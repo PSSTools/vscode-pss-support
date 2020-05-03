@@ -1,0 +1,25 @@
+{
+    "name": "vscode-pss-support",
+    "displayName": "VSCode Accellera PSS",
+    "description": "VSCode for the Accellera Portable Stimulus Specification (PSS) language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.44.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "pss",
+            "aliases": ["portable-stimulus", "pss"],
+            "extensions": [".pss"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "pss",
+            "scopeName": "source.pss",
+            "path": "./syntaxes/pss.tmLanguage.json"
+        }]
+    }
+}

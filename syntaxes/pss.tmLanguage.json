@@ -1,0 +1,96 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "portable-stimulus",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#storage"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#comments"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.pss",
+				"match": "\\b(if|while|for|return)\\b"
+			},
+			{
+				"name": "keyword.other.structure.pss",
+				"match": "\\b(component|package)\\b"
+			},
+			{
+				"name": "keyword.other.types.pss",
+				"match": "\\b(action|struct|buffer|stream|resource|state|typedef)\\b"
+			},
+			{
+				"name": "keyword.other.exec.pss",
+				"match": "\\b(exec|declaration|header|run_start|run_end|pre_solve|post_solve|body)\\b"
+			},
+			{
+				"name": "storage.modifier.pss",
+				"match": "\\b(static|const|rand|private|public|protected)\\b"
+			}
+		]
+		},
+		"strings": {
+			"name": "string.quoted.double.pss",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.pss",
+					"match": "\\\\."
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+					"name": "comment.line.double-slash.pss",
+					"begin": "\\/\\/",
+					"end": "$",
+					"patterns": [{ "include": "#FIXME-TODO-XXX"}]
+				},
+				{
+					"name": "comment.block.pss",
+					"begin": "\\/\\*",
+					"end": "\\*\\/",
+					"patterns": [{ "include": "#FIXME-TODO-XXX"}]
+				}
+			]
+		},
+		"FIXME-TODO-XXX": {
+			"patterns": [
+				{
+					"name": "invalid.other.fixmes.pss",
+					"match": "(?i:fixme)"
+				},
+				{
+					"name": "keyword.other.fixmes.pss",
+					"match": "(?i:todo|xxx)"
+
+				}
+			]
+		},
+		"storage": {
+			"patterns": [
+				{
+					"name": "storage.type.data.pss",
+					"match": "\\b(int|bit|bool|string|chandle)\\b"
+				},
+				{
+					"name": "storage.modifier.pss",
+					"match": "\\b(input|output|inout|static|const)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.pss"
+}
