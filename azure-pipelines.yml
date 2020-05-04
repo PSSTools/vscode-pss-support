@@ -1,0 +1,27 @@
+trigger:
+- master
+
+jobs:
+- job: PyPi_Linux
+  pool:
+   vmImage: 'ubuntu-latest'
+
+  variables:
+  - name: build_num
+    value: $(Build.BuildNumber)
+
+  steps:
+  - script: npm install
+    displayName: npm install
+  - script: npm run compile
+    displayName: build extension
+  - script: |
+    sudo npm install -g vsce
+    vsce package
+    displayName: Create VSIX
+  - script: |
+    if test "$(Build.SourceBranchName)" = "master"; then
+       vsce publish -p $(VSCODE_MARKETPLACE_TOKEN)
+    fi
+    displayName: Publish VSIX
+    

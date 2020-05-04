@@ -1,8 +1,14 @@
 {
     "name": "vscode-pss-support",
     "displayName": "VSCode Accellera PSS",
-    "description": "VSCode for the Accellera Portable Stimulus Specification (PSS) language",
+    "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
     "version": "0.0.1",
+    "publisher": "matthew-ballance",
+    "license": "Apache 2.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/psstools/vscode-pss-support"
+    },
     "engines": {
         "vscode": "^1.44.0"
     },
