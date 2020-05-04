@@ -13,40 +13,68 @@
 		},
 		{
 			"include": "#comments"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#constraints"
+		},
+		{
+			"include": "#control"
+		},
+		{
+			"include": "#activity"
+		},
+		{
+			"include": "#exec"
+		},
+		{
+			"include": "#operators"
 		}
 	],
 	"repository": {
 		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.pss",
-				"match": "\\b(if|while|for|return)\\b"
-			},
-			{
-				"name": "keyword.other.structure.pss",
-				"match": "\\b(component|package)\\b"
-			},
-			{
-				"name": "keyword.other.types.pss",
-				"match": "\\b(action|struct|buffer|stream|resource|state|typedef)\\b"
-			},
-			{
-				"name": "keyword.other.exec.pss",
-				"match": "\\b(exec|declaration|header|run_start|run_end|pre_solve|post_solve|body)\\b"
-			},
-			{
-				"name": "storage.modifier.pss",
-				"match": "\\b(static|const|rand|private|public|protected)\\b"
-			}
-		]
-		},
-		"strings": {
-			"name": "string.quoted.double.pss",
-			"begin": "\"",
-			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.pss",
-					"match": "\\\\."
+					"name": "keyword.other.structure.pss",
+					"match": "\\b(component|package)\\b"
+				}
+			]
+		},
+		"strings": {
+			"patterns": [
+				{
+					"name": "string.quoted.double.pss",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.pss",
+							"match": "\\\\."
+						}
+					]
+				},
+				{
+					"name": "string.quoted.triple.pss",
+					"begin": "\"\"\"",
+					"end": "\"\"\""
+				}
+			]
+		},
+		"activity": {
+			"patterns": [
+				{
+					"name": "keyword.control.activity.pss",
+					"match": "\\b(parallel|sequence|match|default|while|repeat|foreach|replicate|with|do|select|schedule)\\b"
+				},
+				{
+					"name": "keyword.other.activity.pss",
+					"match": "\\b(activity)\\b"
+				},
+				{
+					"name": "keyword.other.join.pss",
+					"match": "\\b(join_branch|join_select|join_none|join_first)\\b"
 				}
 			]
 		},
@@ -66,6 +94,35 @@
 				}
 			]
 		},
+		"constants": {
+			"patterns": [
+				{
+					"name": "constant.language.pss",
+					"match": "\\b(true|false)\\b"
+				},
+				{
+					"name": "constant.numeric.decimal",
+					"match": "\\b(\\d[\\d.]*)\\b"
+				}
+			]
+		},
+		"constraints": {
+			"patterns": [
+				{
+					"name": "keyword.other.constraint.pss",
+					"match": "\\b(constraint|dynamic|unique|forall)\\b"
+				}
+			]
+		},
+		"control": {
+			"patterns": [
+				{
+					"name": "keyword.control.pss",
+					"match": "\\b(return|if|else|break|continue|super)\\b"
+				}
+
+			]
+		},
 		"FIXME-TODO-XXX": {
 			"patterns": [
 				{
@@ -79,6 +136,47 @@
 				}
 			]
 		},
+		"exec": {
+			"patterns": [
+				{
+					"name": "keyword.other.exec.pss",
+					"match": "\\b(exec)\\b"
+				},
+				{
+					"name": "support.constant.exec.pss",
+					"match": "\\b(declaration|file|header|run_start|run_end|pre_solve|post_solve|body)\\b"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.assignment.pss",
+					"match": "\\+=|\\-=|<<=|>>=|\\|=|&=|="
+				},
+				{
+					"name": "keyword.operator.arithmetic.pss",
+					"match": "\\+|\\-|\\*|%|/|\\*\\*"
+				},
+				{
+					"name": "keyword.operator.relation.pss",
+					"match": "<|>|<=|>="
+				},
+				{
+					"name": "keyword.operator.equality.pss",
+					"match": "==|!="
+				},
+				{
+					"name": "keyword.operator.conditional.pss",
+					"match": "\\?"
+				},
+				{
+					"name": "keyword.operator.logical.pss",
+					"match": "!|&&|\\|\\|"
+				}
+				
+			]
+		},
 		"storage": {
 			"patterns": [
 				{
@@ -87,7 +185,20 @@
 				},
 				{
 					"name": "storage.modifier.pss",
-					"match": "\\b(input|output|inout|static|const)\\b"
+					"match": "\\b(input|output|inout|static|const|(in|out)put|inout|lock|share|pool|abstract)\\b"
+				},
+				{
+					"name": "storage.modifier.other.pss",
+					"match": "\\b(rand|private|public|protected)\\b"
+				},
+				{
+					"name": "storage.type.pss",
+					"match": "\\b(action|component|struct|enum|resource|buffer|stream|state|function)\\b"
+				},
+				{
+					"name": "support.class.collections.pss",
+					"match": "\\b(array|list|map|set)\\b"
+
 				}
 			]
 		}
