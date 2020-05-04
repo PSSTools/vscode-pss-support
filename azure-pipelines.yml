@@ -18,7 +18,7 @@ jobs:
   - script: |
       sudo npm install -g vsce
       date=`date +%Y%m%d%M`
-      sed -i -e 's/"version".*:.*"\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)"/"version": "\1.${date}"/g' package.json
+      sed -i -e "s/\"version\".*:.*\"\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\"/\"version\": \"\1.${date}\"/g" package.json
       vsce package
     displayName: Create VSIX
   - script: |
