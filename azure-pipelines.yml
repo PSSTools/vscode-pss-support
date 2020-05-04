@@ -16,12 +16,12 @@ jobs:
   - script: npm run compile
     displayName: build extension
   - script: |
-    sudo npm install -g vsce
-    vsce package
+      sudo npm install -g vsce
+      vsce package
     displayName: Create VSIX
   - script: |
-    if test "$(Build.SourceBranchName)" = "master"; then
-       vsce publish -p $(VSCODE_MARKETPLACE_TOKEN)
-    fi
+      if test "$(Build.SourceBranchName)" = "master"; then
+         vsce publish -p $(VSCODE_MARKETPLACE_TOKEN)
+      fi
     displayName: Publish VSIX
     
