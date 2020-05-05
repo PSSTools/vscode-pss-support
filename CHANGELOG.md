@@ -4,6 +4,9 @@ All notable changes to the "vscode-pss-support" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.5]
+- Update icon
+
 ## [0.0.4]
 - Add basic snippets for packages, actions, components
 - Update description, icons, etc
