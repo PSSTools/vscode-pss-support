@@ -25,7 +25,11 @@
         "grammars": [{
             "language": "pss",
             "scopeName": "source.pss",
-            "path": "./syntaxes/pss.tmLanguage.json"
+            "path": "./syntaxes/pss.tmLanguage.json",
+            "embeddedLanguages": {
+                "meta.embedded.block.c": "c",
+                "meta.embedded.block.sv": "systemverilog"
+            }
         }]
     }
 }

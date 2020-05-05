@@ -6,44 +6,51 @@
 			"include": "#keywords"
 		},
 		{
-			"include": "#storage"
-		},
-		{
-			"include": "#strings"
-		},
-		{
 			"include": "#comments"
-		},
-		{
-			"include": "#constants"
-		},
-		{
-			"include": "#constraints"
-		},
-		{
-			"include": "#control"
-		},
-		{
-			"include": "#activity"
 		},
 		{
 			"include": "#exec"
 		},
 		{
 			"include": "#operators"
+		},
+		{
+			"include": "#strings"
 		}
 	],
 	"repository": {
 		"keywords": {
 			"patterns": [
 				{
-					"name": "keyword.other.structure.pss",
-					"match": "\\b(component|package)\\b"
+					"include": "#storage"
+				},
+				{
+					"include": "#constants"
+				},
+				{
+					"include": "#constraints"
+				},
+				{
+					"include": "#control"
+				},
+				{
+					"include": "#activity"
 				}
 			]
 		},
 		"strings": {
 			"patterns": [
+				{
+					"name": "string.quoted.triple.pss",
+					"begin": "\"\"\"",
+					"end": "\"\"\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.pss",
+							"match": "\\\\."
+						}
+					]
+				},
 				{
 					"name": "string.quoted.double.pss",
 					"begin": "\"",
@@ -54,11 +61,6 @@
 							"match": "\\\\."
 						}
 					]
-				},
-				{
-					"name": "string.quoted.triple.pss",
-					"begin": "\"\"\"",
-					"end": "\"\"\""
 				}
 			]
 		},
@@ -139,12 +141,92 @@
 		"exec": {
 			"patterns": [
 				{
+					"begin": "\\b(exec)\\s*\\b(\\w+)\\s*\\b(sv|SV|systemverilog)\\b\\s*=",
+					"contentName": "meta.other.exec.block.sv.pss",
+					"end": "\\s*;",
+					"beginCaptures": {
+						"1": { "name": "keyword.other.exec.pss"},
+						"2": { "name": "support.constant.exec.pss"}
+					},
+					"patterns": [
+						{
+							"include": "#exec-strings-sv"
+						}
+					]
+				},
+				{
+					"begin": "\\b(exec)\\s*\\b(\\w+)\\s*\\b(c|C)\\b\\s*=",
+					"contentName": "meta.other.exec.block.c.pss",
+					"end": "\\s*;",
+					"beginCaptures": {
+						"1": { "name": "keyword.other.exec.pss"},
+						"2": { "name": "support.constant.exec.pss"}
+					},
+					"patterns": [
+						{
+							"include": "#exec-strings-c"
+						}
+					]
+				},
+				{
 					"name": "keyword.other.exec.pss",
 					"match": "\\b(exec)\\b"
 				},
 				{
 					"name": "support.constant.exec.pss",
 					"match": "\\b(declaration|file|header|run_start|run_end|pre_solve|post_solve|body)\\b"
+				}
+			]
+		},
+		"exec-strings-c": {
+			"patterns": [
+				{
+					"name": "exec.triplequote.c",
+					"begin": "\"\"\"",
+					"contentName": "meta.embedded.block.c",
+					"end": "\"\"\"",
+					"patterns": [
+						{
+							"include": "source.c"
+						}
+					]
+				},
+				{
+					"name": "exec.doublequote.c",
+					"begin": "\"",
+					"contentName": "meta.embedded.block.c",
+					"end": "\"",
+					"patterns": [
+						{
+							"include": "source.c"
+						}
+					]
+				}
+			]
+		},
+		"exec-strings-sv": {
+			"patterns": [
+				{
+					"name": "exec.triplequote.sv",
+					"begin": "\"\"\"",
+					"contentName": "meta.embedded.block.sv",
+					"end": "\"\"\"",
+					"patterns": [
+						{
+							"include": "text.systemverilog"
+						}
+					]
+				},
+				{
+					"name": "exec.doublequote.sv",
+					"begin": "\"",
+					"contentName": "meta.embedded.block.sv",
+					"end": "\"",
+					"patterns": [
+						{
+							"include": "text.systemverilog"
+						}
+					]
 				}
 			]
 		},
@@ -193,7 +275,7 @@
 				},
 				{
 					"name": "storage.type.pss",
-					"match": "\\b(action|component|struct|enum|resource|buffer|stream|state|function)\\b"
+					"match": "\\b(action|component|package|struct|enum|resource|buffer|stream|state|function)\\b"
 				},
 				{
 					"name": "support.class.collections.pss",

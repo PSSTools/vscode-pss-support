@@ -5,3 +5,6 @@ For more information about Accellera PSS, see the [following](https://www.accell
 
 Currently, the VSCode extension for PSS supports syntax highlighting for keywords. 
 
+Within target-template exec blocks, embedded-language support is provided 
+for SystemVerilog (erikpre.systemverilog extension), and C 
+
