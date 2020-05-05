@@ -1,0 +1,43 @@
+{
+    "action": {
+        "prefix": "action",
+        "description": "Action declaration snippet",
+        "body": [
+            "action ${1:var} {",
+            "}$0"
+        ]
+    },
+    "activity": {
+        "prefix": "activity",
+        "description": "Activity declaration snippet",
+        "body": [
+            "activity {",
+            "}$0"
+        ]
+    },
+    "component": {
+        "prefix": "component",
+        "description": "Component declaration snippet",
+        "body": [
+            "component ${1:var} {",
+            "}$0"
+        ]
+    },
+    "activity_match": {
+        "prefix": "match",
+        "description": "Activity match statement",
+        "body": [
+            "match (${1:var}) {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "package": {
+        "prefix": "package",
+        "description": "Package declaration snippet",
+        "body": [
+            "package ${1:var} {",
+            "}$0"
+        ]
+    }
+}

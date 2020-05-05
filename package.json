@@ -2,7 +2,7 @@
     "name": "vscode-pss-support",
     "displayName": "VSCode Accellera PSS",
     "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "matthew-ballance",
     "license": "Apache 2.0",
     "repository": {
@@ -15,6 +15,20 @@
     "categories": [
         "Programming Languages"
     ],
+    "icon": "images/icon.png",
+    "badges": [
+        {
+            "url": "https://dev.azure.com/mballance/psstools/_apis/build/status/PSSTools.vscode-pss-support?branchName=master",
+            "href": "https://dev.azure.com/mballance/psstools/_build/latest?definitionId=21&branchName=master",
+            "description": "Build Status"
+        }
+
+    ],
+    "keywords": [
+        "portable stimulus",
+        "pss",
+        "Accellera"
+    ],
     "contributes": {
         "languages": [{
             "id": "pss",
@@ -22,6 +36,12 @@
             "extensions": [".pss"],
             "configuration": "./language-configuration.json"
         }],
+        "snippets": [
+            {
+                "language": "pss",
+                "path": "./snippets/pss.json"
+            }
+        ],
         "grammars": [{
             "language": "pss",
             "scopeName": "source.pss",
