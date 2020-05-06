@@ -22,7 +22,6 @@
             "href": "https://dev.azure.com/mballance/psstools/_build/latest?definitionId=21&branchName=master",
             "description": "Build Status"
         }
-
     ],
     "keywords": [
         "portable stimulus",
@@ -30,26 +29,35 @@
         "Accellera"
     ],
     "contributes": {
-        "languages": [{
-            "id": "pss",
-            "aliases": ["portable-stimulus", "pss"],
-            "extensions": [".pss"],
-            "configuration": "./language-configuration.json"
-        }],
+        "languages": [
+            {
+                "id": "pss",
+                "aliases": [
+                    "portable-stimulus",
+                    "pss"
+                ],
+                "extensions": [
+                    ".pss"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
         "snippets": [
             {
                 "language": "pss",
                 "path": "./snippets/pss.json"
             }
         ],
-        "grammars": [{
-            "language": "pss",
-            "scopeName": "source.pss",
-            "path": "./syntaxes/pss.tmLanguage.json",
-            "embeddedLanguages": {
-                "meta.embedded.block.c": "c",
-                "meta.embedded.block.sv": "systemverilog"
+        "grammars": [
+            {
+                "language": "pss",
+                "scopeName": "source.pss",
+                "path": "./syntaxes/pss.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.c": "c",
+                    "meta.embedded.block.sv": "systemverilog"
+                }
             }
-        }]
+        ]
     }
 }

@@ -1,0 +1,4 @@
+[submodule "pssparser"]
+	path = pssparser
+	url = https://github.com/psstools/pssparser
+	branch = master
