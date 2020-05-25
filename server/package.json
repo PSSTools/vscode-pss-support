@@ -17,5 +17,10 @@
 		"antlr4": "^4.8.0",
 		"antlr4ts": "^0.5.0-alpha.3"
 	},
-	"scripts": {}
+	"devDependencies": {
+		"antlr4ts-cli": "^0.5.0-alpha.3"
+	},
+	"scripts": {
+		"antlr4ts-pss": "antlr4ts -visitor src/grammar/PSS.g4 -o src/antlr_gen"
+	}
 }
