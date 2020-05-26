@@ -10,7 +10,7 @@
         "url": "https://github.com/psstools/vscode-pss-support"
     },
     "engines": {
-        "vscode": "^1.44.0"
+        "vscode": "^1.43.0"
     },
     "categories": [
         "Programming Languages"
@@ -22,34 +22,84 @@
             "href": "https://dev.azure.com/mballance/psstools/_build/latest?definitionId=21&branchName=master",
             "description": "Build Status"
         }
-
     ],
     "keywords": [
         "portable stimulus",
         "pss",
         "Accellera"
     ],
+    "activationEvents": [
+        "onLanguage:pss"
+    ],
+    "main": "./client/out/extension",
     "contributes": {
-        "languages": [{
-            "id": "pss",
-            "aliases": ["portable-stimulus", "pss"],
-            "extensions": [".pss"],
-            "configuration": "./language-configuration.json"
-        }],
+        "languages": [
+            {
+                "id": "pss",
+                "aliases": [
+                    "portable-stimulus",
+                    "pss"
+                ],
+                "extensions": [
+                    ".pss"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
         "snippets": [
             {
                 "language": "pss",
                 "path": "./snippets/pss.json"
             }
         ],
-        "grammars": [{
-            "language": "pss",
-            "scopeName": "source.pss",
-            "path": "./syntaxes/pss.tmLanguage.json",
-            "embeddedLanguages": {
-                "meta.embedded.block.c": "c",
-                "meta.embedded.block.sv": "systemverilog"
+        "grammars": [
+            {
+                "language": "pss",
+                "scopeName": "source.pss",
+                "path": "./syntaxes/pss.tmLanguage.json",
+                "embeddedLanguages": {
+                    "meta.embedded.block.c": "c",
+                    "meta.embedded.block.sv": "systemverilog"
+                }
             }
-        }]
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "Example configuration",
+            "properties": {
+                "lspPortableStimulus.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls maximum number of errors produced per file"
+                },
+                "lspPortableStimulus.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces communication between VSCode and LSP"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "cd server&&npm run antlr4ts&&cd ..&&tsc -b",
+        "compile": "tsc -b",
+        "watch": "tsc -b -w",
+        "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    },
+    "devDependencies": {
+        "@types/mocha": "^5.2.0",
+        "mocha": "^6.2.2",
+        "@types/node": "^12.12.0",
+        "tslint": "^5.19.0",
+        "eslint": "^6.4.0",
+        "@typescript-eslint/parser": "^2.3.0",
+        "typescript": "^3.8.3"
     }
 }

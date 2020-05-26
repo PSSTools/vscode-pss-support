@@ -1,0 +1,8 @@
+[submodule "pssparser"]
+	path = pssparser
+	url = https://github.com/psstools/pssparser
+	branch = master
+[submodule "server/pssparser"]
+	path = server/pssparser
+	url = https://github.com/psstools/pssparser
+	branch = multi-language
