@@ -2,7 +2,7 @@
     "name": "vscode-pss-support",
     "displayName": "VSCode Accellera PSS",
     "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "matthew-ballance",
     "license": "Apache 2.0",
     "repository": {
@@ -91,7 +91,7 @@
         "vscode:prepublish": "cd server&&npm run antlr4ts&&cd ..&&tsc -b",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+        "postinstall": "cd client&&npm install&&cd ../server&&npm install&&npm run antlr4ts&&cd .."
     },
     "devDependencies": {
         "@types/mocha": "^5.2.0",
