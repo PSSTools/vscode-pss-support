@@ -171,39 +171,6 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			break
 		}
 	}
-	// let problems = 0;
-	// let diagnostics: Diagnostic[] = [];
-	// while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-	// 	problems++;
-	// 	let diagnostic: Diagnostic = {
-	// 		severity: DiagnosticSeverity.Warning,
-	// 		range: {
-	// 			start: textDocument.positionAt(m.index),
-	// 			end: textDocument.positionAt(m.index + m[0].length)
-	// 		},
-	// 		message: `${m[0]} is all uppercase.`,
-	// 		source: 'ex'
-	// 	};
-	// 	if (hasDiagnosticRelatedInformationCapability) {
-	// 		diagnostic.relatedInformation = [
-	// 			{
-	// 				location: {
-	// 					uri: textDocument.uri,
-	// 					range: Object.assign({}, diagnostic.range)
-	// 				},
-	// 				message: 'Spelling matters'
-	// 			},
-	// 			{
-	// 				location: {
-	// 					uri: textDocument.uri,
-	// 					range: Object.assign({}, diagnostic.range)
-	// 				},
-	// 				message: 'Particularly for names'
-	// 			}
-	// 		];
-	// 	}
-	// 	diagnostics.push(diagnostic);
-	// }
 
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
@@ -214,41 +181,43 @@ connection.onDidChangeWatchedFiles(_change => {
 	connection.console.log('We received an file change event');
 });
 
-// This handler provides the initial list of the completion items.
-// connection.onCompletion(
-// 	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-// 		// The pass parameter contains the position of the text document in
-// 		// which code complete got requested. For the example we ignore this
-// 		// info and always provide the same completion items.
-// 		return [
-// 			{
-// 				label: 'TypeScript',
-// 				kind: CompletionItemKind.Text,
-// 				data: 1
-// 			},
-// 			{
-// 				label: 'JavaScript',
-// 				kind: CompletionItemKind.Text,
-// 				data: 2
-// 			}
-// 		];
-// 	}
-// );
+//This handler provides the initial list of the completion items.
+connection.onCompletion(
+	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
+		// The pass parameter contains the position of the text document in
+		// which code complete got requested. For the example we ignore this
+		// info and always provide the same completion items.
+		// TODO: null out completions for now
+		return [];
+		// 	{
+		// 		label: 'TypeScript',
+		// 		kind: CompletionItemKind.Text,
+		// 		data: 1
+		// 	},
+		// 	{
+		// 		label: 'JavaScript',
+		// 		kind: CompletionItemKind.Text,
+		// 		data: 2
+		// 	}
+		// ];
+	}
+);
 
 // This handler resolves additional information for the item selected in
 // the completion list.
-// connection.onCompletionResolve(
-// 	(item: CompletionItem): CompletionItem => {
-// 		if (item.data === 1) {
-// 			item.detail = 'TypeScript details';
-// 			item.documentation = 'TypeScript documentation';
-// 		} else if (item.data === 2) {
-// 			item.detail = 'JavaScript details';
-// 			item.documentation = 'JavaScript documentation';
-// 		}
-// 		return item;
-// 	}
-// );
+connection.onCompletionResolve(
+	// TODO: seems related to completion proposal
+	(item: CompletionItem): CompletionItem => {
+		if (item.data === 1) {
+			item.detail = 'TypeScript details';
+			item.documentation = 'TypeScript documentation';
+		} else if (item.data === 2) {
+			item.detail = 'JavaScript details';
+			item.documentation = 'JavaScript documentation';
+		}
+		return item;
+	}
+);
 
 /*
 connection.onDidOpenTextDocument((params) => {

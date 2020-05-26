@@ -4,6 +4,9 @@ All notable changes to the "vscode-pss-support" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.8]
+- Correct an issue with stubbed-out completion handling
+
 ## [0.0.7]
 - Correct a packaging issue with the LSP
 
