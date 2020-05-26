@@ -4,6 +4,9 @@ All notable changes to the "vscode-pss-support" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.6]
+- Add initial LSP version with basic syntax checking
+
 ## [0.0.5]
 - Update icon
 
