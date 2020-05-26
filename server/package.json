@@ -21,6 +21,6 @@
 		"antlr4ts-cli": "^0.5.0-alpha.3"
 	},
 	"scripts": {
-		"antlr4ts-pss": "antlr4ts -visitor src/grammar/PSS.g4 -o src/antlr_gen"
+		"antlr4ts": "antlr4ts -visitor src/grammar/PSS.g4 -o src/antlr_gen"
 	}
 }
