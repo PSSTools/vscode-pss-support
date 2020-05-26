@@ -31,7 +31,6 @@ export class CUParser implements ANTLRErrorListener<Token> {
         charPositionInLine: number, 
         msg:                string,
 		e:                  RecognitionException|undefined): void {
-        console.log("SyntaxError " + offendingSymbol);
         this.errors.push(new Marker(
             line,
             charPositionInLine,

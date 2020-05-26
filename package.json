@@ -1,8 +1,8 @@
 {
     "name": "vscode-pss-support",
+    "version": "0.0.7",
     "displayName": "VSCode Accellera PSS",
     "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
-    "version": "0.0.6",
     "publisher": "matthew-ballance",
     "license": "Apache 2.0",
     "repository": {
@@ -65,7 +65,7 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "Example configuration",
+            "title": "PSS configuration",
             "properties": {
                 "lspPortableStimulus.maxNumberOfProblems": {
                     "scope": "resource",
