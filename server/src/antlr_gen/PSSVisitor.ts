@@ -203,6 +203,13 @@ import { Logical_inequality_opContext } from "./PSSParser";
 import { Unary_opContext } from "./PSSParser";
 import { Exp_opContext } from "./PSSParser";
 import { PrimaryContext } from "./PSSParser";
+import { Aggregate_literal_expressionContext } from "./PSSParser";
+import { Empty_aggregate_literalContext } from "./PSSParser";
+import { Array_list_literalContext } from "./PSSParser";
+import { Struct_literalContext } from "./PSSParser";
+import { Struct_literal_itemContext } from "./PSSParser";
+import { Key_value_literalContext } from "./PSSParser";
+import { Key_value_itemContext } from "./PSSParser";
 import { Paren_exprContext } from "./PSSParser";
 import { Cast_expressionContext } from "./PSSParser";
 import { Casting_typeContext } from "./PSSParser";
@@ -1673,6 +1680,55 @@ export interface PSSVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitPrimary?: (ctx: PrimaryContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.aggregate_literal_expression`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitAggregate_literal_expression?: (ctx: Aggregate_literal_expressionContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.empty_aggregate_literal`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitEmpty_aggregate_literal?: (ctx: Empty_aggregate_literalContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.array_list_literal`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitArray_list_literal?: (ctx: Array_list_literalContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.struct_literal`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitStruct_literal?: (ctx: Struct_literalContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.struct_literal_item`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitStruct_literal_item?: (ctx: Struct_literal_itemContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.key_value_literal`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitKey_value_literal?: (ctx: Key_value_literalContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.key_value_item`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitKey_value_item?: (ctx: Key_value_itemContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `PSSParser.paren_expr`.

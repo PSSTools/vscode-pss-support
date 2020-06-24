@@ -203,6 +203,13 @@ import { Logical_inequality_opContext } from "./PSSParser";
 import { Unary_opContext } from "./PSSParser";
 import { Exp_opContext } from "./PSSParser";
 import { PrimaryContext } from "./PSSParser";
+import { Aggregate_literal_expressionContext } from "./PSSParser";
+import { Empty_aggregate_literalContext } from "./PSSParser";
+import { Array_list_literalContext } from "./PSSParser";
+import { Struct_literalContext } from "./PSSParser";
+import { Struct_literal_itemContext } from "./PSSParser";
+import { Key_value_literalContext } from "./PSSParser";
+import { Key_value_itemContext } from "./PSSParser";
 import { Paren_exprContext } from "./PSSParser";
 import { Cast_expressionContext } from "./PSSParser";
 import { Casting_typeContext } from "./PSSParser";
@@ -2470,6 +2477,83 @@ export interface PSSListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitPrimary?: (ctx: PrimaryContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.aggregate_literal_expression`.
+	 * @param ctx the parse tree
+	 */
+	enterAggregate_literal_expression?: (ctx: Aggregate_literal_expressionContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.aggregate_literal_expression`.
+	 * @param ctx the parse tree
+	 */
+	exitAggregate_literal_expression?: (ctx: Aggregate_literal_expressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.empty_aggregate_literal`.
+	 * @param ctx the parse tree
+	 */
+	enterEmpty_aggregate_literal?: (ctx: Empty_aggregate_literalContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.empty_aggregate_literal`.
+	 * @param ctx the parse tree
+	 */
+	exitEmpty_aggregate_literal?: (ctx: Empty_aggregate_literalContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.array_list_literal`.
+	 * @param ctx the parse tree
+	 */
+	enterArray_list_literal?: (ctx: Array_list_literalContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.array_list_literal`.
+	 * @param ctx the parse tree
+	 */
+	exitArray_list_literal?: (ctx: Array_list_literalContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.struct_literal`.
+	 * @param ctx the parse tree
+	 */
+	enterStruct_literal?: (ctx: Struct_literalContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.struct_literal`.
+	 * @param ctx the parse tree
+	 */
+	exitStruct_literal?: (ctx: Struct_literalContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.struct_literal_item`.
+	 * @param ctx the parse tree
+	 */
+	enterStruct_literal_item?: (ctx: Struct_literal_itemContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.struct_literal_item`.
+	 * @param ctx the parse tree
+	 */
+	exitStruct_literal_item?: (ctx: Struct_literal_itemContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.key_value_literal`.
+	 * @param ctx the parse tree
+	 */
+	enterKey_value_literal?: (ctx: Key_value_literalContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.key_value_literal`.
+	 * @param ctx the parse tree
+	 */
+	exitKey_value_literal?: (ctx: Key_value_literalContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.key_value_item`.
+	 * @param ctx the parse tree
+	 */
+	enterKey_value_item?: (ctx: Key_value_itemContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.key_value_item`.
+	 * @param ctx the parse tree
+	 */
+	exitKey_value_item?: (ctx: Key_value_itemContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `PSSParser.paren_expr`.

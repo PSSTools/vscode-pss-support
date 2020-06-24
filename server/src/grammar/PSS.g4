@@ -91,7 +91,7 @@ const_field_declaration :
 ;
 
 const_data_declaration:
-	scalar_data_type const_data_instantiation (',' const_data_instantiation)* ';' 
+	data_type const_data_instantiation (',' const_data_instantiation)* ';' 
 ;
 
 const_data_instantiation:	
@@ -101,6 +101,7 @@ const_data_instantiation:
 static_const_field_declaration :
 	'static' 'const' const_data_declaration
 ;
+
 /****************************************************************************
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -1414,8 +1415,40 @@ primary:
 	| is_super='super' '.' variable_ref_path
 	| compile_has_expr
 	| cast_expression // TODO: File Jama issue
+	| aggregate_literal_expression
 	;
-	
+
+aggregate_literal_expression:
+    empty_aggregate_literal
+    | array_list_literal
+    | struct_literal
+    | key_value_literal
+	;
+
+empty_aggregate_literal:  
+	'{' '}'
+	;
+
+array_list_literal:
+  '{' expression (',' expression)* '}'
+	;
+
+struct_literal:
+  '{' struct_literal_item (',' struct_literal_item)* '}'
+	;
+
+struct_literal_item:
+  '.' identifier '=' expression
+	;
+
+key_value_literal:
+  '{' key_value_item (',' key_value_item)* '}'
+	;
+
+key_value_item:
+  expression ':' expression
+	;
+
 paren_expr:
 	'(' expression ')'
 ;
@@ -1757,35 +1790,4 @@ import_class_extends:
 import_class_method_decl:
 	method_prototype ';'
 ;
-/****************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- ****************************************************************************/
-
-
-
-
-
-
-
-
-/*	
-entry : 
-	expression EOF
-	;
- */
 

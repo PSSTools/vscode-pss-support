@@ -4,6 +4,10 @@ All notable changes to the "vscode-pss-support" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.9]
+- Implement aggregate expressions
+- Ensure const fields can have user-defined type
+
 ## [0.0.8]
 - Correct an issue with stubbed-out completion handling
 
