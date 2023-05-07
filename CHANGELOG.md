@@ -8,6 +8,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Implement aggregate expressions
 - Ensure const fields can have user-defined type
 
+## [0.0.9]
+- Implement aggregate expressions
+- Ensure const fields can have user-defined type
+
 ## [0.0.8]
 - Correct an issue with stubbed-out completion handling
 

@@ -1,7 +1,7 @@
 
 import {ANTLRInputStream, CommonTokenStream, ANTLRErrorListener, Recognizer, RecognitionException, Token } from 'antlr4ts';
-import {PSSParser} from '../antlr_gen/PSSParser';
-import {PSSLexer} from '../antlr_gen/PSSLexer';
+import {PSSParser} from '../antlr_gen/src/grammar/PSSParser';
+import {PSSLexer} from '../antlr_gen/src/grammar/PSSLexer';
 import { Override } from 'antlr4ts/Decorators';
 import { ParserATNSimulator } from 'antlr4ts/atn/ParserATNSimulator';
 import { Marker } from './Marker';
