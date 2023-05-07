@@ -13,11 +13,15 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
+      - name: Install VSCE
+        run: |
+          npm install -i -g vsce
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          npm install --frozen-lockfile
       - name: Package Extension (Stable)
         run: |
-          yarn vsce package 1.0.0 --yarn --no-update-package-json -o "./vscode-pss-support.vsix" 
+          vsce package 1.0.0 --yarn --no-update-package-json -o "./vscode-pss-support.vsix" 
       
 #  ci-macos-arm64:
 #    runs-on: [self-hosted, macOS, ARM64]
