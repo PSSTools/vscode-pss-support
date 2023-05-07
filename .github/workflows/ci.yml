@@ -13,7 +13,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
-      
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile      
       
 #  ci-macos-arm64:
 #    runs-on: [self-hosted, macOS, ARM64]
