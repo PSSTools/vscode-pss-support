@@ -21,7 +21,11 @@ jobs:
           npm install --frozen-lockfile
       - name: Package Extension (Stable)
         run: |
-          vsce package 1.0.0 --yarn --no-update-package-json -o "./vscode-pss-support.vsix" 
+          vsce package
+      - name: Release
+        if: startsWith(github.ref, 'refs/heads/master')
+        run: |
+          vsce publish -p $(VS_MARKETPLACE_PAT)
       
 #  ci-macos-arm64:
 #    runs-on: [self-hosted, macOS, ARM64]
