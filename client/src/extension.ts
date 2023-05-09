@@ -10,7 +10,8 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-	TransportKind
+	TransportKind,
+    createClientSocketTransport
 } from 'vscode-languageclient';
 
 let client: LanguageClient;
@@ -35,6 +36,13 @@ export function activate(context: ExtensionContext) {
 			options: debugOptions
 		}
 	};
+
+    /*
+    let socketT = createClientSocketTransport(6000);
+    console.log("Created socket")
+    let socket2T = createClientSocketTransport(6000);
+    console.log("Created socket")
+     */
 
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
