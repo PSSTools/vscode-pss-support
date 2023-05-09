@@ -4,6 +4,9 @@ All notable changes to the "vscode-pss-support" extension will be documented in 
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.2.0]
+- Correct to parse issues around template parameters and default values
+
 ## [0.1.0]
 - Update syntax-check grammar to PSS 2.0
 
