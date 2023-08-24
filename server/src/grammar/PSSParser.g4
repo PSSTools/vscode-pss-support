@@ -815,9 +815,7 @@ type_param_decl:
 	;
 
 generic_type_param_decl: 
-// Note: type_identifier doesn't cover primitive types (eg bit, int, bool)
-//      TOK_TYPE identifier ( TOK_SINGLE_EQ type_identifier )?
-    TOK_TYPE identifier ( TOK_SINGLE_EQ data_type )?
+	TOK_TYPE identifier ( TOK_SINGLE_EQ type_identifier )?
 	;
 
 category_type_param_decl: 
@@ -843,8 +841,8 @@ template_param_value_list:
 	;
 
 template_param_value: 
-	data_type
-	| constant_expression 
+	constant_expression 
+	| type_identifier
 	;
 
 /********************************************************************
@@ -852,7 +850,7 @@ template_param_value:
  ********************************************************************/
 data_type:
 	scalar_data_type 
-//	| collection_type // Note: this parser uses template types, not special tokens
+	| collection_type
 	| reference_type
 	| type_identifier
 	;
@@ -921,14 +919,12 @@ enum_type:
 	enum_type_identifier (TOK_IN TOK_LSBRACE open_range_list TOK_RSBRACE)?
 	;
 
-// Note: This parser treates built-in collection types as special
-// cases of template types
-// collection_type:
-// 	| (TOK_ARRAY TOK_LT data_type TOK_COMMA array_size_expression TOK_GT)
-// 	| (TOK_LIST TOK_LT data_type TOK_GT)
-// 	| (TOK_MAP TOK_LT data_type TOK_COMMA data_type TOK_GT)
-// 	| (TOK_SET TOK_LT data_type TOK_GT)
-// 	;
+collection_type:
+	| (TOK_ARRAY TOK_LT data_type TOK_COMMA array_size_expression TOK_GT)
+	| (TOK_LIST TOK_LT data_type TOK_GT)
+	| (TOK_MAP TOK_LT data_type TOK_COMMA data_type TOK_GT)
+	| (TOK_SET TOK_LT data_type TOK_GT)
+	;
 
 array_size_expression:
 	constant_expression
