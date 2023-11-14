@@ -142,6 +142,7 @@ import { Bool_typeContext } from "./PSSParser";
 import { Enum_declarationContext } from "./PSSParser";
 import { Enum_itemContext } from "./PSSParser";
 import { Enum_typeContext } from "./PSSParser";
+import { Collection_typeContext } from "./PSSParser";
 import { Array_size_expressionContext } from "./PSSParser";
 import { Reference_typeContext } from "./PSSParser";
 import { Typedef_declarationContext } from "./PSSParser";
@@ -1808,6 +1809,17 @@ export interface PSSParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitEnum_type?: (ctx: Enum_typeContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `PSSParser.collection_type`.
+	 * @param ctx the parse tree
+	 */
+	enterCollection_type?: (ctx: Collection_typeContext) => void;
+	/**
+	 * Exit a parse tree produced by `PSSParser.collection_type`.
+	 * @param ctx the parse tree
+	 */
+	exitCollection_type?: (ctx: Collection_typeContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `PSSParser.array_size_expression`.
