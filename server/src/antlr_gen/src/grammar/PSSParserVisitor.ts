@@ -142,6 +142,7 @@ import { Bool_typeContext } from "./PSSParser";
 import { Enum_declarationContext } from "./PSSParser";
 import { Enum_itemContext } from "./PSSParser";
 import { Enum_typeContext } from "./PSSParser";
+import { Collection_typeContext } from "./PSSParser";
 import { Array_size_expressionContext } from "./PSSParser";
 import { Reference_typeContext } from "./PSSParser";
 import { Typedef_declarationContext } from "./PSSParser";
@@ -1255,6 +1256,13 @@ export interface PSSParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitEnum_type?: (ctx: Enum_typeContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `PSSParser.collection_type`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitCollection_type?: (ctx: Collection_typeContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `PSSParser.array_size_expression`.

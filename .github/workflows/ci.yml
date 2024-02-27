@@ -10,6 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: fregante/setup-git-user@v2
+      - name: Update PSS Grammar
+        run: |
+          ./scripts/update_grammar.sh
       - name: Setup Node version
         uses: actions/setup-node@v1
         with:
