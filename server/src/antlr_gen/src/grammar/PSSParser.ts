@@ -6847,7 +6847,7 @@ export class PSSParser extends Parser {
 				this.state = 1671;
 				this.match(PSSParser.TOK_SINGLE_EQ);
 				this.state = 1672;
-				this.type_identifier();
+				this.data_type();
 				}
 			}
 
@@ -7048,7 +7048,7 @@ export class PSSParser extends Parser {
 			this.state = 1707;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << PSSParser.TOK_LPAREN) | (1 << PSSParser.TOK_LCBRACE) | (1 << PSSParser.TOK_DOUBLE_COLON))) !== 0) || _la === PSSParser.TOK_SUPER || ((((_la - 120)) & ~0x1F) === 0 && ((1 << (_la - 120)) & ((1 << (PSSParser.TOK_COMPILE - 120)) | (1 << (PSSParser.TOK_PLUS - 120)) | (1 << (PSSParser.TOK_MINUS - 120)) | (1 << (PSSParser.TOK_NOT - 120)) | (1 << (PSSParser.TOK_NEG - 120)) | (1 << (PSSParser.TOK_NULL - 120)) | (1 << (PSSParser.TOK_SINGLE_AND - 120)) | (1 << (PSSParser.TOK_SINGLE_OR - 120)) | (1 << (PSSParser.TOK_CARET - 120)) | (1 << (PSSParser.TOK_TRUE - 120)) | (1 << (PSSParser.TOK_FALSE - 120)) | (1 << (PSSParser.DOUBLE_QUOTED_STRING - 120)) | (1 << (PSSParser.TRIPLE_DOUBLE_QUOTED_STRING - 120)) | (1 << (PSSParser.ID - 120)) | (1 << (PSSParser.ESCAPED_ID - 120)) | (1 << (PSSParser.BASED_HEX_LITERAL - 120)) | (1 << (PSSParser.BASED_DEC_LITERAL - 120)))) !== 0) || ((((_la - 152)) & ~0x1F) === 0 && ((1 << (_la - 152)) & ((1 << (PSSParser.DEC_LITERAL - 152)) | (1 << (PSSParser.BASED_BIN_LITERAL - 152)) | (1 << (PSSParser.BASED_OCT_LITERAL - 152)) | (1 << (PSSParser.OCT_LITERAL - 152)) | (1 << (PSSParser.HEX_LITERAL - 152)))) !== 0)) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << PSSParser.TOK_LPAREN) | (1 << PSSParser.TOK_LCBRACE) | (1 << PSSParser.TOK_DOUBLE_COLON))) !== 0) || _la === PSSParser.TOK_REF || _la === PSSParser.TOK_SUPER || ((((_la - 95)) & ~0x1F) === 0 && ((1 << (_la - 95)) & ((1 << (PSSParser.TOK_CHANDLE - 95)) | (1 << (PSSParser.TOK_INT - 95)) | (1 << (PSSParser.TOK_BIT - 95)) | (1 << (PSSParser.TOK_STRING - 95)) | (1 << (PSSParser.TOK_BOOL - 95)) | (1 << (PSSParser.TOK_COMPILE - 95)) | (1 << (PSSParser.TOK_PLUS - 95)) | (1 << (PSSParser.TOK_MINUS - 95)))) !== 0) || ((((_la - 127)) & ~0x1F) === 0 && ((1 << (_la - 127)) & ((1 << (PSSParser.TOK_NOT - 127)) | (1 << (PSSParser.TOK_NEG - 127)) | (1 << (PSSParser.TOK_NULL - 127)) | (1 << (PSSParser.TOK_SINGLE_AND - 127)) | (1 << (PSSParser.TOK_SINGLE_OR - 127)) | (1 << (PSSParser.TOK_CARET - 127)) | (1 << (PSSParser.TOK_TRUE - 127)) | (1 << (PSSParser.TOK_FALSE - 127)) | (1 << (PSSParser.DOUBLE_QUOTED_STRING - 127)) | (1 << (PSSParser.TRIPLE_DOUBLE_QUOTED_STRING - 127)) | (1 << (PSSParser.ID - 127)) | (1 << (PSSParser.ESCAPED_ID - 127)) | (1 << (PSSParser.BASED_HEX_LITERAL - 127)) | (1 << (PSSParser.BASED_DEC_LITERAL - 127)) | (1 << (PSSParser.DEC_LITERAL - 127)) | (1 << (PSSParser.BASED_BIN_LITERAL - 127)) | (1 << (PSSParser.BASED_OCT_LITERAL - 127)) | (1 << (PSSParser.OCT_LITERAL - 127)) | (1 << (PSSParser.HEX_LITERAL - 127)))) !== 0)) {
 				{
 				this.state = 1699;
 				this.template_param_value();
@@ -7101,7 +7101,7 @@ export class PSSParser extends Parser {
 				this.enterOuterAlt(_localctx, 1);
 				{
 				this.state = 1711;
-				this.constant_expression();
+				this.data_type();
 				}
 				break;
 
@@ -7109,7 +7109,7 @@ export class PSSParser extends Parser {
 				this.enterOuterAlt(_localctx, 2);
 				{
 				this.state = 1712;
-				this.type_identifier();
+				this.constant_expression();
 				}
 				break;
 			}
@@ -14345,8 +14345,8 @@ export class PSSParser extends Parser {
 		"\xED\x03\x02\x02\x02\u0683\u0686\x05\xF0y\x02\u0684\u0686\x05\xF2z\x02" +
 		"\u0685\u0683\x03\x02\x02\x02\u0685\u0684\x03\x02\x02\x02\u0686\xEF\x03" +
 		"\x02\x02\x02\u0687\u0688\x07_\x02\x02\u0688\u068B\x05\u01B6\xDC\x02\u0689" +
-		"\u068A\x07\b\x02\x02\u068A\u068C\x05\u01DC\xEF\x02\u068B\u0689\x03\x02" +
-		"\x02\x02\u068B\u068C\x03\x02\x02\x02\u068C\xF1\x03\x02\x02\x02\u068D\u068E" +
+		"\u068A\x07\b\x02\x02\u068A\u068C\x05\xFE\x80\x02\u068B\u0689\x03\x02\x02" +
+		"\x02\u068B\u068C\x03\x02\x02\x02\u068C\xF1\x03\x02\x02\x02\u068D\u068E" +
 		"\x05\xF6|\x02\u068E\u0690\x05\u01B6\xDC\x02\u068F\u0691\x05\xF4{\x02\u0690" +
 		"\u068F\x03\x02\x02\x02\u0690\u0691\x03\x02\x02\x02\u0691\u0694\x03\x02" +
 		"\x02\x02\u0692\u0693\x07\b\x02\x02\u0693\u0695\x05\u01DC\xEF\x02\u0694" +
@@ -14363,8 +14363,8 @@ export class PSSParser extends Parser {
 		"\u06AA\u06A8\x03\x02\x02\x02\u06AA\u06AB\x03\x02\x02\x02\u06AB\u06AE\x03" +
 		"\x02\x02\x02\u06AC\u06AA\x03\x02\x02\x02\u06AD\u06A5\x03\x02\x02\x02\u06AD" +
 		"\u06AE\x03\x02\x02\x02\u06AE\u06AF\x03\x02\x02\x02\u06AF\u06B0\x07d\x02" +
-		"\x02\u06B0\xFB\x03\x02\x02\x02\u06B1\u06B4\x05\u017A\xBE\x02\u06B2\u06B4" +
-		"\x05\u01DC\xEF\x02\u06B3\u06B1\x03\x02\x02\x02\u06B3\u06B2\x03\x02\x02" +
+		"\x02\u06B0\xFB\x03\x02\x02\x02\u06B1\u06B4\x05\xFE\x80\x02\u06B2\u06B4" +
+		"\x05\u017A\xBE\x02\u06B3\u06B1\x03\x02\x02\x02\u06B3\u06B2\x03\x02\x02" +
 		"\x02\u06B4\xFD\x03\x02\x02\x02\u06B5\u06B9\x05\u0100\x81\x02\u06B6\u06B9" +
 		"\x05\u011A\x8E\x02\u06B7\u06B9\x05\u01DC\xEF\x02\u06B8\u06B5\x03\x02\x02" +
 		"\x02\u06B8\u06B6\x03\x02\x02\x02\u06B8\u06B7\x03\x02\x02\x02\u06B9\xFF" +
@@ -19891,8 +19891,8 @@ export class Generic_type_param_declContext extends ParserRuleContext {
 		return this.getRuleContext(0, IdentifierContext);
 	}
 	public TOK_SINGLE_EQ(): TerminalNode | undefined { return this.tryGetToken(PSSParser.TOK_SINGLE_EQ, 0); }
-	public type_identifier(): Type_identifierContext | undefined {
-		return this.tryGetRuleContext(0, Type_identifierContext);
+	public data_type(): Data_typeContext | undefined {
+		return this.tryGetRuleContext(0, Data_typeContext);
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
@@ -20120,11 +20120,11 @@ export class Template_param_value_listContext extends ParserRuleContext {
 
 
 export class Template_param_valueContext extends ParserRuleContext {
+	public data_type(): Data_typeContext | undefined {
+		return this.tryGetRuleContext(0, Data_typeContext);
+	}
 	public constant_expression(): Constant_expressionContext | undefined {
 		return this.tryGetRuleContext(0, Constant_expressionContext);
-	}
-	public type_identifier(): Type_identifierContext | undefined {
-		return this.tryGetRuleContext(0, Type_identifierContext);
 	}
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);

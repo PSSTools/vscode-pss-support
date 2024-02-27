@@ -15,7 +15,8 @@ import {
 	CompletionItemKind,
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
-	InitializeResult
+	InitializeResult,
+    VersionedTextDocumentIdentifier
 } from 'vscode-languageserver';
 
 import {
