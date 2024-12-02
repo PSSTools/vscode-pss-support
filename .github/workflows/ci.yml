@@ -35,7 +35,7 @@ jobs:
           base_version=$(grep '\[[0-9][0-9]*\.[0-9][0-9*\.[0-9][0-9]*\]' CHANGELOG.md  | head -n 1)
           base_version=$(echo $base_version | sed -e 's/##//' -e 's/\[//g' -e 's/\]//g')
           version=${base_version}-${GITHUB_RUN_ID}
-          vsce publish -p ${{ secrets.VS_MARKETPLACE_PAT }} --no-git-tag-version patch 
+          vsce publish -p ${{ secrets.AZURE_API_TOKEN }} --no-git-tag-version patch 
       
 #  ci-macos-arm64:
 #    runs-on: [self-hosted, macOS, ARM64]
