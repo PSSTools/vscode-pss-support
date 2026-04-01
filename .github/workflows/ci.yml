@@ -1,82 +1,95 @@
 name: CI
 on:
-  - push
-  - pull_request
-  - workflow_dispatch
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  ci-linux:
+  docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ivpm
+        run: pip install ivpm
+      - name: Fetch packages
+        run: ivpm update -a -d default-dev
+      - name: Install Sphinx dependencies
+        run: pip install -r docs/requirements.txt
+      - name: Build HTML docs
+        run: sphinx-build -W --keep-going docs docs/_build/html
+      - name: Publish to gh-pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
+
+
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: fregante/setup-git-user@v2
-      - name: Update PSS Grammar
-        run: |
-          ./scripts/update_grammar.sh
-      - name: Setup Node version
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install VSCE
-        run: |
-          npm install -i -g vsce
+      - name: Setup Java (for ANTLR grammar generation)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
       - name: Install dependencies
-        run: |
-          npm install --frozen-lockfile
-      - name: Package Extension (Stable)
-        run: |
-          base_version=$(grep '\[[0-9][0-9]*\.[0-9][0-9*\.[0-9][0-9]*\]' CHANGELOG.md  | head -n 1)
-          base_version=$(echo $base_version | sed -e 's/##//' -e 's/\[//g' -e 's/\]//g')
-          version=${base_version}-${GITHUB_RUN_ID}
-          vsce package 
-      - name: Release
-        if: startsWith(github.ref, 'refs/heads/master')
-        run: |
-          base_version=$(grep '\[[0-9][0-9]*\.[0-9][0-9*\.[0-9][0-9]*\]' CHANGELOG.md  | head -n 1)
-          base_version=$(echo $base_version | sed -e 's/##//' -e 's/\[//g' -e 's/\]//g')
-          version=${base_version}-${GITHUB_RUN_ID}
-          vsce publish -p ${{ secrets.AZURE_API_TOKEN }} --no-git-tag-version patch 
-      
-#  ci-macos-arm64:
-#    runs-on: [self-hosted, macOS, ARM64]
-#    steps:
-#      - uses: actions/checkout@v1
-#      - name: Fetch source dependencies
-#        run: |
-#          export IVPM_PYTHON=python3
-#          ${IVPM_PYTHON} -m pip install ivpm 
-#          ${IVPM_PYTHON} -m ivpm update -a
-#          ./packages/python/bin/python3 -m pip install twine
-#      - name: Build packages
-#        run: |
-#          export BUILD_NUM=$GITHUB_RUN_ID
-#          ./packages/python/bin/python3 setup.py bdist_wheel
-#      - name: Publish to PyPi
-#        if: startsWith(github.ref, 'refs/heads/main')
-#        run: |
-#          python3 -m twine upload dist/*
-#        env:
-#          TWINE_USERNAME: __token__
-#          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-#  ci-macos-x86_64:
-#    runs-on: [self-hosted, macOS, ARM64]
-#    steps:
-#      - uses: actions/checkout@v1
-#      - name: Fetch source dependencies
-#        run: |
-#          export IVPM_PYTHON=/usr/local/bin/python3
-#          arch -x86_64 ${IVPM_PYTHON} -m pip install ivpm 
-#          arch -x86_64 ${IVPM_PYTHON} -m ivpm update -a
-#          arch -x86_64 ./packages/python/bin/python3 -m pip install twine
-#      - name: Build packages
-#        run: |
-#          export BUILD_NUM=$GITHUB_RUN_ID
-#          arch -x86_64 ./packages/python/bin/python3 setup.py bdist_wheel --plat-name macosx_10_9_x86_64
-#      - name: Publish to PyPi
-#        if: startsWith(github.ref, 'refs/heads/main')
-#        run: |
-#          arch -x86_64 ./packages/python/bin/python3 -m twine upload dist/*_x86_64.whl
-#        env:
-#          TWINE_USERNAME: __token__
-#          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-#
+        run: npm install
+      - name: Build grammar
+        run: npm run build:grammar
+      - name: Build
+        run: npm run compile
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run lint
+
+  test-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Run core tests
+        run: npm run test:core
+
+  test-lsp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Run LSP tests
+        run: npm run test:lsp
+
+  test-bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Run benchmarks
+        run: npm run test:bench

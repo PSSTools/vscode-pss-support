@@ -1,43 +1,388 @@
 {
     "action": {
         "prefix": "action",
-        "description": "Action declaration snippet",
+        "description": "Action declaration",
         "body": [
-            "action ${1:var} {",
-            "}$0"
+            "action ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "abstract_action": {
+        "prefix": "abstract action",
+        "description": "Abstract action declaration",
+        "body": [
+            "abstract action ${1:name} {",
+            "\t$0",
+            "}"
         ]
     },
     "activity": {
         "prefix": "activity",
-        "description": "Activity declaration snippet",
+        "description": "Activity block",
         "body": [
             "activity {",
-            "}$0"
+            "\t$0",
+            "}"
         ]
     },
     "component": {
         "prefix": "component",
-        "description": "Component declaration snippet",
+        "description": "Component declaration",
         "body": [
-            "component ${1:var} {",
-            "}$0"
+            "component ${1:name} {",
+            "\t$0",
+            "}"
         ]
     },
-    "activity_match": {
-        "prefix": "match",
-        "description": "Activity match statement",
+    "struct": {
+        "prefix": "struct",
+        "description": "Struct declaration",
         "body": [
-            "match (${1:var}) {",
+            "struct ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "buffer": {
+        "prefix": "buffer",
+        "description": "Buffer declaration",
+        "body": [
+            "buffer ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "resource": {
+        "prefix": "resource",
+        "description": "Resource declaration",
+        "body": [
+            "resource ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "stream": {
+        "prefix": "stream",
+        "description": "Stream declaration",
+        "body": [
+            "stream ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "state": {
+        "prefix": "state",
+        "description": "State declaration",
+        "body": [
+            "state ${1:name} {",
             "\t$0",
             "}"
         ]
     },
     "package": {
         "prefix": "package",
-        "description": "Package declaration snippet",
+        "description": "Package declaration",
         "body": [
-            "package ${1:var} {",
-            "}$0"
+            "package ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "enum": {
+        "prefix": "enum",
+        "description": "Enum declaration",
+        "body": [
+            "enum ${1:name} {",
+            "\t${2:ITEM_A}, ${3:ITEM_B}",
+            "}"
+        ]
+    },
+    "constraint": {
+        "prefix": "constraint",
+        "description": "Named constraint block",
+        "body": [
+            "constraint ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "constraint_dynamic": {
+        "prefix": "dynamic constraint",
+        "description": "Dynamic constraint block",
+        "body": [
+            "dynamic constraint ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "constraint_foreach": {
+        "prefix": "constraint foreach",
+        "description": "Foreach constraint",
+        "body": [
+            "constraint ${1:name} {",
+            "\tforeach (${2:it} : ${3:collection}) {",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ]
+    },
+    "constraint_forall": {
+        "prefix": "constraint forall",
+        "description": "Forall constraint",
+        "body": [
+            "constraint ${1:name} {",
+            "\tforall (${2:it} : ${3:collection}) {",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ]
+    },
+    "constraint_implication": {
+        "prefix": "constraint implies",
+        "description": "Implication constraint",
+        "body": [
+            "constraint ${1:name} {",
+            "\t${2:condition} -> {",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ]
+    },
+    "exec_body": {
+        "prefix": "exec body",
+        "description": "Exec body block",
+        "body": [
+            "exec body {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "exec_pre_solve": {
+        "prefix": "exec pre_solve",
+        "description": "Exec pre_solve block",
+        "body": [
+            "exec pre_solve {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "exec_post_solve": {
+        "prefix": "exec post_solve",
+        "description": "Exec post_solve block",
+        "body": [
+            "exec post_solve {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "exec_init_down": {
+        "prefix": "exec init_down",
+        "description": "Exec init_down block",
+        "body": [
+            "exec init_down {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "exec_init_up": {
+        "prefix": "exec init_up",
+        "description": "Exec init_up block",
+        "body": [
+            "exec init_up {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "function": {
+        "prefix": "function",
+        "description": "Function declaration",
+        "body": [
+            "function ${1:void} ${2:name}(${3:}) {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "pure_function": {
+        "prefix": "pure function",
+        "description": "Pure function declaration",
+        "body": [
+            "pure function ${1:void} ${2:name}(${3:});$0"
+        ]
+    },
+    "covergroup": {
+        "prefix": "covergroup",
+        "description": "Covergroup declaration",
+        "body": [
+            "covergroup ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "extend_action": {
+        "prefix": "extend action",
+        "description": "Extend action declaration",
+        "body": [
+            "extend action ${1:target_type} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "extend_component": {
+        "prefix": "extend component",
+        "description": "Extend component declaration",
+        "body": [
+            "extend component ${1:target_type} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "extend_struct": {
+        "prefix": "extend struct",
+        "description": "Extend struct declaration",
+        "body": [
+            "extend struct ${1:target_type} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "extend_enum": {
+        "prefix": "extend enum",
+        "description": "Extend enum declaration",
+        "body": [
+            "extend enum ${1:target_type} {",
+            "\t${2:NEW_ITEM}",
+            "}"
+        ]
+    },
+    "import": {
+        "prefix": "import",
+        "description": "Import statement",
+        "body": [
+            "import ${1:package_name}::${2:*};$0"
+        ]
+    },
+    "monitor": {
+        "prefix": "monitor",
+        "description": "Monitor declaration",
+        "body": [
+            "monitor ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "annotation_decl": {
+        "prefix": "annotation",
+        "description": "Annotation declaration",
+        "body": [
+            "annotation ${1:name} {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "typedef": {
+        "prefix": "typedef",
+        "description": "Typedef declaration",
+        "body": [
+            "typedef ${1:type} ${2:alias};$0"
+        ]
+    },
+    "input_field": {
+        "prefix": "input",
+        "description": "Input flow object field",
+        "body": [
+            "input ${1:type} ${2:name};$0"
+        ]
+    },
+    "output_field": {
+        "prefix": "output",
+        "description": "Output flow object field",
+        "body": [
+            "output ${1:type} ${2:name};$0"
+        ]
+    },
+    "lock_field": {
+        "prefix": "lock",
+        "description": "Lock resource field",
+        "body": [
+            "lock ${1:resource_type} ${2:name};$0"
+        ]
+    },
+    "share_field": {
+        "prefix": "share",
+        "description": "Share resource field",
+        "body": [
+            "share ${1:resource_type} ${2:name};$0"
+        ]
+    },
+    "parallel": {
+        "prefix": "parallel",
+        "description": "Parallel activity block",
+        "body": [
+            "parallel {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "schedule": {
+        "prefix": "schedule",
+        "description": "Schedule activity block",
+        "body": [
+            "schedule {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "select": {
+        "prefix": "select",
+        "description": "Select activity block",
+        "body": [
+            "select {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "replicate": {
+        "prefix": "replicate",
+        "description": "Replicate activity statement",
+        "body": [
+            "replicate (${1:idx} : ${2:count}) {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "repeat_count": {
+        "prefix": "repeat",
+        "description": "Repeat count activity",
+        "body": [
+            "repeat (${1:i} : ${2:count}) {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "activity_match": {
+        "prefix": "match",
+        "description": "Activity match statement",
+        "body": [
+            "match (${1:expr}) {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "template_action": {
+        "prefix": "template action",
+        "description": "Templated action declaration",
+        "body": [
+            "action ${1:name}<${2:type T}> {",
+            "\t$0",
+            "}"
+        ]
+    },
+    "rand_field": {
+        "prefix": "rand",
+        "description": "Random field declaration",
+        "body": [
+            "rand ${1:bit[32]} ${2:name};$0"
         ]
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "vscode-pss-support",
-    "version": "0.2.6",
+    "version": "0.3.0",
     "displayName": "VSCode Accellera PSS",
     "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
     "publisher": "matthew-ballance",
@@ -10,7 +10,7 @@
         "url": "https://github.com/psstools/vscode-pss-support"
     },
     "engines": {
-        "vscode": "^1.43.0"
+        "vscode": "^1.75.0"
     },
     "categories": [
         "Programming Languages"
@@ -67,13 +67,13 @@
             "type": "object",
             "title": "PSS configuration",
             "properties": {
-                "lspPortableStimulus.maxNumberOfProblems": {
+                "pss.maxNumberOfProblems": {
                     "scope": "resource",
                     "type": "number",
                     "default": 100,
                     "description": "Controls maximum number of errors produced per file"
                 },
-                "lspPortableStimulus.trace.server": {
+                "pss.trace.server": {
                     "scope": "window",
                     "type": "string",
                     "enum": [
@@ -85,27 +85,42 @@
                     "description": "Traces communication between VSCode and LSP"
                 }
             }
+        },
+        "commands": [
+            {
+                "command": "pss.showActivityDiagram",
+                "title": "PSS: View Activity Diagram",
+                "category": "PSS"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "resourceLangId == pss",
+                    "command": "pss.showActivityDiagram",
+                    "group": "navigation"
+                }
+            ]
         }
     },
     "scripts": {
-        "vscode:prepublish": "cd server&&npm run antlr4ts&&cd ..&&tsc -b",
+        "vscode:prepublish": "npm run build",
+        "build": "npm run build:grammar && tsc -b",
+        "build:grammar": "cd server && npm run build:grammar",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "postinstall": "cd client&&npm install&&cd ../server&&npm install&&npm run antlr4ts&&cd .."
+        "test": "npm run test:core && npm run test:lsp",
+        "test:core": "cd server && npm run test:core",
+        "test:lsp": "cd server && npm run test:lsp",
+        "test:bench": "cd server && npm run test:bench",
+        "lint": "eslint server/src/core/ --ext .ts",
+        "postinstall": "cd client && npm install && cd ../server && npm install"
     },
     "devDependencies": {
-        "@types/mocha": "^5.2.0",
-        "@types/node": "^12.12.0",
-        "@typescript-eslint/parser": "^2.3.0",
-        "eslint": "^6.4.0",
-        "mocha": "^6.2.2",
-        "tslint": "^5.19.0",
-        "typescript": "^3.9.10"
-    },
-    "dependencies": {
-        "antlr4ts": "^0.5.0-alpha.4",
-        "yarn": "^1.22.19"
+        "@types/node": "^20.11.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.0",
+        "@typescript-eslint/parser": "^7.0.0",
+        "eslint": "^8.56.0",
+        "typescript": "^5.4.0"
     }
 }
-
-
