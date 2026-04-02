@@ -7,4 +7,5 @@ vsc-extension-quickstart.md
 .git/**
 *.vsix
 *.g4
+**/.env
 
