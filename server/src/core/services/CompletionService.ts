@@ -1104,7 +1104,7 @@ function addFieldsFromScope(
 }
 
 /** Walk up `node.parent` to find the nearest ancestor of the given class. */
-function findEnclosingNode(node: ScopeChild | null, cls: new (...args: unknown[]) => ScopeChild): ScopeChild | null {
+function findEnclosingNode(node: ScopeChild | null, cls: new (...args: any[]) => ScopeChild): ScopeChild | null {
   let current: ScopeChild | null = node;
   while (current) {
     if (current instanceof (cls as any)) return current;
