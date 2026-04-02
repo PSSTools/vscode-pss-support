@@ -6,7 +6,9 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended"
   ],
-  "rules": {},
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "warn"
+  },
   "overrides": [
     {
       "files": ["server/src/core/**/*.ts"],
