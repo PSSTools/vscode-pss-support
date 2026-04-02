@@ -36,7 +36,7 @@ function collectFoldingRanges(scope: Scope, ranges: FoldingRange[]): void {
 
       // Compute end line: use endLocation if set, otherwise find the
       // last child's location, or use the scope's own extent
-      let endLine = getEndLine(child);
+      const endLine = getEndLine(child);
       if (endLine > startLoc.lineno - 1) {
         ranges.push({
           startLine: startLoc.lineno - 1,

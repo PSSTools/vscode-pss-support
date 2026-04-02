@@ -123,7 +123,7 @@ function collectTraversals(
 ): void {
   for (const child of walkActionScope(action)) {
     let targetName: string | null = null;
-    let loc = child.location;
+    const loc = child.location;
 
     if (child instanceof ActivityActionTypeTraversal) {
       targetName = child.target?.type_id?.elems.map(e => e.id?.id).join('::') ?? null;
