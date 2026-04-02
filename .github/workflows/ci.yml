@@ -50,6 +50,13 @@ jobs:
         run: npm run build:grammar
       - name: Build
         run: npm run compile
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+      - name: Package extension
+        run: vsce package
+      - name: Publish to VS Code Marketplace
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: vsce publish -p ${{ secrets.AZURE_API_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest
