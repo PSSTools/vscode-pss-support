@@ -1,0 +1,38 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["server/src/core/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            {
+              "group": ["vscode-languageserver*", "vscode"],
+              "message": "Core layer must not depend on LSP or VSCode APIs."
+            }
+          ]
+        }]
+      }
+    },
+    {
+      "files": ["client/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": ["error", {
+          "patterns": [
+            {
+              "group": ["../core", "../core/*", "../../server/*"],
+              "message": "Client must not import directly from core/server."
+            }
+          ]
+        }]
+      }
+    }
+  ]
+}

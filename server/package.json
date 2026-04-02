@@ -22,8 +22,8 @@
     "scripts": {
         "build": "tsc -b",
         "build:grammar": "antlr4ng -Dlanguage=TypeScript -visitor -listener -o src/generated ../packages/zuspec-fe-pss/src/PSSLexer.g4 ../packages/zuspec-fe-pss/src/PSSParser.g4",
-        "test:core": "vitest run --project core",
-        "test:lsp": "vitest run --project lsp",
+        "test:core": "vitest run test/core",
+        "test:lsp": "vitest run test/lsp",
         "test:bench": "vitest bench",
         "test": "vitest run"
     }
