@@ -77,13 +77,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install ivpm
-        run: pip install ivpm
-      - name: Fetch packages
-        run: ivpm update -a -d default-dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -95,13 +88,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install ivpm
-        run: pip install ivpm
-      - name: Fetch packages
-        run: ivpm update -a -d default-dev
       - uses: actions/setup-node@v4
         with:
           node-version: 22
