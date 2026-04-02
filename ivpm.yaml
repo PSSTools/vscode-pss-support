@@ -1,0 +1,11 @@
+package:
+  name: vscode-pss-support
+
+  dep-sets:
+  - name: default-dev
+    deps:
+    - name: zuspec-fe-pss
+      url: https://github.com/zuspec/zuspec-fe-pss.git
+      anonymous: true
+      type: raw
+

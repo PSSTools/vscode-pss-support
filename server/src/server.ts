@@ -1,247 +1,337 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
-
 import {
-	createConnection,
-	TextDocuments,
-	Diagnostic,
-	DiagnosticSeverity,
-	ProposedFeatures,
-	InitializeParams,
-	DidChangeConfigurationNotification,
-	CompletionItem,
-	CompletionItemKind,
-	TextDocumentPositionParams,
-	TextDocumentSyncKind,
-	InitializeResult
-} from 'vscode-languageserver';
+  createConnection,
+  TextDocuments,
+  ProposedFeatures,
+  InitializeParams,
+  TextDocumentSyncKind,
+  InitializeResult,
+  DocumentSymbolParams,
+  HoverParams,
+  DefinitionParams,
+  ReferenceParams,
+  CompletionParams,
+  CompletionItem,
+  SignatureHelpParams,
+  SemanticTokensParams,
+  FoldingRangeParams,
+  WorkspaceSymbolParams,
+  RenameParams,
+  PrepareRenameParams,
+  CodeActionParams,
+  CallHierarchyPrepareParams,
+  CallHierarchyIncomingCallsParams,
+  CallHierarchyOutgoingCallsParams,
+  TypeHierarchyPrepareParams,
+  TypeHierarchySupertypesParams,
+  TypeHierarchySubtypesParams,
+  InlayHintParams,
+  DocumentFormattingParams,
+  DocumentRangeFormattingParams,
+  CodeLensParams,
+} from 'vscode-languageserver/node';
 
-import {
-	TextDocument
-} from 'vscode-languageserver-textdocument';
-import { CUParser } from './parser/CUParser';
-import { Marker } from './parser/Marker';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { WorkspaceIndex } from './core/index/WorkspaceIndex';
+import { handleDocumentSymbol } from './lsp/LspSymbolHandler';
+import { handleHover } from './lsp/LspHoverHandler';
+import { handleDefinition } from './lsp/LspDefinitionHandler';
+import { handleReferences } from './lsp/LspReferencesHandler';
+import { handleCompletion, handleCompletionResolve } from './lsp/LspCompletionHandler';
+import { handleSignatureHelp } from './lsp/LspSignatureHelpHandler';
+import { handleSemanticTokensFull, SEMANTIC_TOKENS_LEGEND } from './lsp/LspSemanticTokensHandler';
+import { handleFoldingRanges } from './lsp/LspFoldingHandler';
+import { handlePrepareRename, handleRename } from './lsp/LspRenameHandler';
+import { handleCodeAction } from './lsp/LspCodeActionHandler';
+import { handlePrepareCallHierarchy, handleIncomingCalls, handleOutgoingCalls } from './lsp/LspCallHierarchyHandler';
+import { handlePrepareTypeHierarchy, handleSupertypes, handleSubtypes } from './lsp/LspTypeHierarchyHandler';
+import { handleInlayHints } from './lsp/LspInlayHintHandler';
+import { convertDiagnostic, convertSymbolKind } from './lsp/LspTypeConverters';
+import { handleFormatting, handleRangeFormatting } from './lsp/LspFormattingHandler';
+import { handleCodeLens } from './lsp/LspCodeLensHandler';
+import { lint } from './core/services/LintService';
+import { getWorkspaceSymbols } from './core/services/SymbolService';
+import { GlobalScope, ActivityDecl } from './core/ast/generated';
+import * as fs from 'fs';
+import * as nodePath from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { ActivityDiagramBuilder } from './core/diagram/ActivityDiagramBuilder';
+import { walkScope, getNodeName } from './core/ast/ASTUtils';
 
-// Create a connection for the server. The connection uses Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
-let connection = createConnection(ProposedFeatures.all);
-
-// Create a simple text document manager. The text document manager
-// supports full document sync only
-let documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
-
-let hasConfigurationCapability: boolean = false;
-let hasWorkspaceFolderCapability: boolean = false;
-let hasDiagnosticRelatedInformationCapability: boolean = false
-let parser = new CUParser();
+const connection = createConnection(ProposedFeatures.all);
+let initParams: InitializeParams;
+const documents = new TextDocuments(TextDocument);
+const index = new WorkspaceIndex();
 
 connection.onInitialize((params: InitializeParams) => {
-	let capabilities = params.capabilities;
+  initParams = params;
+  connection.console.info('PSS Language Server initializing');
 
-	// Does the client support the `workspace/configuration` request?
-	// If not, we will fall back using global settings
-	hasConfigurationCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.configuration
-	);
-	hasWorkspaceFolderCapability = !!(
-		capabilities.workspace && !!capabilities.workspace.workspaceFolders
-	);
-	hasDiagnosticRelatedInformationCapability = !!(
-		capabilities.textDocument &&
-		capabilities.textDocument.publishDiagnostics &&
-		capabilities.textDocument.publishDiagnostics.relatedInformation
-	);
-
-	const result: InitializeResult = {
-		capabilities: {
-			textDocumentSync: TextDocumentSyncKind.Full,
-			// Tell the client that the server supports code completion
-			completionProvider: {
-				resolveProvider: true
-			}
-		}
-	};
-	if (hasWorkspaceFolderCapability) {
-		result.capabilities.workspace = {
-			workspaceFolders: {
-				supported: true
-			}
-		};
-	}
-	return result;
+  const result: InitializeResult = {
+    capabilities: {
+      textDocumentSync: TextDocumentSyncKind.Full,
+      documentSymbolProvider: true,
+      completionProvider: {
+        resolveProvider: true,
+        triggerCharacters: ['.', ':', '@', '<'],
+      },
+      hoverProvider: true,
+      definitionProvider: true,
+      referencesProvider: true,
+      signatureHelpProvider: {
+        triggerCharacters: ['(', ','],
+      },
+      semanticTokensProvider: {
+        legend: SEMANTIC_TOKENS_LEGEND,
+        full: true,
+      },
+      foldingRangeProvider: true,
+      workspaceSymbolProvider: true,
+      renameProvider: { prepareProvider: true },
+      codeActionProvider: true,
+      callHierarchyProvider: true,
+      typeHierarchyProvider: true,
+      inlayHintProvider: true,
+      documentFormattingProvider: true,
+      documentRangeFormattingProvider: true,
+      codeLensProvider: { resolveProvider: false },
+    },
+  };
+  connection.console.info('PSS Language Server initialized - capabilities registered');
+  return result;
 });
 
+// After initialization, scan workspace for all .pss files
 connection.onInitialized(() => {
-	if (hasConfigurationCapability) {
-		// Register for all configuration changes.
-		connection.client.register(DidChangeConfigurationNotification.type, undefined);
-	}
-	if (hasWorkspaceFolderCapability) {
-		connection.workspace.onDidChangeWorkspaceFolders(_event => {
-			connection.console.log('Workspace folder change event received.');
-		});
-	}
+  const folders = initParams.workspaceFolders;
+  if (folders) {
+    for (const folder of folders) {
+      const folderPath = folder.uri.startsWith('file://') ? fileURLToPath(folder.uri) : null;
+      if (folderPath) {
+        connection.console.info(`[workspace] Scanning ${folderPath} for .pss files`);
+        scanDirectory(folderPath);
+      }
+    }
+    // Publish diagnostics for all indexed files
+    for (const uri of index.getFileUris()) {
+      try {
+        const diagnostics = index.getDiagnostics(uri).map(convertDiagnostic);
+        connection.sendDiagnostics({ uri, diagnostics });
+      } catch (_) { /* ignore errors during initial scan */ }
+    }
+  }
 });
 
-// The example settings
-interface ExampleSettings {
-	maxNumberOfProblems: number;
+/** Recursively find and index all .pss files in a directory. */
+function scanDirectory(dir: string): void {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const fullPath = nodePath.join(dir, entry.name);
+    if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      scanDirectory(fullPath);
+    } else if (entry.isFile() && entry.name.endsWith('.pss')) {
+      try {
+        const text = fs.readFileSync(fullPath, 'utf-8');
+        const uri = pathToFileURL(fullPath).toString();
+        if (!index.getAST(uri)) {
+          index.addFile(uri, text);
+          connection.console.log(`[workspace] Indexed ${uri}`);
+        }
+      } catch (_) { /* skip unreadable files */ }
+    }
+  }
 }
 
-// The global settings, used when the `workspace/configuration` request is not supported by the client.
-// Please note that this is not the case when using this server with the client provided in this example
-// but could happen with other clients.
-const defaultSettings: ExampleSettings = { maxNumberOfProblems: 1000 };
-let globalSettings: ExampleSettings = defaultSettings;
+function updateDocument(textDocument: TextDocument): void {
+  const uri = textDocument.uri;
+  const text = textDocument.getText();
+  connection.console.log(`[updateDocument] ${uri} (${text.length} chars)`);
 
-// Cache the settings of all open documents
-let documentSettings: Map<string, Thenable<ExampleSettings>> = new Map();
+  if (index.getAST(uri)) {
+    index.updateFile(uri, text);
+  } else {
+    index.addFile(uri, text);
+  }
 
-connection.onDidChangeConfiguration(change => {
-	if (hasConfigurationCapability) {
-		// Reset all cached document settings
-		documentSettings.clear();
-	} else {
-		globalSettings = <ExampleSettings>(
-			(change.settings.lspPortableStimulus || defaultSettings)
-		);
-	}
+  try {
+    const diagnostics = index.getDiagnostics(uri).map(convertDiagnostic);
+    connection.sendDiagnostics({ uri, diagnostics });
+    connection.console.log(`[updateDocument] ${uri} - ${diagnostics.length} diagnostics`);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    connection.console.error(`[updateDocument] analysis error for ${uri}: ${msg}`);
+  }
 
-	// Revalidate all open text documents
-	documents.all().forEach(validateTextDocument);
-});
-
-function getDocumentSettings(resource: string): Thenable<ExampleSettings> {
-	if (!hasConfigurationCapability) {
-		return Promise.resolve(globalSettings);
-	}
-	let result = documentSettings.get(resource);
-	if (!result) {
-		result = connection.workspace.getConfiguration({
-			scopeUri: resource,
-			section: 'lspPortableStimulus'
-		});
-		documentSettings.set(resource, result);
-	}
-	return result;
+  try {
+    for (const depUri of index.getDependents(uri)) {
+      const depDiags = index.getDiagnostics(depUri).map(convertDiagnostic);
+      connection.sendDiagnostics({ uri: depUri, diagnostics: depDiags });
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    connection.console.error(`[updateDocument] dependency analysis error: ${msg}`);
+  }
 }
 
-// Only keep settings for open documents
-documents.onDidClose(e => {
-	documentSettings.delete(e.document.uri);
-});
+// Edit debouncing: wait 300ms after last change before re-parsing
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
 documents.onDidChangeContent(change => {
-	validateTextDocument(change.document);
+  const uri = change.document.uri;
+  const existing = debounceTimers.get(uri);
+  if (existing) clearTimeout(existing);
+
+  debounceTimers.set(uri, setTimeout(() => {
+    debounceTimers.delete(uri);
+    updateDocument(change.document);
+  }, 300));
 });
 
-async function validateTextDocument(textDocument: TextDocument): Promise<void> {
-	// In this simple example we get the settings for every validate run.
-	let settings = await getDocumentSettings(textDocument.uri);
+documents.onDidClose(e => {
+  index.removeFile(e.document.uri);
+  connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
+});
 
-
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	let text = textDocument.getText();
-	let pattern = /\b[A-Z]{2,}\b/g;
-	let m: RegExpExecArray | null;
-
-	let parser = new CUParser();
-	let errors : Marker[] = parser.parse(text);
-
-	let diagnostics: Diagnostic[] = [];
-	let problems = 0;
-
-	for (let e of errors) {
-		let diagnostic : Diagnostic = {
-			severity : DiagnosticSeverity.Error,
-			range: {
-				start: {line: e.lineno-1, character: e.linepos},
-				end: {line: e.lineno-1, character: e.linepos+e.length}
-			},
-			message: e.msg,
-			source: 'ex'
-		};
-	 	diagnostics.push(diagnostic);
-		problems++;
-		if (problems > settings.maxNumberOfProblems) {
-			break
-		}
-	}
-
-	// Send the computed diagnostics to VSCode.
-	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
+// Ensure the document is up-to-date (flush any pending debounce and reparse).
+// Called by request handlers that need the current AST.
+function ensureParsed(uri: string): void {
+  const pending = debounceTimers.get(uri);
+  if (pending) {
+    // Edits are pending -- cancel the timer and parse now
+    clearTimeout(pending);
+    debounceTimers.delete(uri);
+    const doc = documents.get(uri);
+    if (doc) {
+      connection.console.log(`[ensureParsed] flushing pending edits for ${uri}`);
+      updateDocument(doc);
+    }
+  } else if (!index.getAST(uri)) {
+    // No AST at all (file just opened, first parse not yet triggered)
+    const doc = documents.get(uri);
+    if (doc) {
+      connection.console.log(`[ensureParsed] initial parse for ${uri}`);
+      updateDocument(doc);
+    }
+  }
 }
 
-connection.onDidChangeWatchedFiles(_change => {
-	// Monitored files have change in VSCode
-	connection.console.log('We received an file change event');
+// Phase 1
+connection.onDocumentSymbol((params: DocumentSymbolParams) => {
+  const uri = params.textDocument.uri;
+  ensureParsed(uri);
+  const ast = index.getAST(uri);
+  connection.console.log(`[documentSymbol] ${uri} - AST ${ast ? 'found' : 'NOT FOUND'}`);
+  if (!ast) return [];
+  const result = handleDocumentSymbol(params, u => index.getAST(u));
+  connection.console.log(`[documentSymbol] ${uri} - returning ${result.length} symbols`);
+  return result;
 });
 
-//This handler provides the initial list of the completion items.
-connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// The pass parameter contains the position of the text document in
-		// which code complete got requested. For the example we ignore this
-		// info and always provide the same completion items.
-		// TODO: null out completions for now
-		return [];
-		// 	{
-		// 		label: 'TypeScript',
-		// 		kind: CompletionItemKind.Text,
-		// 		data: 1
-		// 	},
-		// 	{
-		// 		label: 'JavaScript',
-		// 		kind: CompletionItemKind.Text,
-		// 		data: 2
-		// 	}
-		// ];
-	}
-);
+// Phase 2
+connection.onHover((params: HoverParams) => handleHover(params, index));
+connection.onDefinition((params: DefinitionParams) => handleDefinition(params, index));
+connection.onReferences((params: ReferenceParams) => handleReferences(params, index));
 
-// This handler resolves additional information for the item selected in
-// the completion list.
-connection.onCompletionResolve(
-	// TODO: seems related to completion proposal
-	(item: CompletionItem): CompletionItem => {
-		if (item.data === 1) {
-			item.detail = 'TypeScript details';
-			item.documentation = 'TypeScript documentation';
-		} else if (item.data === 2) {
-			item.detail = 'JavaScript details';
-			item.documentation = 'JavaScript documentation';
-		}
-		return item;
-	}
-);
+// Phase 3
+connection.onCompletion((params: CompletionParams) => {
+  ensureParsed(params.textDocument.uri);
+  return handleCompletion(params, index, uri => documents.get(uri)?.getText());
+});
+connection.onCompletionResolve((item: CompletionItem) => handleCompletionResolve(item, index));
+connection.onSignatureHelp((params: SignatureHelpParams) => handleSignatureHelp(params, index));
+connection.onFoldingRanges((params: FoldingRangeParams) => handleFoldingRanges(params, index));
+connection.onWorkspaceSymbol((params: WorkspaceSymbolParams) => {
+  const allAsts = new Map<string, GlobalScope>();
+  for (const uri of index.getFileUris()) {
+    const ast = index.getAST(uri);
+    if (ast) allAsts.set(uri, ast);
+  }
+  const symbols = getWorkspaceSymbols(params.query, allAsts);
+  return symbols.map(s => ({
+    name: s.name,
+    kind: convertSymbolKind(s.kind),
+    location: { uri: '', range: s.range },
+  }));
+});
+connection.languages.semanticTokens.on((params: SemanticTokensParams) =>
+  handleSemanticTokensFull(params, index));
 
-/*
-connection.onDidOpenTextDocument((params) => {
-	// A text document got opened in VSCode.
-	// params.textDocument.uri uniquely identifies the document. For documents store on disk this is a file URI.
-	// params.textDocument.text the initial full content of the document.
-	connection.console.log(`${params.textDocument.uri} opened.`);
-});
-connection.onDidChangeTextDocument((params) => {
-	// The content of a text document did change in VSCode.
-	// params.textDocument.uri uniquely identifies the document.
-	// params.contentChanges describe the content changes to the document.
-	connection.console.log(`${params.textDocument.uri} changed: ${JSON.stringify(params.contentChanges)}`);
-});
-connection.onDidCloseTextDocument((params) => {
-	// A text document got closed in VSCode.
-	// params.textDocument.uri uniquely identifies the document.
-	connection.console.log(`${params.textDocument.uri} closed.`);
-});
-*/
+// Phase 4
+connection.onPrepareRename((params: PrepareRenameParams) => handlePrepareRename(params, index));
+connection.onRenameRequest((params: RenameParams) => handleRename(params, index));
+connection.onCodeAction((params: CodeActionParams) => handleCodeAction(params, index));
+connection.languages.callHierarchy.onPrepare((params: CallHierarchyPrepareParams) =>
+  handlePrepareCallHierarchy(params, index));
+connection.languages.callHierarchy.onIncomingCalls((params: CallHierarchyIncomingCallsParams) =>
+  handleIncomingCalls(params, index));
+connection.languages.callHierarchy.onOutgoingCalls((params: CallHierarchyOutgoingCallsParams) =>
+  handleOutgoingCalls(params, index));
+connection.languages.typeHierarchy.onPrepare((params: TypeHierarchyPrepareParams) =>
+  handlePrepareTypeHierarchy(params, index));
+connection.languages.typeHierarchy.onSupertypes((params: TypeHierarchySupertypesParams) =>
+  handleSupertypes(params, index));
+connection.languages.typeHierarchy.onSubtypes((params: TypeHierarchySubtypesParams) =>
+  handleSubtypes(params, index));
+connection.languages.inlayHint.on((params: InlayHintParams) =>
+  handleInlayHints(params, index));
 
-// Make the text document manager listen on the connection
-// for open, change and close text document events
+// Phase 5
+connection.onDocumentFormatting((params) =>
+  handleFormatting(params, index, uri => documents.get(uri)));
+connection.onDocumentRangeFormatting((params) =>
+  handleRangeFormatting(params, index, uri => documents.get(uri)));
+connection.onCodeLens((params) => handleCodeLens(params, index));
+
+// Handle file system changes (create/delete .pss files)
+connection.onDidChangeWatchedFiles(change => {
+  for (const event of change.changes) {
+    if (!event.uri.endsWith('.pss')) continue;
+    const uri = event.uri;
+    if (event.type === 3 /* Deleted */) {
+      index.removeFile(uri);
+      connection.sendDiagnostics({ uri, diagnostics: [] });
+    } else if (event.type === 1 /* Created */ || event.type === 2 /* Changed */) {
+      // File created or changed on disk -- read and index if not already open
+      if (uri.startsWith('file://')) {
+        try {
+          const fsPath = fileURLToPath(uri);
+          const text = fs.readFileSync(fsPath, 'utf-8');
+          if (index.getAST(uri)) {
+            index.updateFile(uri, text);
+          } else {
+            index.addFile(uri, text);
+          }
+          const diagnostics = index.getDiagnostics(uri).map(convertDiagnostic);
+          connection.sendDiagnostics({ uri, diagnostics });
+        } catch (_) { /* skip unreadable */ }
+      }
+    }
+  }
+});
+
+// Custom request: build activity diagram for a given file + line
+connection.onRequest('pss/activityDiagram', (params: { uri: string; line: number }) => {
+  ensureParsed(params.uri);
+  const ast = index.getAST(params.uri);
+  if (!ast) return null;
+
+  // Find the ActivityDecl at or near the given line
+  for (const node of walkScope(ast)) {
+    if (node instanceof ActivityDecl) {
+      const loc = node.location;
+      if (loc.lineno - 1 === params.line || (loc.lineno - 1 <= params.line && params.line <= loc.lineno + 20)) {
+        const builder = new ActivityDiagramBuilder();
+        const graph = builder.build(node, params.uri);
+        return graph.toJSON();
+      }
+    }
+  }
+  return null;
+});
+
 documents.listen(connection);
-
-// Listen on the connection
 connection.listen();
