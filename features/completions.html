@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Completions &mdash; PSS Language Support 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Diagnostics" href="diagnostics.html" />
+    <link rel="prev" title="Navigation" href="navigation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            PSS Language Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Features</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="navigation.html">Navigation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Completions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#context-sensitive-completions">Context-Sensitive Completions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#signature-help">Signature Help</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#snippets">Snippets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inlay-hints">Inlay Hints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codelens">CodeLens</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html">Diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formatting.html">Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/index.html">Development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">PSS Language Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Features</a></li>
+      <li class="breadcrumb-item active">Completions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/features/completions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="completions">
+<h1>Completions<a class="headerlink" href="#completions" title="Link to this heading"></a></h1>
+<section id="context-sensitive-completions">
+<h2>Context-Sensitive Completions<a class="headerlink" href="#context-sensitive-completions" title="Link to this heading"></a></h2>
+<p>Completions appear automatically as you type, or can be triggered manually
+with <code class="docutils literal notranslate"><span class="pre">Ctrl+Space</span></code>. The engine detects the cursor’s context and offers
+relevant suggestions:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Context</p></th>
+<th class="head"><p>Suggestions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Top-level</p></td>
+<td><p>Keywords: <code class="docutils literal notranslate"><span class="pre">action</span></code>, <code class="docutils literal notranslate"><span class="pre">component</span></code>, <code class="docutils literal notranslate"><span class="pre">struct</span></code>, <code class="docutils literal notranslate"><span class="pre">enum</span></code>, <code class="docutils literal notranslate"><span class="pre">package</span></code>, <code class="docutils literal notranslate"><span class="pre">import</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Action body</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rand</span></code>, <code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">activity</span></code>, <code class="docutils literal notranslate"><span class="pre">exec</span></code>, field types</p></td>
+</tr>
+<tr class="row-even"><td><p>Struct body</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">rand</span></code>, <code class="docutils literal notranslate"><span class="pre">constraint</span></code>, field types</p></td>
+</tr>
+<tr class="row-odd"><td><p>Component body</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">action</span></code>, <code class="docutils literal notranslate"><span class="pre">struct</span></code>, <code class="docutils literal notranslate"><span class="pre">pool</span></code>, <code class="docutils literal notranslate"><span class="pre">bind</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Activity</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">do</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>, <code class="docutils literal notranslate"><span class="pre">schedule</span></code>, <code class="docutils literal notranslate"><span class="pre">select</span></code>, <code class="docutils literal notranslate"><span class="pre">repeat</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Constraint</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">foreach</span></code>, <code class="docutils literal notranslate"><span class="pre">forall</span></code>, <code class="docutils literal notranslate"><span class="pre">if</span></code>, <code class="docutils literal notranslate"><span class="pre">unique</span></code>, field names</p></td>
+</tr>
+<tr class="row-even"><td><p>Type position</p></td>
+<td><p>All visible types — built-in and user-defined</p></td>
+</tr>
+<tr class="row-odd"><td><p>Member access (<code class="docutils literal notranslate"><span class="pre">.</span></code>)</p></td>
+<td><p>Fields and functions of the resolved type</p></td>
+</tr>
+<tr class="row-even"><td><p>Annotation (<code class="docutils literal notranslate"><span class="pre">&#64;</span></code>)</p></td>
+<td><p>Annotation type names</p></td>
+</tr>
+<tr class="row-odd"><td><p>Import path</p></td>
+<td><p>Package names discovered in the workspace</p></td>
+</tr>
+<tr class="row-even"><td><p>Template parameter (<code class="docutils literal notranslate"><span class="pre">&lt;</span></code>)</p></td>
+<td><p>Valid template arguments for the enclosing parameterised type</p></td>
+</tr>
+</tbody>
+</table>
+<p>Trigger characters: <code class="docutils literal notranslate"><span class="pre">.</span></code>, <code class="docutils literal notranslate"><span class="pre">:</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;</span></code></p>
+</section>
+<section id="signature-help">
+<h2>Signature Help<a class="headerlink" href="#signature-help" title="Link to this heading"></a></h2>
+<p>Inside a function call’s argument list, signature help shows the function
+signature with the active parameter highlighted.
+Trigger characters: <code class="docutils literal notranslate"><span class="pre">(</span></code>, <code class="docutils literal notranslate"><span class="pre">,</span></code></p>
+</section>
+<section id="snippets">
+<h2>Snippets<a class="headerlink" href="#snippets" title="Link to this heading"></a></h2>
+<p>Type a prefix and press <code class="docutils literal notranslate"><span class="pre">Tab</span></code> to expand a snippet. Available snippets
+cover all major PSS constructs:</p>
+<dl class="simple">
+<dt><strong>Types</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">action</span></code>, <code class="docutils literal notranslate"><span class="pre">abstract</span> <span class="pre">action</span></code>, <code class="docutils literal notranslate"><span class="pre">component</span></code>, <code class="docutils literal notranslate"><span class="pre">struct</span></code>, <code class="docutils literal notranslate"><span class="pre">buffer</span></code>,
+<code class="docutils literal notranslate"><span class="pre">resource</span></code>, <code class="docutils literal notranslate"><span class="pre">enum</span></code>, <code class="docutils literal notranslate"><span class="pre">package</span></code>, <code class="docutils literal notranslate"><span class="pre">monitor</span></code>, <code class="docutils literal notranslate"><span class="pre">annotation</span></code>, <code class="docutils literal notranslate"><span class="pre">typedef</span></code></p>
+</dd>
+<dt><strong>Constraints</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">dynamic</span> <span class="pre">constraint</span></code>, <code class="docutils literal notranslate"><span class="pre">constraint</span> <span class="pre">foreach</span></code>,
+<code class="docutils literal notranslate"><span class="pre">constraint</span> <span class="pre">implies</span></code></p>
+</dd>
+<dt><strong>Exec blocks</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">exec</span> <span class="pre">body</span></code>, <code class="docutils literal notranslate"><span class="pre">exec</span> <span class="pre">pre_solve</span></code>, <code class="docutils literal notranslate"><span class="pre">exec</span> <span class="pre">post_solve</span></code></p>
+</dd>
+<dt><strong>Functions</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">function</span></code>, <code class="docutils literal notranslate"><span class="pre">pure</span> <span class="pre">function</span></code>, <code class="docutils literal notranslate"><span class="pre">covergroup</span></code></p>
+</dd>
+<dt><strong>Extensions</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">extend</span> <span class="pre">action</span></code>, <code class="docutils literal notranslate"><span class="pre">extend</span> <span class="pre">component</span></code>, <code class="docutils literal notranslate"><span class="pre">extend</span> <span class="pre">struct</span></code>, <code class="docutils literal notranslate"><span class="pre">extend</span> <span class="pre">enum</span></code></p>
+</dd>
+<dt><strong>Resource flow</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">input</span></code>, <code class="docutils literal notranslate"><span class="pre">output</span></code>, <code class="docutils literal notranslate"><span class="pre">lock</span></code>, <code class="docutils literal notranslate"><span class="pre">share</span></code></p>
+</dd>
+<dt><strong>Activity</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">parallel</span></code>, <code class="docutils literal notranslate"><span class="pre">schedule</span></code>, <code class="docutils literal notranslate"><span class="pre">select</span></code>, <code class="docutils literal notranslate"><span class="pre">replicate</span></code>, <code class="docutils literal notranslate"><span class="pre">repeat</span></code>, <code class="docutils literal notranslate"><span class="pre">match</span></code></p>
+</dd>
+<dt><strong>Misc</strong></dt><dd><p><code class="docutils literal notranslate"><span class="pre">rand</span></code>, <code class="docutils literal notranslate"><span class="pre">template</span> <span class="pre">action</span></code></p>
+</dd>
+</dl>
+</section>
+<section id="inlay-hints">
+<h2>Inlay Hints<a class="headerlink" href="#inlay-hints" title="Link to this heading"></a></h2>
+<p>Inline annotations are displayed directly in the editor (without modifying
+the source file):</p>
+<ul class="simple">
+<li><p><strong>Template parameter names</strong> at instantiation sites, showing which
+formal parameter each argument corresponds to.</p></li>
+<li><p><strong>Resolved action type</strong> on <code class="docutils literal notranslate"><span class="pre">do</span></code> handle traversals.</p></li>
+</ul>
+</section>
+<section id="codelens">
+<h2>CodeLens<a class="headerlink" href="#codelens" title="Link to this heading"></a></h2>
+<p>CodeLens annotations appear above declarations showing:</p>
+<ul class="simple">
+<li><p><strong>References</strong> — number of references to the symbol across the workspace.
+Click to run <em>Find All References</em>.</p></li>
+<li><p><strong>Subtypes</strong> — number of types that inherit from or extend this type.
+Click to open the type hierarchy.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="navigation.html" class="btn btn-neutral float-left" title="Navigation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="diagnostics.html" class="btn btn-neutral float-right" title="Diagnostics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

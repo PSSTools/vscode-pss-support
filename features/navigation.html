@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navigation &mdash; PSS Language Support 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Completions" href="completions.html" />
+    <link rel="prev" title="Features" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            PSS Language Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Features</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Navigation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#outline-view">Outline View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#go-to-definition">Go to Definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#find-all-references">Find All References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workspace-symbol-search">Workspace Symbol Search</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#call-hierarchy">Call Hierarchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#type-hierarchy">Type Hierarchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rename-symbol">Rename Symbol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#code-actions">Code Actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hover-information">Hover Information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="completions.html">Completions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html">Diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="formatting.html">Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/index.html">Development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">PSS Language Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Features</a></li>
+      <li class="breadcrumb-item active">Navigation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/features/navigation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="navigation">
+<h1>Navigation<a class="headerlink" href="#navigation" title="Link to this heading"></a></h1>
+<section id="outline-view">
+<h2>Outline View<a class="headerlink" href="#outline-view" title="Link to this heading"></a></h2>
+<p>The Outline panel (<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+O</span></code>) shows a hierarchical tree of all
+declarations in the current file: packages, components, actions, structs,
+enums, fields, constraints, activities, and functions.</p>
+</section>
+<section id="go-to-definition">
+<h2>Go to Definition<a class="headerlink" href="#go-to-definition" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">F12</span></code> or <code class="docutils literal notranslate"><span class="pre">Ctrl+Click</span></code> on any symbol to jump to its declaration.
+Works across files for types, fields, base-type references, imports, and
+activity traversals.</p>
+</section>
+<section id="find-all-references">
+<h2>Find All References<a class="headerlink" href="#find-all-references" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Shift+F12</span></code> to find every reference to a symbol across the entire
+workspace, including type references, inheritance, extensions, and activity
+traversals.</p>
+</section>
+<section id="workspace-symbol-search">
+<h2>Workspace Symbol Search<a class="headerlink" href="#workspace-symbol-search" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Ctrl+T</span></code> and type a partial name to locate any declaration across
+all <code class="docutils literal notranslate"><span class="pre">.pss</span></code> files in the workspace. Supports fuzzy matching.</p>
+</section>
+<section id="call-hierarchy">
+<h2>Call Hierarchy<a class="headerlink" href="#call-hierarchy" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Shift+Alt+H</span></code> on an action to open the call hierarchy:</p>
+<ul class="simple">
+<li><p><strong>Outgoing calls</strong> — actions traversed by <code class="docutils literal notranslate"><span class="pre">do</span></code> in the action’s activity.</p></li>
+<li><p><strong>Incoming calls</strong> — actions whose activities traverse this action.</p></li>
+</ul>
+</section>
+<section id="type-hierarchy">
+<h2>Type Hierarchy<a class="headerlink" href="#type-hierarchy" title="Link to this heading"></a></h2>
+<p>Open the type hierarchy for any type to inspect:</p>
+<ul class="simple">
+<li><p><strong>Supertypes</strong> — walk the <code class="docutils literal notranslate"><span class="pre">:</span> <span class="pre">base_type</span></code> chain upward.</p></li>
+<li><p><strong>Subtypes</strong> — all types that inherit from this type.</p></li>
+<li><p><strong>Extensions</strong> — <code class="docutils literal notranslate"><span class="pre">extend</span></code> declarations targeting this type.</p></li>
+</ul>
+</section>
+<section id="rename-symbol">
+<h2>Rename Symbol<a class="headerlink" href="#rename-symbol" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">F2</span></code> to rename a symbol and all its references across the workspace.
+The extension validates that the cursor is on a renamable identifier before
+applying the rename. Supported symbol kinds: types, fields, enums, functions,
+and constraint blocks.</p>
+</section>
+<section id="code-actions">
+<h2>Code Actions<a class="headerlink" href="#code-actions" title="Link to this heading"></a></h2>
+<p>A lightbulb appears when the editor detects a fixable issue. Currently
+supported quick fixes:</p>
+<ul class="simple">
+<li><p><strong>Import suggestion</strong> — for an unresolved type name, suggests adding an
+<code class="docutils literal notranslate"><span class="pre">import</span></code> statement for a matching type found in another package.</p></li>
+</ul>
+</section>
+<section id="hover-information">
+<h2>Hover Information<a class="headerlink" href="#hover-information" title="Link to this heading"></a></h2>
+<p>Hover over any symbol to see its signature, doc-comment, type information,
+and source location. Supported symbol kinds: actions, components, structs,
+fields, enums, functions, packages, and annotations.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Features" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="completions.html" class="btn btn-neutral float-right" title="Completions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

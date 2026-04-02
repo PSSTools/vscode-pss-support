@@ -1,0 +1,218 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagnostics &mdash; PSS Language Support 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Formatting" href="formatting.html" />
+    <link rel="prev" title="Completions" href="completions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            PSS Language Support
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Features</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="navigation.html">Navigation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="completions.html">Completions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#syntax-diagnostics">Syntax Diagnostics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic-diagnostics">Semantic Diagnostics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lint-rules">Lint Rules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#semantic-tokens">Semantic Tokens</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="formatting.html">Formatting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagrams.html">Diagrams</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development/index.html">Development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">PSS Language Support</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Features</a></li>
+      <li class="breadcrumb-item active">Diagnostics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/features/diagnostics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="diagnostics">
+<h1>Diagnostics<a class="headerlink" href="#diagnostics" title="Link to this heading"></a></h1>
+<p>The extension reports problems in real time as you edit. Diagnostics appear
+as squiggles in the editor and are listed in the <strong>Problems</strong> panel
+(<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+M</span></code>).</p>
+<section id="syntax-diagnostics">
+<h2>Syntax Diagnostics<a class="headerlink" href="#syntax-diagnostics" title="Link to this heading"></a></h2>
+<p>Syntax errors are detected immediately by the ANTLR4 parser:</p>
+<ul class="simple">
+<li><p>Missing or mismatched braces, brackets, and parentheses.</p></li>
+<li><p>Invalid or unexpected tokens.</p></li>
+<li><p>Incomplete declarations.</p></li>
+</ul>
+</section>
+<section id="semantic-diagnostics">
+<h2>Semantic Diagnostics<a class="headerlink" href="#semantic-diagnostics" title="Link to this heading"></a></h2>
+<p>After parsing, multiple analysis passes check semantic correctness:</p>
+<dl class="simple">
+<dt><strong>Pass 1 — Symbol Table</strong></dt><dd><ul class="simple">
+<li><p>Duplicate declarations within the same scope.</p></li>
+</ul>
+</dd>
+<dt><strong>Pass 2 — Extensions and Imports</strong></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">extend</span></code> target not found in scope.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extend</span></code> kind mismatch (e.g. extending a <code class="docutils literal notranslate"><span class="pre">struct</span></code> as an <code class="docutils literal notranslate"><span class="pre">action</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extend</span></code> adds a member that already exists in the target.</p></li>
+<li><p>Unresolved <code class="docutils literal notranslate"><span class="pre">import</span></code> paths.</p></li>
+</ul>
+</dd>
+<dt><strong>Pass 3 — Reference Resolution</strong></dt><dd><ul class="simple">
+<li><p>Undefined types in field declarations.</p></li>
+<li><p>Unresolved base types in inheritance (<code class="docutils literal notranslate"><span class="pre">action</span> <span class="pre">a</span> <span class="pre">:</span> <span class="pre">unknown_base</span></code>).</p></li>
+<li><p>Circular inheritance chains.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="lint-rules">
+<h2>Lint Rules<a class="headerlink" href="#lint-rules" title="Link to this heading"></a></h2>
+<p>The lint service adds optional style and quality checks on top of the core
+semantic analysis. Each rule can be enabled or disabled individually in the
+<a class="reference internal" href="../reference/configuration.html"><span class="doc">Configuration</span></a> settings or in <code class="docutils literal notranslate"><span class="pre">.pssconfig.json</span></code>.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 15.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Rule</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">no-empty-constraint</span></code></p></td>
+<td><p>enabled</p></td>
+<td><p>Warn on empty <code class="docutils literal notranslate"><span class="pre">constraint</span></code> blocks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">no-unused-field</span></code></p></td>
+<td><p>enabled</p></td>
+<td><p>Warn on fields that are never referenced.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">naming-convention</span></code></p></td>
+<td><p>enabled</p></td>
+<td><p>Suggest fixes for identifiers that violate naming conventions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max-activity-depth</span></code></p></td>
+<td><p>enabled</p></td>
+<td><p>Warn on activities nested beyond a configurable depth.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">no-unreachable-branch</span></code></p></td>
+<td><p>enabled</p></td>
+<td><p>Warn on branches that can never be taken.</p></td>
+</tr>
+</tbody>
+</table>
+<p>To disable the entire lint service set <code class="docutils literal notranslate"><span class="pre">pss.lint.enabled</span></code> to <code class="docutils literal notranslate"><span class="pre">false</span></code>.</p>
+</section>
+<section id="semantic-tokens">
+<h2>Semantic Tokens<a class="headerlink" href="#semantic-tokens" title="Link to this heading"></a></h2>
+<p>The extension provides AST-aware syntax highlighting that goes beyond the
+TextMate grammar. Token types and modifiers are applied based on the
+resolved semantic meaning of each identifier:</p>
+<ul class="simple">
+<li><p>Type declarations vs. type references.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rand</span></code> fields vs. regular fields.</p></li>
+<li><p>Enum member names.</p></li>
+<li><p>Function names and parameters.</p></li>
+<li><p>Annotation names.</p></li>
+</ul>
+<p>This allows editor themes to colour, e.g., a type name differently depending
+on whether it is being defined or used.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="completions.html" class="btn btn-neutral float-left" title="Completions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="formatting.html" class="btn btn-neutral float-right" title="Formatting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
