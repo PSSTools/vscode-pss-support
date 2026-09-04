@@ -6,3 +6,8 @@ out/
 packages/
 docs/_build/
 
+.agents/
+.claude/
+.codex/
+.cursor/
+
