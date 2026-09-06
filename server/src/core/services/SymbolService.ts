@@ -24,6 +24,7 @@ import {
   SymbolKind,
 } from '../types/DocumentSymbol';
 import { SourceRange } from '../types/SourceRange';
+import { WorkspaceSymbol } from '../types/WorkspaceSymbol';
 import { getNodeName } from '../ast/ASTUtils';
 import { Location } from '../ast/generated/structs';
 
@@ -121,18 +122,21 @@ export function getDocumentSymbols(ast: GlobalScope): DocumentSymbol[] {
 }
 
 /**
- * Search workspace symbols matching a query string with fuzzy matching.
+ * Search workspace symbols matching a query string.
+ *
+ * Each result carries the URI of the file it came from -- without that, the
+ * Ctrl-T list renders but cannot navigate.
  */
 export function getWorkspaceSymbols(
   query: string,
   allFileAsts: Map<string, GlobalScope>,
-): DocumentSymbol[] {
-  const results: DocumentSymbol[] = [];
+): WorkspaceSymbol[] {
+  const results: WorkspaceSymbol[] = [];
   const lowerQuery = query.toLowerCase();
 
-  for (const [, ast] of allFileAsts) {
+  for (const [uri, ast] of allFileAsts) {
     const symbols = getDocumentSymbols(ast);
-    collectMatchingSymbols(symbols, lowerQuery, results);
+    collectMatchingSymbols(symbols, lowerQuery, uri, '', results);
   }
 
   return results;
@@ -141,14 +145,24 @@ export function getWorkspaceSymbols(
 function collectMatchingSymbols(
   symbols: DocumentSymbol[],
   query: string,
-  results: DocumentSymbol[],
+  uri: string,
+  containerName: string,
+  results: WorkspaceSymbol[],
 ): void {
   for (const sym of symbols) {
     if (query === '' || sym.name.toLowerCase().includes(query)) {
-      results.push(sym);
+      results.push({
+        name: sym.name,
+        kind: sym.kind,
+        uri,
+        range: sym.range,
+        selectionRange: sym.selectionRange,
+        containerName,
+      });
     }
     if (sym.children) {
-      collectMatchingSymbols(sym.children, query, results);
+      const nested = containerName ? containerName + '.' + sym.name : sym.name;
+      collectMatchingSymbols(sym.children, query, uri, nested, results);
     }
   }
 }

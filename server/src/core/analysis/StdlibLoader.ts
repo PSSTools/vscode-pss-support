@@ -1,5 +1,6 @@
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { IFileSystem } from '../io/IFileSystem';
+import { nodeFileSystem } from '../io/NodeFileSystem';
+import { joinPath } from '../io/UriUtils';
 import { PSSParserFacade } from '../parser/PSSParserFacade';
 import { PSSASTBuilder } from '../parser/PSSASTBuilder';
 import { GlobalScope } from '../ast/generated';
@@ -17,15 +18,42 @@ package std_pkg {
 };
 
 /**
+ * Locate the directory holding the packaged stdlib .pss sources, if present.
+ *
+ * Returns undefined when the directory is absent, in which case StdlibLoader
+ * falls back to BUNDLED_STDLIB. Note that as of today the build does not copy
+ * the real stdlib into `out/stdlib`, so installed users always take the
+ * fallback -- fixing that is packaging work, tracked separately. This function
+ * exists so that server.ts has somewhere to ask, rather than passing nothing.
+ */
+export function resolveStdlibDir(
+  serverOutDir: string = __dirname,
+  fs: IFileSystem = nodeFileSystem,
+): string | undefined {
+  // __dirname is server/out/core/analysis at runtime; stdlib sits at out/stdlib.
+  const candidates = [
+    joinPath(serverOutDir, '../../stdlib'),
+    joinPath(serverOutDir, '../stdlib'),
+    joinPath(serverOutDir, 'stdlib'),
+  ];
+  for (const dir of candidates) {
+    if (fs.isDirectory(dir)) return dir;
+  }
+  return undefined;
+}
+
+/**
  * Loads PSS standard library definitions and returns them as GlobalScope ASTs.
  * Tries to load from the filesystem first; falls back to bundled definitions.
  */
 export class StdlibLoader {
   private parser = new PSSParserFacade();
   private stdlibDir: string | null;
+  private fs: IFileSystem;
 
-  constructor(stdlibDir?: string) {
+  constructor(stdlibDir?: string, fs: IFileSystem = nodeFileSystem) {
     this.stdlibDir = stdlibDir ?? null;
+    this.fs = fs;
   }
 
   public load(): GlobalScope[] {
@@ -33,16 +61,13 @@ export class StdlibLoader {
     let fileId = -1000; // Negative IDs for stdlib files
 
     // Try loading from disk
-    if (this.stdlibDir && existsSync(this.stdlibDir)) {
-      const files = readdirSync(this.stdlibDir).filter(f => f.endsWith('.pss'));
+    if (this.stdlibDir && this.fs.exists(this.stdlibDir)) {
+      const files = this.fs.readDir(this.stdlibDir).filter(f => f.endsWith('.pss')).sort();
       for (const file of files) {
-        try {
-          const content = readFileSync(join(this.stdlibDir, file), 'utf-8');
-          const gs = this.parseStdlib(content, fileId--, file);
-          if (gs) scopes.push(gs);
-        } catch {
-          // Skip files that fail to read
-        }
+        const content = this.fs.readFile(this.stdlibDir + '/' + file);
+        if (content === undefined) continue;
+        const gs = this.parseStdlib(content, fileId--, file);
+        if (gs) scopes.push(gs);
       }
     }
 

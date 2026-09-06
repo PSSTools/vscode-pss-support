@@ -53,7 +53,9 @@ export class PSSASTBuilder {
     if (ctx.generic_constraint_declaration()) return this.visitGenericConstraint(ctx.generic_constraint_declaration()!);
     if (ctx.pyimport_stmt()) return this.visitPyimport(ctx.pyimport_stmt()!);
     if (ctx.export_action()) return this.visitExportAction(ctx.export_action()!);
-    if (ctx.procedural_function?.()) return this.visitProceduralFunction(ctx.procedural_function()!);
+    // `procedural_function` is gone from the 3.1 grammar: declaration and
+    // definition are now one `function_decl` rule with a trailing `;` or block
+    // (PSSParser.g4:468), which line 49 above already dispatches.
     return null;
   }
 
@@ -134,7 +136,10 @@ export class PSSASTBuilder {
     }
     if (ctx.component_pool_declaration?.()) return this.visitPoolDecl(ctx.component_pool_declaration()!);
     if (ctx.object_bind_stmt?.()) return this.visitBindStmt(ctx.object_bind_stmt()!);
-    if (ctx.exec_block?.()) return this.visitExecBlock(ctx.exec_block()!);
+    // component_body_item now uses `exec_block_stmt`, not `exec_block`, so an
+    // `exec file`/target-template exec in a component reaches the builder --
+    // matching the action and struct bodies at lines 101 and 176.
+    if (ctx.exec_block_stmt?.()) return this.visitExecBlockStmt(ctx.exec_block_stmt()!);
     if (ctx.attr_group?.()) return null; // access modifier group, not a declaration
     
     if (ctx.covergroup_declaration?.()) return this.visitCovergroup(ctx.covergroup_declaration()!);
@@ -769,9 +774,12 @@ export class PSSASTBuilder {
     const td = new AST.TypedefDeclaration();
     td.location = this.loc(ctx);
     td.docstring = this.doc(ctx);
+    // 3.1: `typedef_declaration : TOK_TYPEDEF data_type identifier ';'`
+    // (PSSParser.g4:1378). The aliased type is always a `data_type` now, and
+    // the new name is a plain `identifier` -- previously both came from
+    // `type_identifier`, with the name taken as the last of them.
     if (ctx.data_type?.()) td.type = this.visitDataType(ctx.data_type()!);
-    else if (ctx.type_identifier()) td.type = this.mkDTUserDefined(ctx.type_identifier()!);
-    const allTi = arr(ctx.type_identifier()); if (allTi.length > 0) td.name = this.mkId(allTi[allTi.length - 1]);
+    if (ctx.identifier?.()) td.name = this.mkId(ctx.identifier()!);
     return td;
   }
 
@@ -791,20 +799,6 @@ export class PSSASTBuilder {
   }
 
   private visitFuncDecl(ctx: P.Function_declContext): AST.FunctionDefinition {
-    const fd = new AST.FunctionDefinition();
-    fd.location = this.loc(ctx);
-    fd.docstring = this.doc(ctx);
-    const proto = ctx.function_prototype?.();
-    if (proto) {
-      const fp = new AST.FunctionPrototype();
-      fp.location = this.loc(proto);
-      if (proto.function_identifier?.()) fp.name = this.mkId(proto.function_identifier()!);
-      fd.proto = fp;
-    }
-    return fd;
-  }
-
-  private visitProceduralFunction(ctx: any): AST.FunctionDefinition {
     const fd = new AST.FunctionDefinition();
     fd.location = this.loc(ctx);
     fd.docstring = this.doc(ctx);
@@ -916,16 +910,27 @@ export class PSSASTBuilder {
   }
 
   private mapTypeCategory(ctx: P.Type_categoryContext): AST.enums.TypeCategory {
-    if (ctx.TOK_ACTION?.()) return AST.enums.TypeCategory.Action;
-    if (ctx.TOK_COMPONENT?.()) return AST.enums.TypeCategory.Component;
-    const sk = ctx.struct_kind?.();
-    if (sk) {
-      if (sk.TOK_STRUCT?.()) return AST.enums.TypeCategory.Struct;
-      const ok = sk.object_kind?.();
+    // 3.1 splits `type_category` into `ref_type_category` (action, monitor,
+    // component, object_kind) and `plain_type_category` (struct, numeric) --
+    // PSSParser.g4:1220-1235. The tokens are no longer direct children of
+    // `type_category`, and `struct_kind` is not reachable from it at all:
+    // TOK_STRUCT moved to the plain arm and the buffer/stream/state/resource
+    // set to `object_kind` under the ref arm.
+    const ref = ctx.ref_type_category?.();
+    if (ref) {
+      if (ref.TOK_ACTION?.()) return AST.enums.TypeCategory.Action;
+      if (ref.TOK_MONITOR?.()) return AST.enums.TypeCategory.Monitor;
+      if (ref.TOK_COMPONENT?.()) return AST.enums.TypeCategory.Component;
+      const ok = ref.object_kind?.();
       if (ok?.TOK_BUFFER?.()) return AST.enums.TypeCategory.Buffer;
       if (ok?.TOK_STREAM?.()) return AST.enums.TypeCategory.Stream;
       if (ok?.TOK_STATE?.()) return AST.enums.TypeCategory.State;
       if (ok?.TOK_RESOURCE?.()) return AST.enums.TypeCategory.Resource;
+    }
+    const plain = ctx.plain_type_category?.();
+    if (plain) {
+      if (plain.TOK_NUMERIC?.()) return AST.enums.TypeCategory.Numeric;
+      if (plain.TOK_STRUCT?.()) return AST.enums.TypeCategory.Struct;
     }
     return AST.enums.TypeCategory.Struct;
   }

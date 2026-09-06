@@ -9,8 +9,7 @@
     "dependencies": {
         "antlr4ng": "^3.0.4",
         "vscode-languageserver": "^9.0.1",
-        "vscode-languageserver-textdocument": "^1.0.11",
-        "yaml": "^2.8.3"
+        "vscode-languageserver-textdocument": "^1.0.11"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",
@@ -21,10 +20,13 @@
     },
     "scripts": {
         "build": "tsc -b",
-        "build:grammar": "antlr4ng -Dlanguage=TypeScript -visitor -listener -o src/generated ../packages/zuspec-fe-pss/src/PSSLexer.g4 ../packages/zuspec-fe-pss/src/PSSParser.g4",
+        "build:grammar": "antlr4ng -Dlanguage=TypeScript -visitor -listener -o src/generated \"$PWD/../packages/pssparser/src/PSSLexer.g4\" \"$PWD/../packages/pssparser/src/PSSParser.g4\"",
+        "gen:ast": "../packages/python/bin/astbuilder gen-ts -astdir ../packages/pssparser/ast -o src/core/ast/generated",
+        "generate": "npm run build:grammar && npm run gen:ast",
         "test:core": "vitest run test/core",
-        "test:lsp": "vitest run test/lsp",
+        "test:lsp": "vitest run test/lsp test/helpers",
         "test:bench": "vitest bench",
-        "test": "vitest run"
+        "test": "vitest run",
+        "typecheck": "tsc -p tsconfig.test.json"
     }
 }

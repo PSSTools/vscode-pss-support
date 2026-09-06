@@ -1,0 +1,6 @@
+// Known gap: the target name of an `extend` block does not navigate to the
+// component it extends, though a plain type reference to the same name does.
+// See assertKnownGaps().
+extend component /*[ref-gap:mycomp_c]*/mycomp_c {
+    action /*[def:A]*/A { }
+}

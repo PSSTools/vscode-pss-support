@@ -7,6 +7,7 @@ import {
 import { getCompletions, resolveCompletionItem } from '../core/services/CompletionService';
 import { CompletionKind } from '../core/types/CompletionResult';
 import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { IConfiguration } from '../core/io/IConfiguration';
 
 function convertKind(kind: CompletionKind): CompletionItemKind {
   switch (kind) {
@@ -30,15 +31,14 @@ function convertKind(kind: CompletionKind): CompletionItemKind {
 export function handleCompletion(
   params: CompletionParams,
   index: WorkspaceIndex,
-  getDocumentText?: (uri: string) => string | undefined,
+  config?: IConfiguration,
 ): CompletionList {
-  const text = getDocumentText?.(params.textDocument.uri);
-
   const results = getCompletions(
     params.textDocument.uri,
     { line: params.position.line, character: params.position.character },
     index,
-    text,
+    index.getText(params.textDocument.uri),
+    config,
   );
 
   const items: CompletionItem[] = results.map(r => ({

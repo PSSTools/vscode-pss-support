@@ -1,0 +1,7 @@
+Package types_pkg @1:1
+  Struct data_s @3:5
+    Field addr @4:9 -- rand
+    Field size @5:9 -- rand
+  Enum mode_e @8:5
+  Buffer mem_b @13:5
+    Field base @14:9 -- rand

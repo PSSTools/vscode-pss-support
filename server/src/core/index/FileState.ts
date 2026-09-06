@@ -8,6 +8,8 @@ import { Diagnostic } from '../types/Diagnostic';
 export class FileState {
   public readonly uri: string;
   public version: number;
+  /** The source text the current AST was built from. */
+  public text: string;
   public ast: GlobalScope | null;
   public syntaxDiagnostics: Diagnostic[];
   public semanticDiagnostics: Diagnostic[];
@@ -19,6 +21,7 @@ export class FileState {
   constructor(uri: string, version: number = 0) {
     this.uri = uri;
     this.version = version;
+    this.text = '';
     this.ast = null;
     this.syntaxDiagnostics = [];
     this.semanticDiagnostics = [];

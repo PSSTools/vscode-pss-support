@@ -1,0 +1,61 @@
+# SYNTAX TEST "source.pss" "PSS keywords and declarations"
+
+# Scope assertions for the hand-maintained TextMate grammar. PSS 3.1 adds nine
+# keywords, a new exec-kind list, triple-quoted strings, and float/binary
+# literals to this file; nothing but a test like this catches a regex that
+# silently stops matching.
+#
+# Note: declaration *names* carry no scope of their own -- `my_comp` below is
+# plain `source.pss`. Colouring names is left to semantic tokens from the
+# language server, so names are unhighlighted until the server responds.
+
+component my_comp {
+#^^^^^^^^ storage.type.pss
+
+    int a;
+#   ^^^ storage.type.data.pss
+
+    action my_action {
+#   ^^^^^^ storage.type.pss
+
+        rand bit[32] addr;
+#       ^^^^ storage.modifier.other.pss
+#            ^^^ storage.type.data.pss
+
+        constraint c1 {
+#       ^^^^^^^^^^ keyword.other.constraint.pss
+        }
+
+        activity {
+#       ^^^^^^^^ keyword.other.activity.pss
+        }
+    }
+}
+
+package my_pkg {
+#^^^^^^ storage.type.pss
+
+    import other_pkg::*;
+#   ^^^^^^ keyword.control.import.pss
+
+    struct my_struct {
+#   ^^^^^^ storage.type.pss
+
+        string s = "hello";
+#       ^^^^^^ storage.type.data.pss
+#                  ^^^^^^^ string.quoted.double.pss
+
+        bool flag = true;
+#       ^^^^ storage.type.data.pss
+    }
+
+    enum my_enum {
+#   ^^^^ storage.type.pss
+    }
+}
+
+// a line comment
+#^^ comment.line.double-slash.pss
+
+/* a block comment */
+#^^ comment.block.pss

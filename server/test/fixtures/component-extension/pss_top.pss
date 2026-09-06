@@ -1,0 +1,11 @@
+component pss_top {
+
+    /*[ref:mycomp_c]*/mycomp_c c1, c2;
+
+    action Entry {
+        activity {
+            do mycomp_c::/*[ref:A]*/A;
+            do mycomp_c::/*[ref:B]*/B;
+        }
+    }
+}

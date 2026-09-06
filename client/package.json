@@ -12,6 +12,12 @@
     },
     "devDependencies": {
         "@types/vscode": "^1.75.0",
-        "typescript": "^5.4.0"
+        "typescript": "^5.4.0",
+        "vitest": "^2.1.0",
+        "@types/node": "^20.11.0"
+    },
+    "scripts": {
+        "test": "vitest run",
+        "typecheck": "tsc -p tsconfig.test.json"
     }
 }

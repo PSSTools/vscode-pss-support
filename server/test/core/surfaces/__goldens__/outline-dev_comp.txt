@@ -1,0 +1,5 @@
+Component dev_c @3:1
+  Field cfg @5:5
+  Field mode @6:5
+  Action write_a @8:5
+    Field payload @9:9 -- rand

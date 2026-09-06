@@ -4,8 +4,38 @@ package:
   dep-sets:
   - name: default-dev
     deps:
-    - name: zuspec-fe-pss
-      url: https://github.com/zuspec/zuspec-fe-pss.git
+    # ALWAYS SPELL DEPENDENCIES AS github.com URLs. This manifest is public --
+    # it ships in the repo, which is mirrored to GitHub and published to
+    # git.dvkit.org -- so it has to name a URL that an outside collaborator can
+    # actually clone. On a developer machine IVPM's site config remaps this to
+    # the local Forgejo mirror before auth is applied, so naming GitHub costs
+    # nothing here and is the only form that works everywhere.
+    #
+    # LOWERCASE `psstools`, DELIBERATELY. GitHub's canonical spelling of the org
+    # is `PSSTools` and it will happily serve either, but the site-config remap
+    # is a literal prefix match: `github.com/psstools/` is mapped and
+    # `github.com/PSSTools/` is not. The mixed-case form silently bypasses the
+    # mirror and clones from GitHub instead -- which works, and is therefore the
+    # kind of thing nobody notices until the mirror and GitHub disagree.
+    - name: pssparser
+      url: https://github.com/psstools/pssparser.git
       anonymous: true
+      # Redundant with the `-a` that CI passes to `ivpm update`, and kept anyway:
+      # the per-package value is OR'd with the command-line flag, so this is what
+      # makes a bare `ivpm update` work for someone who does not know to pass it.
+      # Without anonymous auth IVPM's default order is ['gh', 'ssh'], which needs
+      # a credential this repo's CI does not hold.
       type: raw
+      # Only the ANTLR grammar (src/PSS{Lexer,Parser}.g4) and the AST schema
+      # (ast/*.yaml) are consumed, by build:grammar and gen-ast.mjs. `raw` stops
+      # IVPM trying to install a compiled C++/Python project into the venv to get
+      # at two directories of source text.
 
+    # docs/conf.py hardcodes `html_theme = 'sphinx_rtd_theme'`, and the CI docs
+    # job builds with `-W`, so a missing theme is a hard failure. Sphinx itself
+    # arrives transitively through pssparser; the theme did not, and was never
+    # declared anywhere -- it happened to be present in whatever venv the job
+    # last ran against. Declared explicitly so the docs build depends on
+    # something stated rather than something inherited.
+    - name: sphinx-rtd-theme
+      src: pypi

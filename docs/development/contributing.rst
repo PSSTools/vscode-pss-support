@@ -34,30 +34,47 @@ Project Structure
        test/                     # Tests mirroring the src/ structure
        scripts/                  # Build scripts (gen-ast.mjs)
        vitest.config.ts          # Test configuration
-     packages/
-       zuspec-fe-pss/            # Reference grammar and AST YAML definitions
+     packages/                   # Fetched by ivpm; not tracked in git
+       pssparser/                # Grammar (src/PSS*.g4) and AST YAML (ast/*.yaml)
        pyastbuilder/             # Python AST builder tool
+       python/                   # ivpm-managed virtualenv
 
 Build Steps
 -----------
 
+Two directories under ``server/src`` are **generated, not tracked**:
+
+* ``server/src/generated/`` — the ANTLR lexer and parser, from
+  ``packages/pssparser/src/PSS{Lexer,Parser}.g4``
+* ``server/src/core/ast/generated/`` — the AST classes, from
+  ``packages/pssparser/ast/*.yaml``, via ``astbuilder gen-ts`` (the same
+  ``pyastbuilder`` tool that generates pssparser's C++ AST, so all three
+  language bindings come from one generator)
+
+A fresh clone therefore will not compile until you bootstrap. This is
+deliberate: the PSS language moves, and deriving these at build time means an
+upstream grammar or AST change surfaces as a CI failure rather than as a
+checked-in copy that silently falls behind.
+
 .. code-block:: bash
 
-   # Install all workspace dependencies
+   # Fetch pssparser and friends, then derive the TypeScript sources from them.
+   # Requires Python 3 (for ivpm) and Java 11+ (ANTLR is a Java tool).
    npm install
+   npm run bootstrap
 
-   # Generate ANTLR parser (requires Java 11+)
-   cd server && npm run build:grammar && cd ..
-
-   # Regenerate AST from YAML (optional — files are checked in)
-   cd server && node scripts/gen-ast.mjs \
-       ../packages/zuspec-fe-pss/ast src/core/ast/generated && cd ..
+   # Thereafter, to re-derive after pssparser moves:
+   npm run generate
 
    # Compile TypeScript
    npm run compile
 
    # Run core tests
    npm run test:core
+
+No pssparser version is pinned. If a grammar or AST change upstream breaks the
+build here, that is the intended signal — fix the consumer, do not pin the
+dependency.
 
 Running Tests
 -------------

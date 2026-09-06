@@ -1,0 +1,18 @@
+import types_pkg::*;
+
+component /*[def:dev_c]*/dev_c {
+
+    /*[ref:data_s]*/data_s   cfg;
+    /*[ref:mode_e]*/mode_e   mode;
+
+    action /*[def:write_a]*/write_a {
+        rand /*[ref:data_s]*/data_s payload;
+
+        constraint c1 {
+            // Known gap: DefinitionService resolves type and action references
+            // but not field references inside constraint expressions, whether
+            // qualified (payload.addr) or bare. See assertKnownGaps().
+            payload./*[ref-gap:addr]*/addr > 0;
+        }
+    }
+}

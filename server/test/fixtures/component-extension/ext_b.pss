@@ -1,0 +1,3 @@
+extend component mycomp_c {
+    action /*[def:B]*/B { }
+}

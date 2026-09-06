@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import { IConfiguration } from '../io/IConfiguration';
+import { IFileSystem } from '../io/IFileSystem';
+import { nodeFileSystem } from '../io/NodeFileSystem';
 
 export interface PSSConfig {
   include?: string[];
@@ -20,12 +20,14 @@ export interface PSSConfig {
 /**
  * Load .pssconfig.json from a workspace root directory.
  */
-export function loadPSSConfig(workspaceRoot: string): PSSConfig {
-  const configPath = join(workspaceRoot, '.pssconfig.json');
-  if (!existsSync(configPath)) return {};
+export function loadPSSConfig(
+  workspaceRoot: string,
+  fs: IFileSystem = nodeFileSystem,
+): PSSConfig {
+  const content = fs.readFile(workspaceRoot.replace(/\/$/, '') + '/.pssconfig.json');
+  if (content === undefined) return {};
 
   try {
-    const content = readFileSync(configPath, 'utf-8');
     return JSON.parse(content) as PSSConfig;
   } catch {
     return {};

@@ -1,119 +1,128 @@
 Configuration
 =============
 
+There are two independent mechanisms, and which one a setting belongs to is not
+a matter of preference:
+
+* **VS Code settings** (``File → Preferences → Settings``) — two keys, both
+  about the editor integration itself.
+* **A** ``.pssconfig.json`` **file** in the workspace root — everything about
+  how PSS sources are formatted and linted. These are *not* VS Code settings
+  and do not appear in the Settings UI.
+
 VS Code Settings
 ----------------
 
-All settings are prefixed with ``pss.`` and can be changed in
-**File → Preferences → Settings** (``Ctrl+,``).
-
 .. list-table::
    :header-rows: 1
-   :widths: 40 15 15 30
+   :widths: 32 12 14 42
 
    * - Setting
      - Type
      - Default
      - Description
-   * - ``pss.maxNumberOfProblems``
-     - number
-     - 100
-     - Maximum number of diagnostics reported per file.
    * - ``pss.trace.server``
      - string
      - ``"off"``
      - LSP protocol tracing level: ``"off"``, ``"messages"``, or ``"verbose"``.
-   * - ``pss.format.indentSize``
+       Handled by the language-client library.
+   * - ``pss.maxNumberOfProblems``
      - number
-     - 4
-     - Spaces per indentation level.
-   * - ``pss.format.insertFinalNewline``
-     - boolean
-     - true
-     - Insert a newline at the end of the file when formatting.
-   * - ``pss.lint.enabled``
-     - boolean
-     - true
-     - Master switch for all lint diagnostics.
-   * - ``pss.lint.rules.no-empty-constraint``
-     - boolean
-     - true
-     - Warn on empty ``constraint`` blocks.
-   * - ``pss.lint.rules.no-unused-field``
-     - boolean
-     - true
-     - Warn on fields that are never referenced.
-   * - ``pss.lint.rules.naming-convention``
-     - boolean
-     - true
-     - Suggest naming-convention fixes.
-   * - ``pss.lint.rules.max-activity-depth``
-     - boolean
-     - true
-     - Warn on deeply nested activities.
-   * - ``pss.lint.rules.no-unreachable-branch``
-     - boolean
-     - true
-     - Warn on branches that can never be taken.
+     - 100
+     - **Declared but not yet honoured.** The server does not read it, so
+       changing it has no effect today. Wiring it is part of the diagnostics
+       work (the ``PSS029`` error cap).
+
+That is the complete list. A test asserts that
+``pss.maxNumberOfProblems`` is the *only* declared-and-unread setting, so this
+gap cannot quietly grow.
 
 Project Configuration File
 --------------------------
 
-Create a ``.pssconfig.json`` file in your workspace root for project-level
-settings that are checked into source control alongside the PSS sources.
-
-Example:
+Create ``.pssconfig.json`` in your workspace root. It is read once, when the
+server initializes against the first workspace root.
 
 .. code-block:: json
 
    {
-     "include": ["src/**/*.pss"],
-     "exclude": ["test/fixtures/**"],
-     "standardVersion": "3.1",
-     "defines": {
-       "SIMULATION": "1"
-     },
      "format": {
        "indentSize": 4,
        "insertFinalNewline": true
      },
      "lint": {
-       "enabled": true,
        "rules": {
          "no-empty-constraint": true,
-         "naming-convention": false
+         "no-unused-field": true,
+         "naming-convention": false,
+         "max-activity-depth": true,
+         "no-unreachable-branch": true
        }
      }
    }
 
-Fields
-^^^^^^
+Honoured fields
+^^^^^^^^^^^^^^^
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 15 55
+   :widths: 40 12 14 34
 
    * - Field
      - Type
+     - Default
      - Description
-   * - ``include``
-     - string[]
-     - Glob patterns for files to index. Default: ``["**/*.pss"]``.
-   * - ``exclude``
-     - string[]
-     - Glob patterns for files to exclude from indexing.
-   * - ``standardVersion``
-     - string
-     - PSS standard version: ``"3.0"`` or ``"3.1"``.
-   * - ``defines``
-     - object
-     - Compile-time defines used in ``compile if`` expressions.
-   * - ``format``
-     - object
-     - Formatting options (same keys as the VS Code settings above).
-   * - ``lint.enabled``
+   * - ``format.indentSize``
+     - number
+     - 4
+     - Spaces per indentation level.
+   * - ``format.insertFinalNewline``
      - boolean
-     - Master switch for lint diagnostics.
-   * - ``lint.rules``
-     - object
-     - Per-rule enable/disable map (rule name → boolean).
+     - true
+     - Insert a newline at end of file when formatting.
+   * - ``lint.rules.no-empty-constraint``
+     - boolean
+     - true
+     - Warn on empty ``constraint`` blocks.
+   * - ``lint.rules.no-unused-field``
+     - boolean
+     - true
+     - Warn on fields that are never referenced.
+   * - ``lint.rules.naming-convention``
+     - boolean
+     - true
+     - Suggest naming-convention fixes.
+   * - ``lint.rules.max-activity-depth``
+     - boolean
+     - true
+     - Warn on deeply nested activities.
+   * - ``lint.rules.no-unreachable-branch``
+     - boolean
+     - true
+     - Warn on branches that can never be taken.
+
+Accepted but not yet honoured
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These keys are part of the ``.pssconfig.json`` schema and are parsed without
+error, but nothing currently reads them. They are listed so that a file using
+them is not mistaken for a file that is working:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 26 74
+
+   * - Field
+     - Intended meaning
+   * - ``include``
+     - Glob patterns for files to index. Indexing currently discovers all
+       ``.pss`` files under the workspace root.
+   * - ``exclude``
+     - Glob patterns to exclude from indexing.
+   * - ``standardVersion``
+     - PSS standard version. The parser accepts the 3.1 grammar unconditionally.
+   * - ``defines``
+     - Compile-time defines for ``compile if`` expressions.
+   * - ``lint.enabled``
+     - Master switch for lint diagnostics. Disable rules individually under
+       ``lint.rules`` instead.

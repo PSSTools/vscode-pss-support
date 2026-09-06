@@ -1,32 +1,20 @@
 #!/usr/bin/env node
 /**
  * pss-check: CLI tool for checking PSS files.
- * Discovers files via glob, parses, analyzes, and prints diagnostics
- * in GCC-compatible format: file:line:col: severity: message
+ * Discovers files, indexes them, and prints diagnostics in GCC-compatible
+ * format: file:line:col: severity: message
  *
+ * Runs the same WorkspaceIndex + WorkspaceLoader pipeline the language server
+ * uses, so what this prints is by construction what the editor would show.
  * Imports only from server/src/core/ -- no LSP/VSCode dependencies.
  */
-import { readdirSync, readFileSync, statSync } from 'fs';
-import { join, resolve, relative } from 'path';
-import { PSSParserFacade } from '../core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../core/parser/PSSASTBuilder';
-import { SemanticAnalyzer } from '../core/analysis/SemanticAnalyzer';
-import { GlobalScope } from '../core/ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../core/types/Diagnostic';
-
-function discoverFiles(dir: string): string[] {
-  const files: string[] = [];
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...discoverFiles(fullPath));
-    } else if (entry.name.endsWith('.pss')) {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
+import { relative } from 'path';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { WorkspaceLoader } from '../core/index/WorkspaceLoader';
+import { nodeFileSystem } from '../core/io/NodeFileSystem';
+import { pathToUri, uriToPath } from '../core/io/UriUtils';
+import { resolveStdlibDir } from '../core/analysis/StdlibLoader';
+import { DiagnosticSeverity } from '../core/types/Diagnostic';
 
 function severityString(sev: DiagnosticSeverity): string {
   switch (sev) {
@@ -37,73 +25,70 @@ function severityString(sev: DiagnosticSeverity): string {
   }
 }
 
-function main(): void {
-  const args = process.argv.slice(2);
-  const target = args[0] || '.';
-  const rootDir = resolve(target);
+export interface CheckResult {
+  lines: string[];
+  hasErrors: boolean;
+  fileCount: number;
+}
 
-  let files: string[];
-  try {
-    const stat = statSync(rootDir);
-    if (stat.isDirectory()) {
-      files = discoverFiles(rootDir);
-    } else {
-      files = [rootDir];
-    }
-  } catch {
-    console.error(`Error: cannot access '${rootDir}'`);
-    process.exit(2);
+/**
+ * Analyze a file or directory and render diagnostics as text lines.
+ * Separated from `main` so tests can assert on the output without spawning a
+ * process or capturing stdout.
+ */
+export async function check(target: string, cwd: string = process.cwd()): Promise<CheckResult> {
+  const index = new WorkspaceIndex(resolveStdlibDir());
+  const loader = new WorkspaceLoader();
+
+  let uris: string[];
+  if (nodeFileSystem.isDirectory(target)) {
+    uris = await loader.loadInto(index, [pathToUri(target)]);
+  } else {
+    const content = nodeFileSystem.readFile(target);
+    if (content === undefined) throw new Error(`cannot access '${target}'`);
+    const uri = pathToUri(target);
+    index.addFile(uri, content);
+    uris = [uri];
   }
 
-  if (files.length === 0) {
+  const lines: string[] = [];
+  let hasErrors = false;
+
+  for (const uri of uris.slice().sort()) {
+    const rel = relative(cwd, uriToPath(uri));
+    for (const diag of index.getDiagnostics(uri)) {
+      const line = diag.range.start.line + 1;
+      const col = diag.range.start.character + 1;
+      lines.push(`${rel}:${line}:${col}: ${severityString(diag.severity)}: ${diag.message}`);
+      if (diag.severity === DiagnosticSeverity.Error) hasErrors = true;
+    }
+  }
+
+  return { lines, hasErrors, fileCount: uris.length };
+}
+
+async function main(): Promise<void> {
+  const target = process.argv[2] || '.';
+
+  let result: CheckResult;
+  try {
+    result = await check(target);
+  } catch (e: unknown) {
+    console.error(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    process.exit(2);
+    return;
+  }
+
+  if (result.fileCount === 0) {
     console.log('No .pss files found.');
     process.exit(0);
   }
 
-  const parser = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
-  const fileMap = new Map<number, string>();
-  let fileId = 1;
-  let hasErrors = false;
-
-  // Parse all files
-  for (const file of files) {
-    const content = readFileSync(file, 'utf-8');
-    const result = parser.parse(content, fileId);
-    const builder = new PSSASTBuilder(fileId, result.tokens);
-    const gs = builder.build(result.tree);
-    gs.filename = file;
-    scopes.push(gs);
-    fileMap.set(fileId, file);
-
-    // Report syntax errors
-    for (const diag of result.errors) {
-      const rel = relative(process.cwd(), file);
-      const line = diag.range.start.line + 1;
-      const col = diag.range.start.character + 1;
-      console.log(`${rel}:${line}:${col}: ${severityString(diag.severity)}: ${diag.message}`);
-      if (diag.severity === DiagnosticSeverity.Error) hasErrors = true;
-    }
-
-    fileId++;
-  }
-
-  // Semantic analysis
-  const analyzer = new SemanticAnalyzer();
-  const result = analyzer.analyze(scopes);
-
-  for (const [fid, diags] of result.diagnostics) {
-    const file = fileMap.get(fid) ?? '<unknown>';
-    const rel = relative(process.cwd(), file);
-    for (const diag of diags) {
-      const line = diag.range.start.line + 1;
-      const col = diag.range.start.character + 1;
-      console.log(`${rel}:${line}:${col}: ${severityString(diag.severity)}: ${diag.message}`);
-      if (diag.severity === DiagnosticSeverity.Error) hasErrors = true;
-    }
-  }
-
-  process.exit(hasErrors ? 1 : 0);
+  for (const line of result.lines) console.log(line);
+  process.exit(result.hasErrors ? 1 : 0);
 }
 
-main();
+// Only run when invoked directly, so the module can be imported by tests.
+if (require.main === module) {
+  void main();
+}

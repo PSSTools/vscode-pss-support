@@ -55,8 +55,11 @@ describe('Generated AST', () => {
     const factory = new ASTFactory();
     const comp = factory.mkComponent();
     expect(comp).toBeInstanceOf(Component);
-    const action = factory.mkAction();
+    // mkAction now takes the inherited ctor params first, matching the C++
+    // factory: mkAction(name, super_t, is_abstract) -- AstBuilderInt.cpp:619.
+    const action = factory.mkAction(null, null, false);
     expect(action).toBeInstanceOf(Action);
+    expect(action.is_abstract).toBe(false);
   });
 
   it('accept calls the visitor', () => {

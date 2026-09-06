@@ -1,0 +1,16 @@
+package types_pkg {
+
+    struct /*[def:data_s]*/data_s {
+        rand bit[32] addr;
+        rand bit[8]  size;
+    }
+
+    enum /*[def:mode_e]*/mode_e {
+        READ,
+        WRITE
+    }
+
+    buffer /*[def:mem_b]*/mem_b {
+        rand bit[64] base;
+    }
+}

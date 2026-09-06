@@ -5,6 +5,7 @@ export * from './HoverResult';
 export * from './CompletionResult';
 export * from './DefinitionResult';
 export * from './DocumentSymbol';
+export * from './WorkspaceSymbol';
 export * from './SemanticToken';
 export * from './DiagramNode';
 export * from './DiagramEdge';

@@ -258,7 +258,7 @@
 			"patterns": [
 				{
 					"match": "\\b(import|typedef)\\b",
-					"name": "keyword.control.misc.sv"
+					"name": "keyword.control.import.pss"
 				}
 			]
 

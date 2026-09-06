@@ -1,0 +1,3 @@
+component /*[def:mycomp_c]*/mycomp_c {
+    int a;
+}

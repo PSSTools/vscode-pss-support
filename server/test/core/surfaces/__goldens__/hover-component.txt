@@ -1,0 +1,7 @@
+@2:1
+---
+```pss
+component dev_c
+```
+
+A device component.

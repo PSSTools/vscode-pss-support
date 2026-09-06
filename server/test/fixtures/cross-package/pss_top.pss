@@ -1,0 +1,12 @@
+import types_pkg::*;
+
+component pss_top {
+
+    /*[ref:dev_c]*/dev_c dev;
+
+    action Entry {
+        activity {
+            do dev_c::/*[ref:write_a]*/write_a;
+        }
+    }
+}

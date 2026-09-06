@@ -69,6 +69,74 @@ jobs:
           echo "release authority for $GITHUB_REPOSITORY: $auth"
           echo "authority=$auth" >> "$GITHUB_OUTPUT"
 
+  # ---------------------------------------------------------------------- #
+  # server/src/generated/ (ANTLR parser, from src/PSS*.g4) and
+  # server/src/core/ast/generated/ (AST classes, from ast/*.yaml) are DERIVED
+  # FROM pssparser and are no longer tracked in git.
+  #
+  # Deriving them here rather than committing them is the point: the PSS
+  # language moves, and an upstream grammar or AST change SHOULD turn this red.
+  # While they were committed, the parser sat 24 tokens behind the grammar for
+  # three weeks and every job stayed green, because the committed copy
+  # satisfied every consumer and nothing compared it against its source.
+  #
+  # No pssparser version is pinned, deliberately. Breakage here is the signal.
+  #
+  # Generated once and shared as an artifact: five jobs need these sources, and
+  # generating in each would mean five ivpm fetches and five JVM installs per
+  # push. `test-client`, `test-contributions` and the grammar tests do not
+  # touch server code and stay lightweight.
+  # ---------------------------------------------------------------------- #
+  generate:
+    name: Generate parser and AST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ivpm
+        run: pip install ivpm
+      # `-a` is anonymous auth. The runner holds no credential for ivpm's
+      # default ['gh', 'ssh'] order, and ssh against the public mirror hangs
+      # rather than failing, so without this the job times out instead of
+      # erroring.
+      - name: Fetch pssparser and its dependencies
+        run: ivpm update -a -d default-dev -j 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Setup Java (ANTLR is a Java tool)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+      - run: npm install
+      - name: Generate
+        run: npm run generate
+      - name: Check the generated sources are non-empty
+        # ANTLR exits 0 while writing nothing when `-o` and the grammar path
+        # disagree -- which is exactly how the committed parser went stale
+        # unnoticed. Assert the output exists rather than trusting the exit
+        # code, and assert a 3.1 token is present so a silently-empty or
+        # wrong-grammar run cannot pass.
+        run: |
+          test -s server/src/generated/PSSParser.ts \
+            || { echo "::error::no parser generated"; exit 1; }
+          test -s server/src/core/ast/generated/classes.ts \
+            || { echo "::error::no AST generated"; exit 1; }
+          grep -q 'TOK_SOFT' server/src/generated/PSSLexer.tokens \
+            || { echo "::error::generated lexer has no TOK_SOFT -- wrong or stale grammar"; exit 1; }
+          echo "AST classes: $(grep -c '^export class' server/src/core/ast/generated/classes.ts)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-sources
+          path: |
+            server/src/generated/
+            server/src/core/ast/generated/
+          if-no-files-found: error
+          retention-days: 1
+
   docs:
     runs-on: ubuntu-latest
     permissions:
@@ -115,8 +183,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch zuspec-fe-pss grammar
-        run: git clone --depth=1 https://github.com/zuspec/zuspec-fe-pss.git packages/zuspec-fe-pss
+      # WAS: a raw `git clone --depth=1` of zuspec/zuspec-fe-pss.
+      #
+      # That checkout was retired upstream, and it left this job fetching its
+      # grammar by a mechanism no other job used: `docs` and `lint` resolve
+      # dependencies through ivpm, `build` cloned a URL. Two mechanisms meant
+      # they could disagree about which parser source the tree was built from,
+      # and after the retirement they did -- ivpm fetched pssparser while this
+      # job still generated the parser from the old grammar.
+      #
+      # ivpm.yaml is now the single declaration of that dependency. `-a` is
+      # anonymous auth: the runner holds no credential for the default
+      # ['gh', 'ssh'] order, and an ssh attempt against the public mirror hangs
+      # rather than failing, so this would time out instead of erroring.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ivpm
+        run: pip install ivpm
+      - name: Fetch packages
+        run: ivpm update -a -d default-dev -j 1
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -128,8 +214,13 @@ jobs:
           java-version: 11
       - name: Install dependencies
         run: npm install
-      - name: Build grammar
-        run: npm run build:grammar
+      # This job derives its own sources rather than downloading the `generate`
+      # job's artifact, because `vsce package` below runs `vscode:prepublish` ->
+      # `npm run build` -> `npm run generate`. The packaged extension is built
+      # from pssparser sources by construction; a downloaded artifact would be
+      # silently overwritten by that step anyway.
+      - name: Generate parser and AST from pssparser sources
+        run: npm run generate
       - name: Build
         run: npm run compile
       - name: Install vsce
@@ -200,6 +291,7 @@ jobs:
       - run: npm run lint
 
   test-core:
+    needs: generate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -207,10 +299,16 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Fetch generated parser and AST
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-sources
+          path: server/src/
       - name: Run core tests
         run: npm run test:core
 
   test-lsp:
+    needs: generate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -218,10 +316,15 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Fetch generated parser and AST
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-sources
+          path: server/src/
       - name: Run LSP tests
         run: npm run test:lsp
 
-  test-bench:
+  test-client:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -229,5 +332,54 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Run client tests
+        run: npm run test:client
+
+  test-contributions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Check package.json contributions, snippets, and packaging
+        run: npm run test:contrib
+      - name: Check TextMate grammar scopes
+        run: npm run test:grammar
+
+  typecheck:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Fetch generated parser and AST
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-sources
+          path: server/src/
+      # Vitest transpiles without typechecking, so type errors in test code are
+      # invisible to the suites above. This is the only step that sees them.
+      - name: Typecheck sources and tests
+        run: npm run typecheck
+
+  test-bench:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Fetch generated parser and AST
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-sources
+          path: server/src/
       - name: Run benchmarks
         run: npm run test:bench

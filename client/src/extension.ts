@@ -10,6 +10,7 @@ import {
 } from 'vscode-languageclient/node';
 
 import { ActivityDiagramPanel } from './views/ActivityDiagramPanel';
+import { resolveDiagramTarget } from './diagramTarget';
 
 let client: LanguageClient;
 
@@ -50,24 +51,22 @@ export function activate(context: ExtensionContext): void {
     const diagramCmd = vscode.commands.registerCommand(
         'pss.showActivityDiagram',
         async (uri?: string, line?: number) => {
-            // Resolve URI and line from arguments or active editor
-            let targetUri = uri;
-            let targetLine = line ?? 0;
+            const editor = vscode.window.activeTextEditor;
+            const target = resolveDiagramTarget(uri, line, editor && {
+                uri: editor.document.uri.toString(),
+                languageId: editor.document.languageId,
+                activeLine: editor.selection.active.line,
+            });
 
-            if (!targetUri) {
-                const editor = vscode.window.activeTextEditor;
-                if (!editor || editor.document.languageId !== 'pss') {
-                    vscode.window.showWarningMessage('Open a PSS file with an activity block first.');
-                    return;
-                }
-                targetUri = editor.document.uri.toString();
-                targetLine = editor.selection.active.line;
+            if (!target.ok) {
+                vscode.window.showWarningMessage('Open a PSS file with an activity block first.');
+                return;
             }
 
             try {
                 const graph = await client.sendRequest('pss/activityDiagram', {
-                    uri: targetUri,
-                    line: targetLine,
+                    uri: target.uri,
+                    line: target.line,
                 });
 
                 if (!graph) {

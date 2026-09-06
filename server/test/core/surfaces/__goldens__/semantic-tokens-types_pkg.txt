@@ -1,0 +1,34 @@
+package types_pkg {
+        ~~~~~~~~~
+  ^ 9+9 namespace.declaration 'types_pkg'
+
+    struct data_s {
+           ~~~~~~
+  ^ 12+6 class.declaration 'data_s'
+        rand bit[32] addr;
+                     ~~~~
+  ^ 22+4 variable.declaration.modification 'addr'
+        rand bit[8]  size;
+                     ~~~~
+  ^ 22+4 variable.declaration.modification 'size'
+    }
+
+    enum mode_e {
+         ~~~~~~
+  ^ 10+6 enum.declaration 'mode_e'
+        READ,
+        ~~~~
+  ^ 9+4 enumMember.declaration 'READ'
+        WRITE
+        ~~~~~
+  ^ 9+5 enumMember.declaration 'WRITE'
+    }
+
+    buffer mem_b {
+           ~~~~~
+  ^ 12+5 class.declaration 'mem_b'
+        rand bit[64] base;
+                     ~~~~
+  ^ 22+4 variable.declaration.modification 'base'
+    }
+}

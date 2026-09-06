@@ -5,6 +5,8 @@ import { ExtensionApplicator } from './ExtensionApplicator';
 import { ImportResolver } from './ImportResolver';
 import { ReferenceResolver } from './ReferenceResolver';
 import { StdlibLoader } from './StdlibLoader';
+import { IFileSystem } from '../io/IFileSystem';
+import { nodeFileSystem } from '../io/NodeFileSystem';
 
 export interface AnalysisResult {
   root: RootSymbolScope;
@@ -21,10 +23,12 @@ export interface AnalysisResult {
  */
 export class SemanticAnalyzer {
   private stdlibDir?: string;
+  private fs: IFileSystem;
   private stdlibScopes: GlobalScope[] | null = null;
 
-  constructor(stdlibDir?: string) {
+  constructor(stdlibDir?: string, fs: IFileSystem = nodeFileSystem) {
     this.stdlibDir = stdlibDir;
+    this.fs = fs;
   }
 
   public analyze(scopes: GlobalScope[]): AnalysisResult {
@@ -32,7 +36,7 @@ export class SemanticAnalyzer {
 
     // Load stdlib if not already loaded
     if (!this.stdlibScopes) {
-      const loader = new StdlibLoader(this.stdlibDir);
+      const loader = new StdlibLoader(this.stdlibDir, this.fs);
       this.stdlibScopes = loader.load();
     }
 

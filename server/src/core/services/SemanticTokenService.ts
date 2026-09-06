@@ -31,6 +31,7 @@ import {
 } from '../ast/generated';
 import { SemanticToken } from '../types/SemanticToken';
 import { getNodeName } from '../ast/ASTUtils';
+import { Location } from '../ast/generated/structs';
 
 // Token type indices (must match the legend registered with the LSP)
 export enum TokenType {
@@ -103,7 +104,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
     if (name) {
       let mods = TokenModifier.declaration;
       if (node.is_abstract) mods |= TokenModifier.abstract;
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.class, tokenModifiers: mods });
+      pushNameToken(tokens, node, name, TokenType.class, mods);
     }
     // Super type reference
     if (node.super_t) {
@@ -114,28 +115,28 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
 
   if (node instanceof Component) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.class, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.class, TokenModifier.declaration);
     }
     return;
   }
 
   if (node instanceof Struct) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.class, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.class, TokenModifier.declaration);
     }
     return;
   }
 
   if (node instanceof Monitor) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.class, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.class, TokenModifier.declaration);
     }
     return;
   }
 
   if (node instanceof AnnotationDecl) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.decorator, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.decorator, TokenModifier.declaration);
     }
     return;
   }
@@ -143,7 +144,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
   // Enum declarations
   if (node instanceof EnumDecl) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.enum, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.enum, TokenModifier.declaration);
     }
     // Enum items
     for (const item of node.items) {
@@ -169,7 +170,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
       if (node.attr & flags.FieldAttr.Rand) mods |= TokenModifier.modification;
       if (node.attr & flags.FieldAttr.Const) mods |= TokenModifier.readonly;
       if (node.attr & flags.FieldAttr.Static) mods |= TokenModifier.static;
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.variable, tokenModifiers: mods });
+      pushNameToken(tokens, node, name, TokenType.variable, mods);
     }
     // Type reference
     if (node.type instanceof DataTypeUserDefined) {
@@ -181,7 +182,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
   if (node instanceof FieldCompRef || node instanceof FieldRef ||
       node instanceof FieldClaim || node instanceof ActionHandleField) {
     if (name) {
-      tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : name.length, tokenType: TokenType.variable, tokenModifiers: TokenModifier.declaration });
+      pushNameToken(tokens, node, name, TokenType.variable, TokenModifier.declaration);
     }
     return;
   }
@@ -190,14 +191,13 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
   if (node instanceof FunctionDefinition && node.proto) {
     const funcName = node.proto.name?.id;
     if (funcName) {
-      const funcLoc = node.proto.location ?? loc;
-      tokens.push({
-        line: funcLoc.lineno >= 0 ? funcLoc.lineno - 1 : line,
-        startChar: funcLoc.linepos >= 0 ? funcLoc.linepos : char,
-        length: funcLoc.extent > 0 ? funcLoc.extent : funcName.length,
-        tokenType: TokenType.function,
-        tokenModifiers: TokenModifier.declaration | TokenModifier.definition,
-      });
+      // The prototype's own extent covers the signature; the name node is what
+      // should be coloured.
+      pushNameToken(
+        tokens, node.proto, funcName,
+        TokenType.function,
+        TokenModifier.declaration | TokenModifier.definition,
+      );
     }
     // Parameters
     for (const param of node.proto.parameters) {
@@ -222,11 +222,63 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
     return;
   }
 
-  // Package
+  // Package. The name is a qualified path (`id: ExprId[]`), not a single
+  // `name` node, so each segment of `a::b::c` gets its own token.
   if (node instanceof PackageScope) {
-    tokens.push({ line, startChar: char, length: loc.extent > 0 ? loc.extent : 7, tokenType: TokenType.namespace, tokenModifiers: TokenModifier.declaration });
+    for (const segment of node.id) {
+      if (segment.location.lineno < 0) continue;
+      tokens.push({
+        line: segment.location.lineno - 1,
+        startChar: segment.location.linepos,
+        length: segment.location.extent > 0 ? segment.location.extent : segment.id.length,
+        tokenType: TokenType.namespace,
+        tokenModifiers: TokenModifier.declaration,
+      });
+    }
     return;
   }
+}
+
+/**
+ * Emit a token covering a declaration's *name*, not its whole declaration.
+ *
+ * `node.location.extent` spans the entire declaration including its body, so
+ * using it produced tokens hundreds of characters long -- one `namespace` token
+ * covering a whole package, swallowing every token inside it. The LSP also
+ * forbids a token from spanning lines, which such a token always does.
+ *
+ * Named nodes carry an accurate location on `name`; when that is missing the
+ * length falls back to the identifier's own length, never to the node extent.
+ */
+function pushNameToken(
+  tokens: SemanticToken[],
+  node: { location: Location; name?: { location?: Location } | null },
+  name: string,
+  tokenType: TokenType,
+  tokenModifiers: number,
+): void {
+  const nameLoc = node.name?.location;
+
+  if (nameLoc && nameLoc.lineno >= 0) {
+    tokens.push({
+      line: nameLoc.lineno - 1,
+      startChar: nameLoc.linepos,
+      length: nameLoc.extent > 0 ? nameLoc.extent : name.length,
+      tokenType,
+      tokenModifiers,
+    });
+    return;
+  }
+
+  const loc = node.location;
+  if (loc.lineno < 0) return;
+  tokens.push({
+    line: loc.lineno - 1,
+    startChar: loc.linepos,
+    length: name.length,
+    tokenType,
+    tokenModifiers,
+  });
 }
 
 function emitTypeIdToken(

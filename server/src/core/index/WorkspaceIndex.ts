@@ -17,6 +17,7 @@ import { PSSASTBuilder } from '../parser/PSSASTBuilder';
 import { SemanticAnalyzer, AnalysisResult } from '../analysis/SemanticAnalyzer';
 import { FileState } from './FileState';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils';
+import { IFileSystem } from '../io/IFileSystem';
 
 /**
  * Cross-file symbol table and dependency graph.
@@ -32,8 +33,8 @@ export class WorkspaceIndex {
   private uriToFileId = new Map<string, number>();
   private fileIdToUri = new Map<number, string>();
 
-  constructor(stdlibDir?: string) {
-    this.analyzer = new SemanticAnalyzer(stdlibDir);
+  constructor(stdlibDir?: string, fs?: IFileSystem) {
+    this.analyzer = new SemanticAnalyzer(stdlibDir, fs);
   }
 
   /** Add a new file to the index. */
@@ -80,6 +81,15 @@ export class WorkspaceIndex {
   /** Get the AST for a file. */
   public getAST(uri: string): GlobalScope | undefined {
     return this.fileStates.get(uri)?.ast ?? undefined;
+  }
+
+  /**
+   * Get the source text the current AST was built from.
+   * Services that need text (formatting, line-prefix completion) read it here
+   * rather than being handed it separately, so text and AST cannot disagree.
+   */
+  public getText(uri: string): string | undefined {
+    return this.fileStates.get(uri)?.text;
   }
 
   /** Get all diagnostics for a file (triggers re-analysis if needed). */
@@ -207,6 +217,7 @@ export class WorkspaceIndex {
     const ast = builder.build(result.tree);
     ast.filename = uri;
 
+    state.text = content;
     state.ast = ast;
     state.syntaxDiagnostics = result.errors;
   }

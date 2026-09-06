@@ -105,22 +105,31 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run build",
-        "build": "npm run build:grammar && tsc -b",
+        "bootstrap": "ivpm update -a -d default-dev -j 1 && npm run generate",
+        "generate": "cd server && npm run generate",
+        "build": "npm run generate && tsc -b",
         "build:grammar": "cd server && npm run build:grammar",
+        "gen:ast": "cd server && npm run gen:ast",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "test": "npm run test:core && npm run test:lsp",
+        "test": "npm run test:core && npm run test:lsp && npm run test:client && npm run test:contrib && npm run test:grammar",
         "test:core": "cd server && npm run test:core",
         "test:lsp": "cd server && npm run test:lsp",
         "test:bench": "cd server && npm run test:bench",
         "lint": "eslint server/src/core/ --ext .ts",
-        "postinstall": "cd client && npm install && cd ../server && npm install"
+        "postinstall": "cd client && npm install && cd ../server && npm install",
+        "test:client": "cd client && npm test",
+        "test:contrib": "vitest run",
+        "test:grammar": "vscode-tmgrammar-test -g syntaxes/pss.tmLanguage.json \"test/grammar/*.pss\"",
+        "typecheck": "cd server && npm run typecheck && cd ../client && npm run typecheck"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",
         "@typescript-eslint/eslint-plugin": "^7.0.0",
         "@typescript-eslint/parser": "^7.0.0",
         "eslint": "^8.56.0",
-        "typescript": "^5.4.0"
+        "typescript": "^5.4.0",
+        "vitest": "^2.1.9",
+        "vscode-tmgrammar-test": "^0.1.3"
     }
 }
