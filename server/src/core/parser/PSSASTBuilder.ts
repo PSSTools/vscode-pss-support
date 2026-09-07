@@ -4,6 +4,58 @@ import * as AST from '../ast/generated';
 import { Location, mkLocation } from '../ast/generated/structs';
 import { DocCommentHarvester } from './DocCommentHarvester';
 
+const PARAM_DIR: Record<string, AST.enums.ParamDir> = {
+  input: AST.enums.ParamDir.ParamDir_In,
+  output: AST.enums.ParamDir.ParamDir_Out,
+  inout: AST.enums.ParamDir.ParamDir_InOut,
+};
+
+// B.13 `ref_type_category ::= action | monitor | component | object_kind`.
+// `struct` is deliberately absent -- it is a *plain* category, so `ref struct`
+// is not legal 3.1. Mirrors `ref_param_kind_m` in AstBuilderInt.cpp:6233.
+const REF_PARAM_KIND: Record<string, AST.enums.FunctionParamDeclKind> = {
+  action: AST.enums.FunctionParamDeclKind.ParamKind_RefAction,
+  monitor: AST.enums.FunctionParamDeclKind.ParamKind_RefMonitor,
+  component: AST.enums.FunctionParamDeclKind.ParamKind_RefComponent,
+  buffer: AST.enums.FunctionParamDeclKind.ParamKind_RefBuffer,
+  stream: AST.enums.FunctionParamDeclKind.ParamKind_RefStream,
+  state: AST.enums.FunctionParamDeclKind.ParamKind_RefState,
+  resource: AST.enums.FunctionParamDeclKind.ParamKind_RefResource,
+};
+
+// B.13 `plain_type_category ::= struct | numeric`.
+const PLAIN_PARAM_KIND: Record<string, AST.enums.FunctionParamDeclKind> = {
+  struct: AST.enums.FunctionParamDeclKind.ParamKind_Struct,
+  numeric: AST.enums.FunctionParamDeclKind.ParamKind_Numeric,
+};
+
+// `pre_body` is 3.1's addition (§20.1.3). ExecKind_File is not here: `exec file`
+// has no exec_kind token to look up.
+const EXEC_KIND: Record<string, AST.enums.ExecKind> = {
+  body: AST.enums.ExecKind.ExecKind_Body,
+  pre_body: AST.enums.ExecKind.ExecKind_PreBody,
+  header: AST.enums.ExecKind.ExecKind_Header,
+  declaration: AST.enums.ExecKind.ExecKind_Declaration,
+  run_start: AST.enums.ExecKind.ExecKind_RunStart,
+  run_end: AST.enums.ExecKind.ExecKind_RunEnd,
+  init_down: AST.enums.ExecKind.ExecKind_InitDown,
+  init_up: AST.enums.ExecKind.ExecKind_InitUp,
+  pre_solve: AST.enums.ExecKind.ExecKind_PreSolve,
+  post_solve: AST.enums.ExecKind.ExecKind_PostSolve,
+};
+
+/**
+ * Strip the quoting from a string_literal's text. Mirrors `execTemplateText`
+ * (AstBuilderInt.cpp:1233) -- the triple-quoted form has to be handled
+ * separately, or a `"""..."""` body loses two characters at each end.
+ */
+function execTemplateText(ctx: P.String_literalContext): string {
+  const text = ctx.getText();
+  return ctx.DOUBLE_QUOTED_STRING?.()
+    ? text.slice(1, -1)
+    : text.slice(3, -3);
+}
+
 /**
  * ANTLR visitor that walks a parse tree and produces a typed AST.
  * Covers compilation_unit, package, component, action, struct, enum,
@@ -13,6 +65,8 @@ import { DocCommentHarvester } from './DocCommentHarvester';
 export class PSSASTBuilder {
   private fileId: number;
   private harvester: DocCommentHarvester;
+  /** Element annotations awaiting the declaration they attach to. */
+  private pendingAnnotations: AST.Annotation[] = [];
 
   constructor(fileId: number, tokens: CommonTokenStream) {
     this.fileId = fileId;
@@ -38,6 +92,8 @@ export class PSSASTBuilder {
   }
 
   private visitPkgBodyItem(ctx: P.Package_body_itemContext): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.abstract_action_declaration()) return this.visitAbstractAction(ctx.abstract_action_declaration()!);
     if (ctx.struct_declaration()) return this.visitStruct(ctx.struct_declaration()!);
     if (ctx.component_declaration()) return this.visitComponent(ctx.component_declaration()!);
@@ -97,6 +153,8 @@ export class PSSASTBuilder {
   }
 
   private visitActionBodyItem(ctx: P.Action_body_itemContext): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.activity_declaration()) return this.visitActivity(ctx.activity_declaration()!);
     if (ctx.constraint_declaration()) return this.visitConstraintDecl(ctx.constraint_declaration()!);
     if (ctx.action_field_declaration()) return this.visitActionField(ctx.action_field_declaration()!);
@@ -125,14 +183,15 @@ export class PSSASTBuilder {
   }
 
   private visitComponentBodyItem(ctx: P.Component_body_itemContext): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.action_declaration()) return this.visitAction(ctx.action_declaration()!);
     if (ctx.abstract_action_declaration()) return this.visitAbstractAction(ctx.abstract_action_declaration()!);
     if (ctx.override_action_declaration?.()) return this.visitOverrideAction(ctx.override_action_declaration()!);
     if (ctx.struct_declaration()) return this.visitStruct(ctx.struct_declaration()!);
     if (ctx.enum_declaration()) return this.visitEnum(ctx.enum_declaration()!);
     if (ctx.component_data_declaration()) {
-      const dd = ctx.component_data_declaration()!.data_declaration();
-      if (dd) return this.visitDataDecl(dd);
+      return this.visitComponentDataDecl(ctx.component_data_declaration()!);
     }
     if (ctx.component_pool_declaration?.()) return this.visitPoolDecl(ctx.component_pool_declaration()!);
     if (ctx.object_bind_stmt?.()) return this.visitBindStmt(ctx.object_bind_stmt()!);
@@ -175,6 +234,8 @@ export class PSSASTBuilder {
   }
 
   private visitStructBodyItem(ctx: P.Struct_body_itemContext): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.attr_field()) return this.visitAttrField(ctx.attr_field()!);
     if (ctx.constraint_declaration()) return this.visitConstraintDecl(ctx.constraint_declaration()!);
     if (ctx.typedef_declaration()) return this.visitTypedef(ctx.typedef_declaration()!);
@@ -189,6 +250,9 @@ export class PSSASTBuilder {
     e.location = this.loc(ctx);
     e.docstring = this.doc(ctx);
     if (ctx.enum_identifier()) e.name = this.mkId(ctx.enum_identifier()!);
+    // 3.1: `enum e : bit[4] { ... }` -- the optional base type.
+    const bt = ctx._base_type;
+    if (bt) e.base_type = this.visitDataType(bt) as AST.DataType | null;
     // Parse enum items
     for (const itemCtx of arr(ctx.enum_item())) {
       const item = new AST.EnumItem();
@@ -213,6 +277,8 @@ export class PSSASTBuilder {
   }
 
   private visitMonitorBodyItem(ctx: any): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.monitor_activity_declaration?.()) {
       const mad = new AST.MonitorActivityDecl();
       mad.location = this.loc(ctx);
@@ -254,6 +320,29 @@ export class PSSASTBuilder {
     }
     this.fillField(f, dd);
     return f;
+  }
+
+  /**
+   * LRM 9.1.6: `component_data_decl_qualifier ::= static const | mutable | instance`.
+   * The qualifier is on the *component* declaration wrapper, not on
+   * `data_declaration`, so reading only the inner rule -- as this used to --
+   * dropped `mutable` and `instance` silently.
+   */
+  private visitComponentDataDecl(ctx: P.Component_data_declarationContext): AST.Field | AST.Field[] {
+    let attr = AST.flags.FieldAttr.None;
+    const m = ctx.access_modifier?.();
+    if (m?.TOK_PROTECTED?.()) attr |= AST.flags.FieldAttr.Protected;
+    else if (m?.TOK_PRIVATE?.()) attr |= AST.flags.FieldAttr.Private;
+    if (ctx.TOK_STATIC?.()) attr |= AST.flags.FieldAttr.Static;
+    if (ctx.TOK_CONST?.()) attr |= AST.flags.FieldAttr.Const;
+    if (ctx.TOK_MUTABLE?.()) attr |= AST.flags.FieldAttr.Mutable;
+    if (ctx.TOK_INSTANCE?.()) attr |= AST.flags.FieldAttr.Instance;
+
+    const dd = ctx.data_declaration();
+    if (!dd) return [];
+    const result = this.visitDataDecl(dd);
+    for (const f of Array.isArray(result) ? result : [result]) f.attr |= attr;
+    return result;
   }
 
   private visitConstField(ctx: P.Const_field_declarationContext): AST.Field | AST.Field[] {
@@ -400,8 +489,12 @@ export class PSSASTBuilder {
     if (ctx.chandle_type()) { const dt = new AST.DataTypeChandle(); dt.location = this.loc(ctx); return dt; }
     if (ctx.enum_type()) { const dt = new AST.DataTypeEnum(); dt.location = this.loc(ctx); return dt; }
     if (ctx.float_type?.()) {
-      // No specific Float32/Float64 classes, use DataType
-      const dt = new AST.DataType(); dt.location = this.loc(ctx); return dt;
+      // 3.1 §4.6: float32 and float64 differ only in precision, so one node
+      // carries both and `is_float64` picks the width.
+      const dt = new AST.DataTypeFloat();
+      dt.location = this.loc(ctx);
+      dt.is_float64 = ctx.float_type()!.TOK_FLOAT64?.() != null;
+      return dt;
     }
     if (ctx.pyobj_type?.()) {
       const dt = new AST.DataTypePyObj(); dt.location = this.loc(ctx); return dt;
@@ -439,6 +532,8 @@ export class PSSASTBuilder {
   }
 
   private visitActivityStmt(ctx: P.Activity_stmtContext): AST.ScopeChild | AST.ScopeChild[] | null {
+    // 3.1: an annotation is a body item, not a prefix. See visitAnnotationApp.
+    if (ctx.annotation?.()) return this.visitAnnotationApp(ctx.annotation()!);
     if (ctx.activity_labeled_stmt?.()) return this.visitLabeledActivity(ctx.activity_labeled_stmt()!);
     if (ctx.activity_data_field?.()) {
       const dd = ctx.activity_data_field()!.data_declaration();
@@ -572,14 +667,29 @@ export class PSSASTBuilder {
   // ── Exec ───────────────────────────────────────────────────────
   private visitExecBlockStmt(ctx: P.Exec_block_stmtContext): AST.ScopeChild | null {
     if (ctx.exec_block()) return this.visitExecBlock(ctx.exec_block()!);
-    if (ctx.target_code_exec_block?.()) {
+    const code = ctx.target_code_exec_block?.();
+    if (code) {
+      // Mirrors AstBuilderInt::visitTarget_code_exec_block (:1243).
       const eb = new AST.ExecTargetTemplateBlock();
       eb.location = this.loc(ctx);
+      eb.kind = EXEC_KIND[code.exec_kind().getText()] ?? AST.enums.ExecKind.ExecKind_Body;
+      eb.data = execTemplateText(code.string_literal());
+      eb.language = code.language_identifier().identifier().getText();
+      eb.tag = this.mkExecBlockTag(code.exec_block_tag?.());
+      // `template` stays null: scanning the body into a TemplateString tree is
+      // Phase 5. `data` carries the raw text until then.
       return eb;
     }
-    if (ctx.target_file_exec_block?.()) {
+    const file = ctx.target_file_exec_block?.();
+    if (file) {
+      // `exec file` has no exec_kind of its own; ExecKind_File stands in so
+      // downstream code has a single discriminator to switch on.
       const eb = new AST.ExecTargetTemplateBlock();
       eb.location = this.loc(ctx);
+      eb.kind = AST.enums.ExecKind.ExecKind_File;
+      eb.data = execTemplateText(file.string_literal());
+      eb.filename = execTemplateText(file.filename_string().string_literal());
+      eb.tag = this.mkExecBlockTag(file.exec_block_tag?.());
       return eb;
     }
     return null;
@@ -590,22 +700,23 @@ export class PSSASTBuilder {
     eb.location = this.loc(ctx);
     const kindCtx = ctx.exec_kind();
     if (kindCtx) {
-      const kindText = kindCtx.getText();
-      const kindMap: Record<string, AST.enums.ExecKind> = {
-        'body': AST.enums.ExecKind.ExecKind_Body,
-        'header': AST.enums.ExecKind.ExecKind_Header,
-        'declaration': AST.enums.ExecKind.ExecKind_Declaration,
-        'run_start': AST.enums.ExecKind.ExecKind_RunStart,
-        'run_end': AST.enums.ExecKind.ExecKind_RunEnd,
-        'init_down': AST.enums.ExecKind.ExecKind_InitDown,
-        'init_up': AST.enums.ExecKind.ExecKind_InitUp,
-        'pre_solve': AST.enums.ExecKind.ExecKind_PreSolve,
-        'post_solve': AST.enums.ExecKind.ExecKind_PostSolve,
-      };
-      eb.kind = kindMap[kindText] ?? AST.enums.ExecKind.ExecKind_Body;
+      eb.kind = EXEC_KIND[kindCtx.getText()] ?? AST.enums.ExecKind.ExecKind_Body;
     }
     for (const stmt of arr(ctx.exec_stmt())) this.addChild(eb, this.visitExecStmt(stmt));
     return eb;
+  }
+
+  /**
+   * 3.1 §20.5.4: `exec header C = tag_s {.name="h"}: """...""";`. The struct
+   * literal stays unbuilt -- it is an expression, and this builder constructs
+   * none -- but the tag's type is what a consumer needs to resolve.
+   */
+  private mkExecBlockTag(ctx: P.Exec_block_tagContext | null | undefined): AST.ExecBlockTag | null {
+    if (!ctx) return null;
+    const tag = new AST.ExecBlockTag();
+    tag.location = this.loc(ctx);
+    tag.type = this.visitTypeId(ctx.type_identifier());
+    return tag;
   }
 
   private visitExecStmt(ctx: any): AST.ScopeChild | null {
@@ -804,12 +915,103 @@ export class PSSASTBuilder {
     fd.docstring = this.doc(ctx);
     const proto = ctx.function_prototype?.();
     if (proto) {
-      const fp = new AST.FunctionPrototype();
-      fp.location = this.loc(proto);
-      if (proto.function_identifier?.()) fp.name = this.mkId(proto.function_identifier()!);
-      fd.proto = fp;
+      fd.proto = this.mkFunctionPrototype(
+        proto,
+        ctx.platform_qualifier?.() ?? null,
+        ctx.TOK_PURE?.() != null,
+      );
     }
     return fd;
+  }
+
+  /**
+   * Mirrors `AstBuilderInt::mkFunctionPrototype` (AstBuilderInt.cpp:6265). The
+   * AST is a contract shared with the rest of psstools, so the shape follows
+   * the C++ builder rather than being invented here.
+   */
+  private mkFunctionPrototype(
+    ctx: P.Function_prototypeContext,
+    plat: P.Platform_qualifierContext | null,
+    isPure: boolean,
+  ): AST.FunctionPrototype {
+    const fp = new AST.FunctionPrototype();
+    fp.location = this.loc(ctx);
+    if (ctx.function_identifier?.()) fp.name = this.mkId(ctx.function_identifier()!);
+
+    const rt = ctx.function_return_type?.();
+    // `void` has no data_type child, and a null rtype is how it is spelled.
+    if (rt?.data_type?.()) fp.rtype = this.visitDataType(rt.data_type()!) as AST.DataType | null;
+
+    // `platform_qualifier ::= target [solve] | solve`, so the two are not
+    // mutually exclusive -- `target solve function` sets both.
+    fp.is_target = plat?.TOK_TARGET?.() != null;
+    fp.is_solve = plat?.TOK_SOLVE?.() != null;
+    fp.is_pure = isPure;
+
+    const plist = ctx.function_parameter_list_prototype?.();
+    if (plist) {
+      for (const p of arr(plist.function_parameter())) {
+        fp.parameters.push(this.mkFunctionParamDecl(p));
+      }
+      const va = plist.varargs_parameter?.();
+      if (va) {
+        const param = new AST.FunctionParamDecl();
+        param.location = this.loc(va);
+        param.is_varargs = true;
+        if (va.identifier?.()) param.name = this.mkId(va.identifier()!);
+        if (va.data_type?.()) {
+          param.type = this.visitDataType(va.data_type()!) as AST.DataType | null;
+        } else {
+          param.kind = this.paramKindOf(va.TOK_TYPE?.() != null, va.ref_type_category?.(), va.plain_type_category?.());
+        }
+        fp.parameters.push(param);
+      }
+    }
+    return fp;
+  }
+
+  /** Mirrors `AstBuilderInt::mkFunctionParamDecl` (AstBuilderInt.cpp:6356). */
+  private mkFunctionParamDecl(ctx: P.Function_parameterContext): AST.FunctionParamDecl {
+    const param = new AST.FunctionParamDecl();
+    param.location = this.loc(ctx);
+    param.docstring = this.doc(ctx);
+    if (ctx.identifier?.()) param.name = this.mkId(ctx.identifier()!);
+
+    if (ctx.data_type?.()) {
+      param.type = this.visitDataType(ctx.data_type()!) as AST.DataType | null;
+      const dir = ctx.function_parameter_dir?.();
+      if (dir) param.dir = PARAM_DIR[dir.getText()] ?? AST.enums.ParamDir.ParamDir_Default;
+      // `dflt` stays null: this builder constructs no expressions yet.
+    } else {
+      param.kind = this.paramKindOf(
+        ctx.TOK_TYPE?.() != null,
+        ctx.ref_type_category?.(),
+        ctx.plain_type_category?.(),
+      );
+    }
+    return param;
+  }
+
+  /**
+   * The three non-data_type parameter forms are siblings, not nested: `type T`,
+   * `ref <ref_type_category>`, and a bare `plain_type_category`. `struct` is a
+   * *plain* category in 3.1, so `ref struct` is not legal (B.13).
+   */
+  private paramKindOf(
+    isType: boolean,
+    refCat: P.Ref_type_categoryContext | null | undefined,
+    plainCat: P.Plain_type_categoryContext | null | undefined,
+  ): AST.enums.FunctionParamDeclKind {
+    if (isType) return AST.enums.FunctionParamDeclKind.ParamKind_Type;
+    if (refCat) {
+      return REF_PARAM_KIND[refCat.getText()]
+        ?? AST.enums.FunctionParamDeclKind.ParamKind_RefStruct;
+    }
+    if (plainCat) {
+      return PLAIN_PARAM_KIND[plainCat.getText()]
+        ?? AST.enums.FunctionParamDeclKind.ParamKind_Struct;
+    }
+    return AST.enums.FunctionParamDeclKind.ParamKind_DataType;
   }
 
   private visitExportAction(ctx: P.Export_actionContext): AST.ScopeChild {
@@ -947,13 +1149,55 @@ export class PSSASTBuilder {
     if (!child) return;
     if (Array.isArray(child)) {
       for (const c of child) {
+        this.attachPendingAnnotations(c);
         c.parent = parent as any;
         parent.children.push(c);
       }
     } else {
+      this.attachPendingAnnotations(child);
       child.parent = parent as any;
       parent.children.push(child);
     }
+  }
+
+  /**
+   * 3.1 §7.13: an element annotation (`@t {...}`, no trailing `;`) attaches to
+   * the declaration that follows it, so it is buffered until the next child is
+   * added. A standalone annotation (`@t {...};`) never enters this list -- it
+   * is a scope child in its own right and returns from the body-item visitor
+   * directly. Mirrors `attachPendingAnnotations` (AstBuilderInt.cpp:5023).
+   */
+  private attachPendingAnnotations(child: AST.ScopeChild): void {
+    if (this.pendingAnnotations.length === 0) return;
+    child.annotations.push(...this.pendingAnnotations);
+    this.pendingAnnotations = [];
+  }
+
+  /**
+   * Build an annotation *application*. Returns the node for the standalone
+   * form and null for the element form, which is buffered instead.
+   */
+  private visitAnnotationApp(ctx: P.AnnotationContext): AST.Annotation | null {
+    const a = new AST.Annotation();
+    a.location = this.loc(ctx);
+    a.type = this.visitTypeId(ctx.type_identifier());
+    a.is_standalone = ctx.TOK_SEMICOLON?.() != null;
+
+    const plist = ctx.annotation_params_list?.();
+    if (plist) {
+      for (const item of arr(plist.annotation_param_item())) {
+        const p = new AST.AnnotationParam();
+        p.location = this.loc(item);
+        if (item.identifier?.()) p.name = this.mkId(item.identifier()!);
+        // `value` stays null: it is a constant_expression, and this builder
+        // constructs no expressions yet.
+        a.parameters.push(p);
+      }
+    }
+
+    if (a.is_standalone) return a;
+    this.pendingAnnotations.push(a);
+    return null;
   }
 
   private loc(ctx: ParserRuleContext): Location {

@@ -37,7 +37,6 @@ import {
   SymbolRefPath,
   SymbolImportSpec,
   PackageImportStmt,
-  PackageScope,
   GlobalScope,
   FunctionDefinition,
 } from '../ast/generated';
@@ -92,10 +91,6 @@ export class ReferenceResolver {
   private resolveNode(node: ScopeChild, fileId: number): void {
     if (node instanceof TypeScope) {
       this.resolveTypeScope(node, fileId);
-    } else if (node instanceof PackageScope) {
-      for (const child of node.children) {
-        this.resolveNode(child, fileId);
-      }
     } else if (node instanceof Field) {
       this.resolveFieldType(node, fileId);
     } else if (node instanceof FieldCompRef) {
@@ -122,7 +117,10 @@ export class ReferenceResolver {
       }
     }
 
-    // Recurse into scopes
+    // Recurse into scopes. PackageScope needs no arm of its own above: it is a
+    // Scope, so this is what descends into it. It used to have one, which meant
+    // every reference inside a package was resolved twice and every diagnostic
+    // in one reported twice.
     if (node instanceof Scope) {
       for (const child of node.children) {
         this.resolveNode(child, fileId);

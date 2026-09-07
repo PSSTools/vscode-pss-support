@@ -78,6 +78,7 @@ const EXEC_KEYWORDS = [
 
 const BUILTIN_TYPES: readonly string[] = [
   'bit', 'int', 'bool', 'string', 'chandle', 'void',
+  'float32', 'float64',
 ];
 
 // ── Main entry point ────────────────────────────────────────────

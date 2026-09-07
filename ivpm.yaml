@@ -39,3 +39,6 @@ package:
     # something stated rather than something inherited.
     - name: sphinx-rtd-theme
       src: pypi
+
+    - name: pssfmt
+      url: https://github.com/psstools/pssfmt.git

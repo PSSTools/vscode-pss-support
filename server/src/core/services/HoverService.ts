@@ -26,6 +26,7 @@ import {
   DataTypeBool,
   DataTypeInt,
   DataTypeString,
+  DataTypeFloat,
   TypeIdentifier,
   ActivityActionTypeTraversal,
   RootSymbolScope,
@@ -271,6 +272,7 @@ function getDataTypeName(dt: unknown): string {
     return `${sign}`;
   }
   if (dt instanceof DataTypeString) return 'string';
+  if (dt instanceof DataTypeFloat) return dt.is_float64 ? 'float64' : 'float32';
   if (dt instanceof DataTypeUserDefined) {
     return dt.type_id?.elems.map(e => e.id?.id).join('::') ?? '?';
   }

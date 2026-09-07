@@ -7,6 +7,7 @@ import {
   DataTypeBool,
   DataTypeInt,
   DataTypeString,
+  DataTypeFloat,
   DataTypeUserDefined,
 } from '../ast/generated';
 import { SourcePosition } from '../types/SourcePosition';
@@ -80,6 +81,7 @@ function getDataTypeName(dt: unknown): string {
   if (dt instanceof DataTypeBool) return 'bool';
   if (dt instanceof DataTypeInt) return dt.is_signed ? 'int' : 'bit';
   if (dt instanceof DataTypeString) return 'string';
+  if (dt instanceof DataTypeFloat) return dt.is_float64 ? 'float64' : 'float32';
   if (dt instanceof DataTypeUserDefined) {
     return dt.type_id?.elems.map(e => e.id?.id).join('::') ?? '?';
   }

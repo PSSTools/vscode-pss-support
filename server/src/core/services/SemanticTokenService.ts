@@ -199,18 +199,17 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
         TokenModifier.declaration | TokenModifier.definition,
       );
     }
-    // Parameters
+    // Parameters. A parameter's own extent covers `int arg_a`, type and all,
+    // so colouring it would swallow the type keyword and violate the
+    // one-token-one-identifier rule; pushNameToken picks the identifier.
     for (const param of node.proto.parameters) {
       const paramName = param.name?.id;
-      const paramLoc = param.location;
-      if (paramName && paramLoc.lineno >= 0) {
-        tokens.push({
-          line: paramLoc.lineno - 1,
-          startChar: paramLoc.linepos,
-          length: paramLoc.extent > 0 ? paramLoc.extent : paramName.length,
-          tokenType: TokenType.parameter,
-          tokenModifiers: TokenModifier.declaration,
-        });
+      if (paramName) {
+        pushNameToken(
+          tokens, param, paramName,
+          TokenType.parameter,
+          TokenModifier.declaration,
+        );
       }
     }
     return;

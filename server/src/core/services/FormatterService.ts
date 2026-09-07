@@ -8,6 +8,7 @@ import {
   Component,
   Struct,
   Field,
+  DataTypeFloat,
   FieldCompRef,
   FieldRef,
   FieldClaim,
@@ -278,6 +279,9 @@ function getFieldTypeName(field: Field): string {
   if (ctor === 'DataTypeInt') {
     const idt = dt as any;
     return idt.is_signed ? 'int' : 'bit';
+  }
+  if (ctor === 'DataTypeFloat') {
+    return (dt as DataTypeFloat).is_float64 ? 'float64' : 'float32';
   }
   if (ctor === 'DataTypeUserDefined') {
     const udt = dt as any;

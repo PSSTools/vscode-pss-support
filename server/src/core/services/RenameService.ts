@@ -116,6 +116,12 @@ function isKeyword(name: string): boolean {
     'rand', 'constraint', 'activity', 'exec', 'if', 'else', 'do',
     'parallel', 'schedule', 'select', 'repeat', 'foreach', 'forall',
     'bit', 'int', 'bool', 'string', 'void', 'true', 'false',
+    // 3.1 additions. `soft` and `mutable` in particular are the reserved-word
+    // break: they were legal identifiers in 3.0, so renaming onto one is the
+    // exact mistake a user migrating a 3.0 model is positioned to make.
+    'soft', 'mutable', 'monitor', 'annotation', 'attr_group', 'override',
+    'pure', 'symbol', 'numeric', 'float32', 'float64', 'target', 'solve',
+    'instance', 'dist',
   ]);
   return keywords.has(name);
 }
