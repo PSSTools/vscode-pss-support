@@ -1,6 +1,24 @@
 package:
   name: vscode-pss-support
 
+  with:
+    node:
+      # No <project_root>/node_modules symlink into packages/node/node_modules.
+      #
+      # IVPM's default is to create that link, because for most projects it is
+      # the only way project sources can import an IVPM-managed package: node
+      # resolves bare specifiers by walking `node_modules` *upward* and never
+      # looks sideways into packages/node/.
+      #
+      # Here it would be actively destructive. This repo has its own root
+      # package.json and runs `npm install` at the root, so npm would treat the
+      # symlinked tree as its own -- and npm prunes packages that are not in the
+      # manifest it is installing. The first root `npm install` after an
+      # `ivpm update` would delete @psstools/pssparser out from under the
+      # server. server/package.json names the package directly instead, so the
+      # link buys nothing to offset that.
+      link-root: false
+
   dep-sets:
   - name: default-dev
     deps:
@@ -25,11 +43,45 @@ package:
       # makes a bare `ivpm update` work for someone who does not know to pass it.
       # Without anonymous auth IVPM's default order is ['gh', 'ssh'], which needs
       # a credential this repo's CI does not hold.
-      type: raw
-      # Only the ANTLR grammar (src/PSS{Lexer,Parser}.g4) and the AST schema
-      # (ast/*.yaml) are consumed, by build:grammar and gen-ast.mjs. `raw` stops
-      # IVPM trying to install a compiled C++/Python project into the venv to get
-      # at two directories of source text.
+      # The parser is consumed as a WebAssembly npm package built from source:
+      # pssparser's ts/ directory is installed into the managed node
+      # environment as a `file:` dependency, and npm's `prepare` hook compiles
+      # the C++ core to wasm and emits dist/ on install.
+      #
+      # This is the recipe pssparser's own ivpm.yaml documents for source
+      # consumers; the three keys are not independent.
+      #
+      #   dep-set: ts-build   default-dev (astbuilder, ANTLR, the venv) plus
+      #                       the pinned Emscripten toolchain. Building the
+      #                       wasm needs emcc, and default-dev does not carry
+      #                       it, so the plain dep-set gets as far as `emcmake:
+      #                       not found`.
+      #
+      #   deps-mode: nested   pssparser's dependencies land in *its* deps-dir
+      #                       rather than being flattened into ours.
+      #                       wasm/CMakeLists.txt resolves ANTLR relative to
+      #                       its own tree, so flattened it finds nothing.
+      #
+      #   subdir: ts          the package.json is in ts/, not at the repo root.
+      #                       Without it npm is handed a directory with no
+      #                       manifest, symlinks it anyway, and *succeeds* --
+      #                       the package is simply not importable afterwards.
+      dep-set: ts-build
+      deps-mode: nested
+      #
+      # `raw` alongside `node` is not redundant. pssparser has a pyproject.toml
+      # at its root, and IVPM's python auto-detection is *additive*: declaring
+      # a node type does not opt out of it. Without `raw` here, IVPM enrols
+      # pssparser as a python package as well and tries to build the native
+      # Cython extension -- which needs a full C++ toolchain and a cmake
+      # configure, fails, and takes the whole update down. `raw` is how a
+      # dependency says "no python content"; it does not suppress the node
+      # type declared beside it.
+      #
+      # This only shows up on a *clean* bootstrap. In a warm workspace the
+      # extension is already installed and the python step is a no-op, so the
+      # node-only form appears to work right up until CI runs it.
+      type: [raw, { node: { subdir: ts } }]
 
     # docs/conf.py hardcodes `html_theme = 'sphinx_rtd_theme'`, and the CI docs
     # job builds with `-W`, so a missing theme is a hard failure. Sphinx itself
