@@ -24,6 +24,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface ReferenceResult {
   uri: string;
@@ -63,8 +64,8 @@ export function getReferences(
         results.push({
           uri: fileUri,
           range: {
-            start: { line: loc.lineno - 1, character: loc.linepos },
-            end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : name.length) },
+            start: { line: loc.lineno - 1, character: lspChar(loc) },
+            end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : name.length) },
           },
           isDeclaration: true,
         });
@@ -205,8 +206,8 @@ function addTypeIdReference(
       results.push({
         uri,
         range: {
-          start: { line: loc.lineno - 1, character: loc.linepos },
-          end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : refName.length) },
+          start: { line: loc.lineno - 1, character: lspChar(loc) },
+          end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : refName.length) },
         },
         isDeclaration: false,
       });

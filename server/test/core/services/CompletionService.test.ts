@@ -3,10 +3,39 @@ import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
 import { getCompletions, resolveCompletionItem, parseLineContext } from '../../../src/core/services/CompletionService.js';
 import { CompletionKind } from '../../../src/core/types/CompletionResult.js';
 
-function createIndex(files: Record<string, string>): WorkspaceIndex {
+/**
+ * A workspace holding `files`.
+ *
+ * `typing` names the file and line the cursor is on, and is needed whenever
+ * that line is incomplete -- which for completion fixtures is most of them:
+ * `do mycomp_c::`, `my_s.` and `action x :` are all syntax errors. The parser
+ * has no error recovery, so a file containing one yields no tree at all, and
+ * the server's answer is to keep the tree from the last parse that succeeded.
+ * In an editor that tree is the file one keystroke ago; here it is the file
+ * with the line being typed left out. Seeding it that way and then updating
+ * to the text under test is the sequence a real edit produces, so it is what
+ * these tests should exercise.
+ *
+ * Fixtures whose text already parses need no `typing`.
+ */
+function createIndex(
+  files: Record<string, string>,
+  typing?: { uri: string; line: number },
+): WorkspaceIndex {
   const index = new WorkspaceIndex();
   for (const [uri, content] of Object.entries(files)) {
-    index.addFile(uri, content);
+    if (typing && uri === typing.uri) {
+      const lines = content.split('\n');
+      lines.splice(typing.line, 1);
+      index.addFile(uri, lines.join('\n'));
+    } else {
+      index.addFile(uri, content);
+    }
+  }
+  if (typing) {
+    // Force the seed parse before the update, so there is a good tree to keep.
+    index.getAnalysisResult();
+    index.updateFile(typing.uri, files[typing.uri]);
   }
   return index;
 }
@@ -323,7 +352,7 @@ describe('CompletionService do-target', () => {
   ].join('\n');
 
   it('should offer actions and components after "do "', () => {
-    const index = createIndex({ 'file:///test.pss': COMP_ACTIVITY_SRC });
+    const index = createIndex({ 'file:///test.pss': COMP_ACTIVITY_SRC }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: 9 },
@@ -341,7 +370,7 @@ describe('CompletionService do-target', () => {
 
   it('should filter do-target completions by partial identifier', () => {
     const src = COMP_ACTIVITY_SRC.replace('      do ', '      do my_');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: 11 },
@@ -368,7 +397,7 @@ describe('CompletionService do-target', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 5 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 5, character: 9 },
@@ -416,7 +445,7 @@ describe('CompletionService qualified-path', () => {
   ].join('\n');
 
   it('should offer actions within a component after "comp::"', () => {
-    const index = createIndex({ 'file:///test.pss': MULTI_COMP_SRC });
+    const index = createIndex({ 'file:///test.pss': MULTI_COMP_SRC }, { uri: 'file:///test.pss', line: 7 });
     const line7 = '      do mycomp_c::';
     const results = getCompletions(
       'file:///test.pss',
@@ -433,7 +462,7 @@ describe('CompletionService qualified-path', () => {
 
   it('should filter qualified-path completions by partial id', () => {
     const src = MULTI_COMP_SRC.replace('do mycomp_c::', 'do mycomp_c::read');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 7 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 7, character: '      do mycomp_c::read'.length },
@@ -448,7 +477,7 @@ describe('CompletionService qualified-path', () => {
 
   it('should return empty for unknown qualified prefix', () => {
     const src = MULTI_COMP_SRC.replace('do mycomp_c::', 'do nonexistent::');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 7 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 7, character: '      do nonexistent::'.length },
@@ -470,7 +499,7 @@ describe('CompletionService qualified-path', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 6 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 6, character: '    my_pkg::'.length },
@@ -502,7 +531,7 @@ describe('CompletionService member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 8 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 8, character: '      my_s.'.length },
@@ -530,7 +559,7 @@ describe('CompletionService member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 8 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 8, character: '      my_s.x'.length },
@@ -553,7 +582,7 @@ describe('CompletionService member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: '      unknown_var.'.length },
@@ -578,7 +607,7 @@ describe('CompletionService member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 8 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 8, character: '      my_comp.'.length },
@@ -606,7 +635,7 @@ describe('CompletionService template-params', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 5 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 5, character: '    my_generic<'.length },
@@ -634,7 +663,7 @@ describe('CompletionService template-params', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 7 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 7, character: '    my_tmpl<'.length },
@@ -661,7 +690,7 @@ describe('CompletionService template-params', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 6 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 6, character: '    my_pair<int, '.length },
@@ -687,7 +716,7 @@ describe('CompletionService annotations', () => {
       '  action a { }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: 3 },
@@ -706,7 +735,7 @@ describe('CompletionService annotations', () => {
       'annotation other_ann { }',
       '@my',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 2 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 2, character: 3 },
@@ -730,7 +759,7 @@ describe('CompletionService inheritance', () => {
       '  action child_a : ',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 2 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 2, character: '  action child_a : '.length },
@@ -749,7 +778,7 @@ describe('CompletionService inheritance', () => {
       'struct base_s { }',
       'struct child_s : ',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 1 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 1, character: 'struct child_s : '.length },
@@ -769,7 +798,7 @@ describe('CompletionService inheritance', () => {
       '  action child_a : al',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: '  action child_a : al'.length },
@@ -828,7 +857,7 @@ describe('CompletionService activity body', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: 6 },
@@ -862,7 +891,7 @@ describe('CompletionService nested member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 10 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 10, character: '      my_outer.nested.'.length },
@@ -895,7 +924,7 @@ describe('CompletionService inherited member-access', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 10 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 10, character: '      my_child.'.length },
@@ -923,7 +952,7 @@ describe('CompletionService value template param', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 5 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 5, character: '    my_sized<'.length },
@@ -948,7 +977,7 @@ describe('CompletionService import path', () => {
       '}',
       'import ',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 3 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 3, character: 'import '.length },
@@ -968,7 +997,7 @@ describe('CompletionService import path', () => {
       '}',
       'import my_pkg::',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 4 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 4, character: 'import my_pkg::'.length },
@@ -1000,7 +1029,7 @@ describe('CompletionService do with comp-ref', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 8 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 8, character: '      do '.length },
@@ -1041,7 +1070,7 @@ describe('CompletionService qualified-path scoping', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 12 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 12, character: '      do mycomp_c::'.length },
@@ -1083,7 +1112,7 @@ describe('CompletionService qualified-path scoping', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 7 });
     // Without text: AST-based fallback (activity context)
     const results = getCompletions(
       'file:///test.pss',
@@ -1114,7 +1143,7 @@ describe('CompletionService qualified-path scoping', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = createIndex({ 'file:///test.pss': src });
+    const index = createIndex({ 'file:///test.pss': src }, { uri: 'file:///test.pss', line: 7 });
     const results = getCompletions(
       'file:///test.pss',
       { line: 7, character: '      do mycomp_c::A'.length },

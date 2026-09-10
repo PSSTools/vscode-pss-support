@@ -17,6 +17,7 @@ import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
 import { SymbolChildrenScope } from '../ast/generated/index.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface CallHierarchyItem {
   name: string;
@@ -170,7 +171,7 @@ function* walkActionScope(scope: { children: ScopeChild[] }): Generator<ScopeChi
 
 function makeRange(loc: { lineno: number; linepos: number; extent: number }): SourceRange {
   return {
-    start: { line: loc.lineno - 1, character: loc.linepos },
-    end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+    start: { line: loc.lineno - 1, character: lspChar(loc) },
+    end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
   };
 }

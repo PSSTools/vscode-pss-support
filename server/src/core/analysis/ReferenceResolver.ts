@@ -44,6 +44,7 @@ import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
 import { getNodeName, walkScope } from '../ast/ASTUtils.js';
 import { ImportResolver } from './ImportResolver.js';
 import { collectAllSymbolNames, findBestMatch } from './SpellSuggest.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface ReferenceResolveResult {
   diagnostics: Diagnostic[];
@@ -304,8 +305,8 @@ export class ReferenceResolver {
     const loc = node.location;
     this.diagnostics.push({
       range: {
-        start: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, loc.linepos) },
-        end: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, loc.linepos + (loc.extent > 0 ? loc.extent : 1)) },
+        start: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, lspChar(loc)) },
+        end: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, lspChar(loc) + (loc.extent > 0 ? loc.extent : 1)) },
       },
       severity: DiagnosticSeverity.Error,
       code,

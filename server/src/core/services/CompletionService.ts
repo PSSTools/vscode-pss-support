@@ -96,11 +96,16 @@ export function getCompletions(
   text?: string,
   config?: IConfiguration,
 ): CompletionResult[] {
+  // No AST is the normal case here, not an edge case: completion is requested
+  // mid-token, and the parser has no error recovery, so the file the user is
+  // typing in frequently has no tree at all. Losing the tree costs the node
+  // context -- which construct the cursor sits in -- but not the line prefix
+  // and not the workspace symbol table, and the sub-contexts below are driven
+  // by exactly those. Bailing to bare keywords here would mean `do foo::`
+  // offering `component` and `struct` at the moment it can most usefully
+  // offer foo's actions.
   const ast = index.getAST(uri);
-  if (!ast) return getTopLevelCompletions(index);
-
-  const node = findNodeAtPosition(ast, position);
-  const context = detectContext(node, ast, position);
+  const node = ast ? findNodeAtPosition(ast, position) : null;
   const lineCtx = text ? parseLineContext(text, position) : null;
 
   // Line-prefix overrides take priority when detected.
@@ -146,6 +151,12 @@ export function getCompletions(
     }
   }
 
+  // Past the line-prefix sub-contexts, there is nothing left to go on without
+  // a tree: the switch below dispatches purely on which construct encloses
+  // the cursor.
+  if (!ast) return getTopLevelCompletions(index);
+
+  const context = detectContext(node, ast, position);
   switch (context) {
     case CompletionContext.TopLevel:
       return getTopLevelCompletions(index);

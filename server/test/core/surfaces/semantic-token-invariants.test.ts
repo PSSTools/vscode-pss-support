@@ -16,7 +16,8 @@ describe('semantic token invariants', () => {
       'package p {',
       '    struct data_s {',
       '        rand bit[32] addr;',
-      '        const bit[8] size;',
+      // `const` alone is not a legal field qualifier; 3.1 requires `static const`.
+      '        static const bit[8] size = 8;',
       '    }',
       '    enum mode_e { READ, WRITE }',
       '    function void helper(int arg_a, int arg_b);',

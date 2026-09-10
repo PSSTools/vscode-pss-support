@@ -6,6 +6,7 @@ import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { getNodeName, walkScope } from '../ast/ASTUtils.js';
 import { getReferences } from './ReferencesService.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface CodeLensItem {
   range: SourceRange;
@@ -35,8 +36,8 @@ export function getCodeLenses(
     if (loc.lineno < 0) continue;
 
     const range: SourceRange = {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : name.length) },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : name.length) },
     };
 
     // Reference count
@@ -67,8 +68,8 @@ export function getCodeLenses(
     const loc = child.location;
     if (loc.lineno < 0) continue;
     const range: SourceRange = {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + 8 },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + 8 },
     };
     lenses.push({
       range,

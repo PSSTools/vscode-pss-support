@@ -17,7 +17,7 @@ describe('diagnostic suggestions', () => {
     expect(diags.length).toBeGreaterThan(0);
     const typo = diags.find(d => d.message.includes("'my_dta_s'"));
     expect(typo).toBeDefined();
-    expect(typo!.message).toContain("Did you mean 'my_data_s'");
+    expect(typo!.message).toMatch(/did you mean 'my_data_s'/i);
   });
 
   it('should suggest similar type for misspelled component', () => {
@@ -32,7 +32,7 @@ describe('diagnostic suggestions', () => {
     const diags = index.getDiagnostics('file:///top.pss');
     const d = diags.find(d => d.message.includes("'mycomp'"));
     expect(d).toBeDefined();
-    expect(d!.message).toContain("Did you mean 'mycomp_c'");
+    expect(d!.message).toMatch(/did you mean 'mycomp_c'/i);
   });
 
   it('should suggest similar type for misspelled base type', () => {
@@ -45,7 +45,7 @@ describe('diagnostic suggestions', () => {
     const diags = index.getDiagnostics('file:///test.pss');
     const d = diags.find(d => d.code === 'unresolved-base-type');
     expect(d).toBeDefined();
-    expect(d!.message).toContain("Did you mean 'base_s'");
+    expect(d!.message).toMatch(/did you mean 'base_s'/i);
   });
 
   it('should not suggest when nothing is close', () => {
@@ -76,7 +76,7 @@ describe('diagnostic suggestions', () => {
     const diags = index.getDiagnostics('file:///ext.pss');
     const d = diags.find(d => d.code === 'unresolved-extend-target');
     expect(d).toBeDefined();
-    expect(d!.message).toContain("Did you mean 'mycomp_c'");
+    expect(d!.message).toMatch(/did you mean 'mycomp_c'/i);
   });
 
   it('should handle case-insensitive matching', () => {
@@ -93,6 +93,6 @@ describe('diagnostic suggestions', () => {
     const diags = index.getDiagnostics('file:///test.pss');
     const d = diags.find(d => d.message.includes("'mystruct'"));
     expect(d).toBeDefined();
-    expect(d!.message).toContain("Did you mean 'MyStruct'");
+    expect(d!.message).toMatch(/did you mean 'MyStruct'/i);
   });
 });

@@ -32,6 +32,7 @@ import {
 import { SemanticToken } from '../types/SemanticToken.js';
 import { getNodeName } from '../ast/ASTUtils.js';
 import { Location } from '../ast/generated/index.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 // Token type indices (must match the legend registered with the LSP)
 export enum TokenType {
@@ -96,7 +97,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
   if (loc.lineno < 0) return;
 
   const line = loc.lineno - 1;
-  const char = loc.linepos;
+  const char = lspChar(loc);
   const name = getNodeName(node);
 
   // Type declarations
@@ -153,7 +154,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
       if (itemName && itemLoc.lineno >= 0) {
         tokens.push({
           line: itemLoc.lineno - 1,
-          startChar: itemLoc.linepos,
+          startChar: lspChar(itemLoc),
           length: itemLoc.extent > 0 ? itemLoc.extent : itemName.length,
           tokenType: TokenType.enumMember,
           tokenModifiers: TokenModifier.declaration,
@@ -228,7 +229,7 @@ function emitTokensForNode(node: ScopeChild, tokens: SemanticToken[]): void {
       if (segment.location.lineno < 0) continue;
       tokens.push({
         line: segment.location.lineno - 1,
-        startChar: segment.location.linepos,
+        startChar: lspChar(segment.location),
         length: segment.location.extent > 0 ? segment.location.extent : segment.id.length,
         tokenType: TokenType.namespace,
         tokenModifiers: TokenModifier.declaration,
@@ -261,7 +262,7 @@ function pushNameToken(
   if (nameLoc && nameLoc.lineno >= 0) {
     tokens.push({
       line: nameLoc.lineno - 1,
-      startChar: nameLoc.linepos,
+      startChar: lspChar(nameLoc),
       length: nameLoc.extent > 0 ? nameLoc.extent : name.length,
       tokenType,
       tokenModifiers,
@@ -273,7 +274,7 @@ function pushNameToken(
   if (loc.lineno < 0) return;
   tokens.push({
     line: loc.lineno - 1,
-    startChar: loc.linepos,
+    startChar: lspChar(loc),
     length: name.length,
     tokenType,
     tokenModifiers,
@@ -290,7 +291,7 @@ function emitTypeIdToken(
     if (elem.id && elem.id.location.lineno >= 0) {
       tokens.push({
         line: elem.id.location.lineno - 1,
-        startChar: elem.id.location.linepos,
+        startChar: lspChar(elem.id.location),
         length: elem.id.location.extent > 0 ? elem.id.location.extent : elem.id.id.length,
         tokenType,
         tokenModifiers: 0,

@@ -18,6 +18,7 @@ import { SemanticAnalyzer, AnalysisResult } from '../analysis/SemanticAnalyzer.j
 import { FileState } from './FileState.js';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
 import { IFileSystem } from '../io/IFileSystem.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 /**
  * Cross-file symbol table and dependency graph.
@@ -148,6 +149,7 @@ export class WorkspaceIndex {
     uri: string,
     pos: SourcePosition,
   ): { node: ScopeChild; scope: SymbolScope } | null {
+    this.ensureParsed();
     const state = this.fileStates.get(uri);
     if (!state?.ast) return null;
 
@@ -230,6 +232,14 @@ export class WorkspaceIndex {
    * The cost of that resilience was measured: 136ms for the 92-file corpus
    * against 34ms for a single batched call. Correctness is worth the 4x here,
    * and both are lazy.
+   *
+   * A file that fails keeps the tree from its last successful parse. The
+   * parser has no error recovery -- a failed parse yields no unit at all, not
+   * a partial one -- and a buffer mid-edit is syntactically invalid most of
+   * the time it is being looked at. Dropping the tree would make every
+   * identifier in the file stop resolving the moment a brace was opened,
+   * which is exactly when completion is wanted. The stale tree is wrong only
+   * about the edit in progress; it is right about everything else in the file.
    */
   private ensureParsed(): void {
     if (!this.parseStale) return;
@@ -238,7 +248,6 @@ export class WorkspaceIndex {
     this.uriToFileId.clear();
     this.fileIdToUri.clear();
     for (const state of this.fileStates.values()) {
-      state.ast = null;
       state.syntaxDiagnostics = [];
     }
 
@@ -270,6 +279,7 @@ export class WorkspaceIndex {
       this.fileIdToUri.set(fileid, name);
     }
 
+    const reparsed = new Set<string>();
     for (const unit of this.parser.userUnits()) {
       const uri = this.fileIdToUri.get(unit.fileid);
       if (uri === undefined) continue;
@@ -277,6 +287,17 @@ export class WorkspaceIndex {
       if (!state) continue;
       unit.filename = uri;
       state.ast = unit;
+      reparsed.add(uri);
+    }
+
+    // A file holding a stale tree still needs its id in the maps: the tree's
+    // nodes carry that id, and callers translate node to URI through it.
+    for (const [uri, state] of this.fileStates) {
+      if (reparsed.has(uri) || !state.ast) continue;
+      this.uriToFileId.set(uri, state.ast.fileid);
+      if (!this.fileIdToUri.has(state.ast.fileid)) {
+        this.fileIdToUri.set(state.ast.fileid, uri);
+      }
     }
 
     for (const marker of this.parser.markers) {
@@ -429,8 +450,8 @@ export class WorkspaceIndex {
             kind: child.constructor.name,
             uri,
             range: {
-              start: { line: loc.lineno - 1, character: loc.linepos },
-              end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : name.length) },
+              start: { line: loc.lineno - 1, character: lspChar(loc) },
+              end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : name.length) },
             },
           });
         }

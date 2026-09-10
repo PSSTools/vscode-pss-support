@@ -21,10 +21,23 @@ export interface ParsedSources {
   /**
    * Everything the parser reported, as LSP-shaped diagnostics.
    *
-   * Includes link-time findings as well as syntax errors: the parser appends
-   * the two, and a test asserting "this source is clean" wants both.
+   * The concatenation of `syntaxDiagnostics` and `linkDiagnostics`, in that
+   * order, for tests that want "is this source clean at all".
    */
   diagnostics: Diagnostic[];
+  /**
+   * What the parse itself reported, before any name was resolved.
+   *
+   * Split out because the two questions are different and most tests mean
+   * only the first. `struct s { my_t x; }` is well-formed PSS whose type
+   * happens not to be declared in the fixture; a test about declaration
+   * syntax should not have to declare it. The old front end never raised the
+   * second kind at all -- it did not resolve names -- so tests written
+   * against it assume this split even where they do not say so.
+   */
+  syntaxDiagnostics: Diagnostic[];
+  /** What `link()` reported: unresolved references, type mismatches. */
+  linkDiagnostics: Diagnostic[];
 }
 
 /**
@@ -52,6 +65,10 @@ export function parseSources(sources: string[] | Record<string, string>): Parsed
         // Deliberately-malformed input: the scope is simply absent.
       }
     }
+    // Markers accumulate in one list, so the boundary between the two kinds
+    // is just how many there were when parsing finished.
+    const syntaxCount = parser.markers.length;
+
     try {
       parser.link();
     } catch {
@@ -71,8 +88,10 @@ export function parseSources(sources: string[] | Record<string, string>): Parsed
     // The AST survives dispose() -- it is plain JavaScript, not a view over
     // WASM memory -- so the caller keeps everything returned here.
     const diagnostics = parser.markers.map(markerToDiagnostic);
+    const syntaxDiagnostics = diagnostics.slice(0, syntaxCount);
+    const linkDiagnostics = diagnostics.slice(syntaxCount);
 
-    return { scopes, root, stdlibScopes, diagnostics };
+    return { scopes, root, stdlibScopes, diagnostics, syntaxDiagnostics, linkDiagnostics };
   } finally {
     parser.dispose();
   }

@@ -39,6 +39,7 @@ import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, getNodeSignature } from '../ast/ASTUtils.js';
 import { resolveTypeAtPosition, findSymbolScope } from '../analysis/SymbolLookup.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 /**
  * Given a position in a file, produce hover information including
@@ -72,8 +73,8 @@ export function getHover(
   const loc = node.location;
   const range: SourceRange | undefined = loc.lineno >= 0
     ? {
-        start: { line: loc.lineno - 1, character: loc.linepos },
-        end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+        start: { line: loc.lineno - 1, character: lspChar(loc) },
+        end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
       }
     : undefined;
 

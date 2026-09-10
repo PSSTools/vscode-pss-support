@@ -22,6 +22,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { TextEdit } from '../types/TextEdit.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface RenameResult {
   /** Map from URI to text edits for that file */
@@ -59,8 +60,8 @@ export function prepareRename(
 
   return {
     range: {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : name.length) },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : name.length) },
     },
     placeholder: name,
   };
@@ -196,10 +197,10 @@ function checkTypeIdReference(
     if (elem.id?.id === oldName && elem.id.location.lineno >= 0) {
       edits.push({
         range: {
-          start: { line: elem.id.location.lineno - 1, character: elem.id.location.linepos },
+          start: { line: elem.id.location.lineno - 1, character: lspChar(elem.id.location) },
           end: {
             line: elem.id.location.lineno - 1,
-            character: elem.id.location.linepos + (elem.id.location.extent > 0 ? elem.id.location.extent : oldName.length),
+            character: lspChar(elem.id.location) + (elem.id.location.extent > 0 ? elem.id.location.extent : oldName.length),
           },
         },
         newText: newName,
@@ -229,10 +230,10 @@ function addEditForName(
   if (nameLoc.lineno >= 0) {
     edits.push({
       range: {
-        start: { line: nameLoc.lineno - 1, character: nameLoc.linepos },
+        start: { line: nameLoc.lineno - 1, character: lspChar(nameLoc) },
         end: {
           line: nameLoc.lineno - 1,
-          character: nameLoc.linepos + (nameLoc.extent > 0 ? nameLoc.extent : oldName.length),
+          character: lspChar(nameLoc) + (nameLoc.extent > 0 ? nameLoc.extent : oldName.length),
         },
       },
       newText: newName,

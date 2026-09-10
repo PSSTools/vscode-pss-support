@@ -33,6 +33,7 @@ import {
 } from '../ast/generated/index.js';
 import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
 import { getNodeName } from '../ast/ASTUtils.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface SymbolTableResult {
   root: RootSymbolScope;
@@ -265,8 +266,8 @@ export class SymbolTableBuilder {
     if (loc.lineno < 0) return;
     this.diagnostics.push({
       range: {
-        start: { line: loc.lineno - 1, character: loc.linepos },
-        end: { line: loc.lineno - 1, character: loc.linepos + name.length },
+        start: { line: loc.lineno - 1, character: lspChar(loc) },
+        end: { line: loc.lineno - 1, character: lspChar(loc) + name.length },
       },
       severity: DiagnosticSeverity.Error,
       code: 'duplicate-symbol',

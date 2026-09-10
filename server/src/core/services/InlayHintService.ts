@@ -16,6 +16,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { walkScope, getNodeName } from '../ast/ASTUtils.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface InlayHint {
   position: SourcePosition;
@@ -89,7 +90,7 @@ function collectNodeHints(
         hints.push({
           position: {
             line: loc.lineno - 1,
-            character: loc.linepos + (loc.extent > 0 ? loc.extent : lastElem.id.id.length),
+            character: lspChar(loc) + (loc.extent > 0 ? loc.extent : lastElem.id.id.length),
           },
           label: ': action',
           kind: 'type',
@@ -122,7 +123,7 @@ function addTemplateParamHints(
           const valueLoc = (elem.params.values[i] as any)?.location;
           if (valueLoc && valueLoc.lineno >= 0) {
             hints.push({
-              position: { line: valueLoc.lineno - 1, character: valueLoc.linepos },
+              position: { line: valueLoc.lineno - 1, character: lspChar(valueLoc) },
               label: `${paramName}=`,
               kind: 'parameter',
               paddingRight: true,

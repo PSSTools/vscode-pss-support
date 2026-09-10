@@ -11,6 +11,7 @@ import {
   TypeIdentifier,
 } from '../ast/generated/index.js';
 import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface ImportResolveResult {
   diagnostics: Diagnostic[];
@@ -134,8 +135,8 @@ export class ImportResolver {
     const loc = node.location;
     this.diagnostics.push({
       range: {
-        start: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, loc.linepos) },
-        end: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, loc.linepos + (loc.extent > 0 ? loc.extent : 1)) },
+        start: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, lspChar(loc)) },
+        end: { line: Math.max(0, loc.lineno - 1), character: Math.max(0, lspChar(loc) + (loc.extent > 0 ? loc.extent : 1)) },
       },
       severity: DiagnosticSeverity.Error,
       code,

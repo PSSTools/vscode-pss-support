@@ -34,6 +34,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
 import { findSymbolScope, resolveTypeAtPosition } from '../analysis/SymbolLookup.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 /**
  * Given a position in a file, find the declaration location of the
@@ -64,8 +65,8 @@ export function getDefinition(
       results.push({
         uri: fileUri,
         range: {
-          start: { line: loc.lineno - 1, character: loc.linepos },
-          end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+          start: { line: loc.lineno - 1, character: lspChar(loc) },
+          end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
         },
       });
     }
@@ -178,8 +179,8 @@ function resolveTypeIdentifierAtPosition(
   return {
     uri: fileUri,
     range: {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
     },
   };
 }
@@ -205,8 +206,8 @@ function resolveTypeIdentifierToDefinition(
   return {
     uri: fileUri,
     range: {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
     },
   };
 }

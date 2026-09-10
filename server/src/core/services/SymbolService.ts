@@ -27,12 +27,13 @@ import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceSymbol } from '../types/WorkspaceSymbol.js';
 import { getNodeName } from '../ast/ASTUtils.js';
 import { Location } from '../ast/generated/index.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 function locationToRange(loc: Location, endLoc?: Location): SourceRange {
   const startLine = Math.max(0, loc.lineno - 1);
-  const startChar = Math.max(0, loc.linepos);
+  const startChar = Math.max(0, lspChar(loc));
   const endLine = endLoc ? Math.max(0, endLoc.lineno - 1) : startLine;
-  const endChar = endLoc ? Math.max(0, endLoc.linepos) : startChar + Math.max(1, loc.extent);
+  const endChar = endLoc ? Math.max(0, lspChar(endLoc)) : startChar + Math.max(1, loc.extent);
   return {
     start: { line: startLine, character: startChar },
     end: { line: endLine, character: endChar },

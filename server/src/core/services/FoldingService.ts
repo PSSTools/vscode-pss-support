@@ -1,6 +1,7 @@
 import {
   ScopeChild,
   Scope,
+  ConstraintBlock,
   TypeScope,
   PackageScope,
   ActivityDecl,
@@ -30,6 +31,21 @@ export function getFoldingRanges(ast: GlobalScope): FoldingRange[] {
 
 function collectFoldingRanges(scope: Scope, ranges: FoldingRange[]): void {
   for (const child of scope.children) {
+    // A constraint block is brace-delimited and often the longest thing in an
+    // action, but it is not a Scope -- it holds `constraints`, not `children`
+    // -- so the general branch below would skip it.
+    if (child instanceof ConstraintBlock) {
+      // `endLocation` is not set on these, so the last statement stands in for
+      // the closing brace -- the same fallback `getEndLine` uses for a scope.
+      const end = child.endLocation.lineno >= 0
+        ? child.endLocation.lineno
+        : Math.max(...child.constraints.map(c => c.location.lineno), -1);
+      if (child.location.lineno >= 0 && end > child.location.lineno) {
+        ranges.push({ startLine: child.location.lineno - 1, endLine: end - 1 });
+      }
+      continue;
+    }
+
     if (child instanceof Scope && child.children.length > 0) {
       const startLoc = child.location;
       if (startLoc.lineno < 0) continue;

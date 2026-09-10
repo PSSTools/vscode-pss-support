@@ -120,7 +120,7 @@ describe('SymbolTableBuilder', () => {
   it('handles struct fields without error', () => {
     const result = buildSymbolTable([`
       struct s {
-        rand int<32> x;
+        rand int[32] x;
         bool flag;
       }
     `]);
@@ -131,7 +131,7 @@ describe('SymbolTableBuilder', () => {
   it('handles complex multi-file project', () => {
     const result = buildSymbolTable([
       `package common {
-        struct addr_s { rand int<32> addr; }
+        struct addr_s { rand int[32] addr; }
         enum op_e { READ, WRITE }
       }`,
       `package tests {

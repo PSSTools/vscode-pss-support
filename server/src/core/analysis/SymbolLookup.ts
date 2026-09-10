@@ -5,6 +5,7 @@ import {
   TypeIdentifier,
 } from '../ast/generated/index.js';
 import { SourcePosition } from '../types/SourcePosition.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 /**
  * Resolve a qualified name (e.g. "mycomp_c::A") to its SymbolScope
@@ -62,7 +63,7 @@ export function resolveTypeAtPosition(
     const loc = elem.id?.location;
     if (!loc || loc.lineno < 0) continue;
     const elemLine = loc.lineno - 1;
-    const elemStart = loc.linepos;
+    const elemStart = lspChar(loc);
     const elemEnd = elemStart + (loc.extent > 0 ? loc.extent : (elem.id?.id?.length ?? 1));
     if (position.line === elemLine && position.character >= elemStart && position.character < elemEnd) {
       elemCount = i + 1;

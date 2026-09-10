@@ -33,6 +33,7 @@ import { TextEdit } from '../types/TextEdit.js';
 import { SourceRange } from '../types/SourceRange.js';
 import { IConfiguration } from '../io/IConfiguration.js';
 import { getNodeName, getNodeSignature } from '../ast/ASTUtils.js';
+import { isWritten } from '../ast/SourceLoc.js';
 
 export interface FormatOptions {
   indentSize: number;
@@ -111,6 +112,9 @@ function formatScope(scope: GlobalScope, depth: number, opts: FormatOptions): st
 }
 
 function formatChild(node: ScopeChild, depth: number, opts: FormatOptions): string | null {
+  // Members the linker grafted on are not part of the document.
+  if (!isWritten(node)) return null;
+
   const indent = ' '.repeat(depth * opts.indentSize);
   const innerIndent = ' '.repeat((depth + 1) * opts.indentSize);
 

@@ -6,6 +6,7 @@ import {
 import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
 import { getNodeName, walkScope } from '../ast/ASTUtils.js';
 import { IConfiguration } from '../io/IConfiguration.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface LintRule {
   name: string;
@@ -87,8 +88,8 @@ function addLintDiag(
   if (loc.lineno < 0) return;
   diags.push({
     range: {
-      start: { line: loc.lineno - 1, character: loc.linepos },
-      end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+      start: { line: loc.lineno - 1, character: lspChar(loc) },
+      end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
     },
     severity,
     code: `lint/${code}`,

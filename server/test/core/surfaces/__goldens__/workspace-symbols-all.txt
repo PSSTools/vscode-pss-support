@@ -4,12 +4,12 @@ Buffer mem_b (types_pkg) -> types_pkg.pss:13:5
 Component dev_c -> dev_comp.pss:3:1
 Component pss_top -> pss_top.pss:3:1
 Enum mode_e (types_pkg) -> types_pkg.pss:8:5
-Field addr (types_pkg.data_s) -> types_pkg.pss:4:9
-Field base (types_pkg.mem_b) -> types_pkg.pss:14:9
-Field cfg (dev_c) -> dev_comp.pss:5:5
-Field dev (pss_top) -> pss_top.pss:5:5
-Field mode (dev_c) -> dev_comp.pss:6:5
-Field payload (dev_c.write_a) -> dev_comp.pss:9:9
-Field size (types_pkg.data_s) -> types_pkg.pss:5:9
+Field addr (types_pkg.data_s) -> types_pkg.pss:4:22
+Field base (types_pkg.mem_b) -> types_pkg.pss:14:22
+Field cfg (dev_c) -> dev_comp.pss:5:14
+Field dev (pss_top) -> pss_top.pss:5:11
+Field mode (dev_c) -> dev_comp.pss:6:14
+Field payload (dev_c.write_a) -> dev_comp.pss:9:21
+Field size (types_pkg.data_s) -> types_pkg.pss:5:22
 Package types_pkg -> types_pkg.pss:1:1
 Struct data_s (types_pkg) -> types_pkg.pss:3:5

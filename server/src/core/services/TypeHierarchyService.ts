@@ -16,6 +16,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { lspChar } from '../ast/SourceLoc.js';
 
 export interface TypeHierarchyItem {
   name: string;
@@ -178,7 +179,7 @@ function getTypeKindString(node: TypeScope): string {
 
 function makeRange(loc: { lineno: number; linepos: number; extent: number }): SourceRange {
   return {
-    start: { line: loc.lineno - 1, character: loc.linepos },
-    end: { line: loc.lineno - 1, character: loc.linepos + (loc.extent > 0 ? loc.extent : 1) },
+    start: { line: loc.lineno - 1, character: lspChar(loc) },
+    end: { line: loc.lineno - 1, character: lspChar(loc) + (loc.extent > 0 ? loc.extent : 1) },
   };
 }

@@ -5,27 +5,36 @@
  * are the ones a consumer (a service, or another psstools front end) can
  * observe.
  *
- * Where a row's AST shape is not built yet, the test says so and pins the
- * current behaviour rather than being omitted -- see the `constraint bodies`
- * describe at the bottom, which is the recorded Phase 2 gap.
+ * Every row asserts syntax only. These fixtures are one-liners that name
+ * types they never declare, so the linker has plenty to complain about and
+ * none of it is what any row is about.
  */
 import { describe, it, expect } from 'vitest';
 import { parseSources } from '../../helpers/ParseHelper.js';
+import { DiagnosticSeverity } from '../../../src/core/types/Diagnostic.js';
 import * as AST from '../../../src/core/ast/generated/index.js';
 import { enums, flags } from '../../../src/core/ast/generated/index.js';
 
-/** Parse and assert the source is syntactically clean, returning the AST. */
+/**
+ * Parse and assert the source is syntactically clean, returning the AST.
+ *
+ * Syntax only: these fixtures are minimal by design and name types they do
+ * not declare, so link findings are expected and are not what any row here
+ * is about.
+ */
 function build(source: string): AST.GlobalScope {
-  const { scopes, diagnostics } = parseSources([source]);
+  const { scopes, syntaxDiagnostics } = parseSources([source]);
   expect(
-    diagnostics.map(d => `${d.range.start.line + 1}:${d.range.start.character + 1} ${d.message}`),
+    syntaxDiagnostics.map(
+      d => `${d.range.start.line + 1}:${d.range.start.character + 1} ${d.message}`,
+    ),
   ).toEqual([]);
   return scopes[0];
 }
 
 /** Parse and assert the source is rejected. */
 function expectSyntaxError(source: string): void {
-  expect(parseSources([source]).diagnostics.length).toBeGreaterThan(0);
+  expect(parseSources([source]).syntaxDiagnostics.length).toBeGreaterThan(0);
 }
 
 /**
@@ -147,7 +156,7 @@ describe('PSS 3.1 constructs', () => {
       const gs = build(
         'package p { function void f(numeric n, struct s, ref action a, ref component c, type T); }',
       );
-      const proto = find(gs, AST.FunctionDefinition).proto!;
+      const proto = find(gs, AST.FunctionPrototype);
       expect(proto.parameters.map(p => [p.name?.id, enums.FunctionParamDeclKind[p.kind]])).toEqual([
         ['n', 'ParamKind_Numeric'],
         ['s', 'ParamKind_Struct'],
@@ -162,40 +171,44 @@ describe('PSS 3.1 constructs', () => {
     });
   });
 
+  /**
+   * A declaration with no body builds a `FunctionPrototype` directly, not a
+   * `FunctionDefinition` wrapping one -- the definition node exists only
+   * where there is a body to hold.
+   */
   describe('platform-qualified functions ✱', () => {
     it('sets is_target for a target function', () => {
-      const proto = find(build('package p { target function void w(int a); }'), AST.FunctionDefinition).proto!;
+      const proto = find(build('package p { target function void w(int a); }'), AST.FunctionPrototype);
       expect(proto.is_target).toBe(true);
       expect(proto.is_solve).toBe(false);
     });
 
     it('sets both flags for `target solve`, which are not exclusive', () => {
-      const proto = find(build('package p { target solve function void w(); }'), AST.FunctionDefinition).proto!;
+      const proto = find(build('package p { target solve function void w(); }'), AST.FunctionPrototype);
       expect(proto.is_target).toBe(true);
       expect(proto.is_solve).toBe(true);
     });
 
     it('sets is_solve alone for a solve function', () => {
-      const proto = find(build('package p { solve function void w(); }'), AST.FunctionDefinition).proto!;
+      const proto = find(build('package p { solve function void w(); }'), AST.FunctionPrototype);
       expect(proto.is_target).toBe(false);
       expect(proto.is_solve).toBe(true);
     });
 
     it('sets is_pure and carries the return type', () => {
-      const proto = find(build('package p { pure function bit[8] w(); }'), AST.FunctionDefinition).proto!;
+      const proto = find(build('package p { pure function bit[8] w(); }'), AST.FunctionPrototype);
       expect(proto.is_pure).toBe(true);
       expect(proto.rtype).toBeInstanceOf(AST.DataTypeInt);
     });
 
     it('spells a void return as a null rtype', () => {
-      expect(find(build('package p { function void w(); }'), AST.FunctionDefinition).proto!.rtype).toBeNull();
+      expect(find(build('package p { function void w(); }'), AST.FunctionPrototype).rtype).toBeNull();
     });
 
     it('carries parameter names, types, and direction', () => {
       const proto = find(
         build('package p { function void w(int a, output bit[4] b); }'),
-        AST.FunctionDefinition,
-      ).proto!;
+        AST.FunctionPrototype);
       expect(proto.parameters).toHaveLength(2);
       expect(proto.parameters[0].name?.id).toBe('a');
       expect(proto.parameters[0].type).toBeInstanceOf(AST.DataTypeInt);
@@ -299,29 +312,39 @@ describe('PSS 3.1 constructs', () => {
       build('package p { compile if (1) { struct s { } } else { struct t { } } }');
     });
 
-    it('still parses the deprecated brace-less form (PSS104 is Phase 4)', () => {
-      build('package p { compile if (1) struct s { } }');
+    it('still parses the deprecated brace-less form, and says it is deprecated', () => {
+      const { syntaxDiagnostics } = parseSources([
+        'package p { compile if (1) struct s { } }',
+      ]);
+      // A warning, not a rejection: the form is legal 3.1 and existing source
+      // uses it. `build` is not used here because it requires silence.
+      expect(syntaxDiagnostics).toHaveLength(1);
+      expect(syntaxDiagnostics[0].severity).toBe(DiagnosticSeverity.Warning);
+      expect(syntaxDiagnostics[0].message).toMatch(/deprecated/);
     });
   });
 
   describe('template strings', () => {
-    // Scanning these into a TemplateString tree is Phase 5; for now the body is
-    // kept verbatim in `data`, which is what these pin.
+    // The body is kept verbatim in `data` *and* scanned into a `template`
+    // tree; both are asserted, because a consumer that wants the source text
+    // back (the formatter) and one that wants the structure (the checker) each
+    // rely on one of them.
     it('keeps a mustache body verbatim', () => {
       const gs = build('component c { exec body C = """x = {{ a }};"""; }');
       expect(find(gs, AST.ExecTargetTemplateBlock).data).toBe('x = {{ a }};');
     });
 
     it('keeps control and comment elements verbatim', () => {
+      // Blocks close with `{%%}`, not a keyword: §4.7.1.2 has no `{% endif %}`.
       const gs = build(
-        'component c { exec body C = """{% if a %}x{% endif %}{# note #}"""; }',
+        'component c { exec body C = """{% if (a) %}x{%%}{# note #}"""; }',
       );
-      expect(find(gs, AST.ExecTargetTemplateBlock).data).toBe('{% if a %}x{% endif %}{# note #}');
+      expect(find(gs, AST.ExecTargetTemplateBlock).data).toBe('{% if (a) %}x{%%}{# note #}');
     });
 
-    it('does not build a TemplateString tree yet', () => {
+    it('builds a TemplateString tree alongside the verbatim body', () => {
       const gs = build('component c { exec body C = """{{ a }}"""; }');
-      expect(find(gs, AST.ExecTargetTemplateBlock).template).toBeNull();
+      expect(find(gs, AST.ExecTargetTemplateBlock).template).toBeInstanceOf(AST.TemplateString);
     });
   });
 
@@ -349,21 +372,19 @@ describe('PSS 3.1 constructs', () => {
     });
   });
 
-  describe('constraint bodies: recorded Phase 2 gap', () => {
-    // The builder constructs no expressions and no constraint statements: a
-    // constraint block's items become bare ScopeChild placeholders. Every 3.1
-    // constraint feature above therefore parses but has no AST shape to assert
-    // -- ConstraintStmtSoft, ConstraintStmtDist, DistItem and ExprSliceRange
-    // are all generated and all unused. This pins that so the gap closing is a
-    // visible test change rather than a silent one.
-    it('builds constraint items as untyped placeholders', () => {
+  describe('constraint bodies', () => {
+    // Previously a recorded gap: the old builder made every constraint item a
+    // bare ScopeChild placeholder, so none of the 3.1 constraint features
+    // above had an AST shape to assert. They do now.
+    it('builds typed constraint statements', () => {
       const gs = build('struct s { rand int x; constraint c { soft x > 10; x < 20; } }');
-      const c = findAll(gs, AST.NamedScope).find(n => n.name?.id === 'c')!;
-      expect(c.children).toHaveLength(2);
-      for (const item of c.children) {
-        expect(item.constructor).toBe(AST.ScopeChild);
-      }
-      expect(findAll(gs, AST.ConstraintStmtSoft)).toHaveLength(0);
+      const block = find(gs, AST.ConstraintBlock);
+      // `name` is a plain string here, not an identifier node.
+      expect(block.name).toBe('c');
+      expect(block.constraints.map(s => s.constructor.name)).toEqual([
+        'ConstraintStmtSoft',
+        'ConstraintStmtExpr',
+      ]);
     });
   });
 });
