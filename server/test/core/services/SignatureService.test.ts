@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getSignatureHelp } from '../../../src/core/services/SignatureService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getSignatureHelp } from '../../../src/core/services/SignatureService.js';
 
 describe('SignatureService', () => {
   it('should return undefined for position with no function', () => {

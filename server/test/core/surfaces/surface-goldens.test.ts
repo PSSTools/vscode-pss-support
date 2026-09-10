@@ -1,6 +1,8 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { join } from 'path';
-import { TestProject } from '../../helpers/TestProject';
+import { TestProject } from '../../helpers/TestProject.js';
 import {
   renderDiagnostics,
   renderDocumentSymbols,
@@ -12,7 +14,7 @@ import {
   renderCompletions,
   renderDefinitions,
   renderHover,
-} from '../../helpers/Probes';
+} from '../../helpers/Probes.js';
 
 /**
  * Golden-file coverage of every surface whose output a user reads directly.
@@ -22,7 +24,7 @@ import {
  * same act as reviewing the behaviour.
  */
 
-const GOLDEN_DIR = join(__dirname, '__goldens__');
+const GOLDEN_DIR = join(dirname(fileURLToPath(import.meta.url)), '__goldens__');
 const golden = (name: string) => join(GOLDEN_DIR, `${name}.txt`);
 
 /** Map a project URI back to a short file name so goldens stay path-independent. */

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
 
 /**
  * Multi-file diagnostic tests. Validates that type references across

@@ -3,8 +3,8 @@ import {
   SymbolScope,
   RootSymbolScope,
   TypeIdentifier,
-} from '../ast/generated';
-import { SourcePosition } from '../types/SourcePosition';
+} from '../ast/generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
 
 /**
  * Resolve a qualified name (e.g. "mycomp_c::A") to its SymbolScope

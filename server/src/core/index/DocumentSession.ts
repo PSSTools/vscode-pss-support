@@ -1,5 +1,5 @@
-import { WorkspaceIndex } from './WorkspaceIndex';
-import { Diagnostic } from '../types/Diagnostic';
+import { WorkspaceIndex } from './WorkspaceIndex.js';
+import { Diagnostic } from '../types/Diagnostic.js';
 
 export type TimerHandle = unknown;
 

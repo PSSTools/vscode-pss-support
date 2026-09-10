@@ -1,14 +1,14 @@
-import { Diagnostic, DiagnosticSeverity } from '../../src/core/types/Diagnostic';
-import { DocumentSymbol, SymbolKind } from '../../src/core/types/DocumentSymbol';
-import { WorkspaceSymbol } from '../../src/core/types/WorkspaceSymbol';
-import { CompletionResult, CompletionKind } from '../../src/core/types/CompletionResult';
-import { SemanticToken } from '../../src/core/types/SemanticToken';
-import { TOKEN_TYPES, TOKEN_MODIFIERS } from '../../src/core/services/SemanticTokenService';
-import { FoldingRange } from '../../src/core/services/FoldingService';
-import { InlayHint } from '../../src/core/services/InlayHintService';
-import { CodeLensItem } from '../../src/core/services/CodeLensService';
-import { CodeAction } from '../../src/core/services/CodeActionService';
-import { DefinitionResult } from '../../src/core/types/DefinitionResult';
+import { Diagnostic, DiagnosticSeverity } from '../../src/core/types/Diagnostic.js';
+import { DocumentSymbol, SymbolKind } from '../../src/core/types/DocumentSymbol.js';
+import { WorkspaceSymbol } from '../../src/core/types/WorkspaceSymbol.js';
+import { CompletionResult, CompletionKind } from '../../src/core/types/CompletionResult.js';
+import { SemanticToken } from '../../src/core/types/SemanticToken.js';
+import { TOKEN_TYPES, TOKEN_MODIFIERS } from '../../src/core/services/SemanticTokenService.js';
+import { FoldingRange } from '../../src/core/services/FoldingService.js';
+import { InlayHint } from '../../src/core/services/InlayHintService.js';
+import { CodeLensItem } from '../../src/core/services/CodeLensService.js';
+import { CodeAction } from '../../src/core/services/CodeActionService.js';
+import { DefinitionResult } from '../../src/core/types/DefinitionResult.js';
 
 /**
  * Probes: render each user-facing surface as reviewable text.

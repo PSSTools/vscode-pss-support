@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
-import { IFileSystem } from './IFileSystem';
+import { IFileSystem } from './IFileSystem.js';
 
 /**
  * Production IFileSystem backed by node's `fs`. Every method swallows errors and

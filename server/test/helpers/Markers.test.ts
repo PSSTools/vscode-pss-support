@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMarkers, offsetToPosition, positionToOffset } from './Markers';
+import { parseMarkers, offsetToPosition, positionToOffset } from './Markers.js';
 
 describe('parseMarkers', () => {
   it('strips markers from the source', () => {

@@ -2,9 +2,9 @@ import {
   SemanticTokensParams,
   SemanticTokens,
   SemanticTokensLegend,
-} from 'vscode-languageserver/node';
-import { getSemanticTokens, TOKEN_TYPES, TOKEN_MODIFIERS } from '../core/services/SemanticTokenService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+} from 'vscode-languageserver/node.js';
+import { getSemanticTokens, TOKEN_TYPES, TOKEN_MODIFIERS } from '../core/services/SemanticTokenService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export const SEMANTIC_TOKENS_LEGEND: SemanticTokensLegend = {
   tokenTypes: TOKEN_TYPES,

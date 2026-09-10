@@ -3,11 +3,11 @@ import {
   CompletionItem,
   CompletionItemKind,
   CompletionList,
-} from 'vscode-languageserver/node';
-import { getCompletions, resolveCompletionItem } from '../core/services/CompletionService';
-import { CompletionKind } from '../core/types/CompletionResult';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { IConfiguration } from '../core/io/IConfiguration';
+} from 'vscode-languageserver/node.js';
+import { getCompletions, resolveCompletionItem } from '../core/services/CompletionService.js';
+import { CompletionKind } from '../core/types/CompletionResult.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { IConfiguration } from '../core/io/IConfiguration.js';
 
 function convertKind(kind: CompletionKind): CompletionItemKind {
   switch (kind) {

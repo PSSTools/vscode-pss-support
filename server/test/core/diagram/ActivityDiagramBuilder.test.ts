@@ -1,16 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { ActivityDiagramBuilder } from '../../../src/core/diagram/ActivityDiagramBuilder';
-import { ActivityDecl, Action, Scope } from '../../../src/core/ast/generated';
-import { DiagramNodeKind } from '../../../src/core/types/DiagramNode';
-import { walkScope } from '../../../src/core/ast/ASTUtils';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { ActivityDiagramBuilder } from '../../../src/core/diagram/ActivityDiagramBuilder.js';
+import { ActivityDecl, Action, Scope } from '../../../src/core/ast/generated/index.js';
+import { DiagramNodeKind } from '../../../src/core/types/DiagramNode.js';
+import { walkScope } from '../../../src/core/ast/ASTUtils.js';
 
 function buildActivity(source: string): ActivityDecl | null {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
 
   for (const child of walkScope(ast)) {
     if (child instanceof ActivityDecl) return child;

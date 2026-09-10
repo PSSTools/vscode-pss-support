@@ -6,14 +6,14 @@ import {
   CallHierarchyIncomingCall,
   CallHierarchyOutgoingCall,
   SymbolKind,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 import {
   prepareCallHierarchy,
   getIncomingCalls,
   getOutgoingCalls,
   CallHierarchyItem,
-} from '../core/services/CallHierarchyService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+} from '../core/services/CallHierarchyService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 function toLspItem(item: CallHierarchyItem): LspCallHierarchyItem {
   return {

@@ -5,7 +5,7 @@ import {
   StreamMessageReader,
   StreamMessageWriter,
   ProposedFeatures,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 import {
   createProtocolConnection,
   InitializeRequest,
@@ -32,7 +32,7 @@ import {
   TextEdit,
   SemanticTokens,
 } from 'vscode-languageserver-protocol/node';
-import { startLanguageServer } from '../../src/lsp/PSSLanguageServer';
+import { startLanguageServer } from '../../src/lsp/PSSLanguageServer.js';
 
 /**
  * End-to-end test over a real JSON-RPC connection.

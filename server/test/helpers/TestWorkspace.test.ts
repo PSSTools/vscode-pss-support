@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TestWorkspace } from '../helpers/TestWorkspace';
+import { TestWorkspace } from '../helpers/TestWorkspace.js';
 
 describe('TestWorkspace', () => {
   it('parseOne returns non-null AST for trivial PSS', () => {

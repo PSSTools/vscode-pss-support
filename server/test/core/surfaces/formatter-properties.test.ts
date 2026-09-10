@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TestProject } from '../../helpers/TestProject';
-import { renderDocumentSymbols } from '../../helpers/Probes';
+import { TestProject } from '../../helpers/TestProject.js';
+import { renderDocumentSymbols } from '../../helpers/Probes.js';
 
 /**
  * Property tests for the formatter.

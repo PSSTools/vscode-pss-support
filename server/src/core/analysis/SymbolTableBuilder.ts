@@ -30,9 +30,9 @@ import {
   SymbolExtendScope,
   SymbolChildrenScope,
   ExprId,
-} from '../ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic';
-import { getNodeName } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
+import { getNodeName } from '../ast/ASTUtils.js';
 
 export interface SymbolTableResult {
   root: RootSymbolScope;

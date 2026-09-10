@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
 
 describe('WorkspaceIndex', () => {
   it('should add and retrieve a file', () => {

@@ -1,13 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { formatDocument } from '../../../src/core/services/FormatterService';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { formatDocument } from '../../../src/core/services/FormatterService.js';
 
 function format(source: string): string {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
   const edits = formatDocument(source, ast);
   if (edits.length === 0) return source;
   return edits[0].newText;
@@ -47,10 +43,7 @@ describe('FormatterService', () => {
   });
 
   it('should return empty edits for empty source', () => {
-    const parser = new PSSParserFacade();
-    const result = parser.parse('', 1);
-    const builder = new PSSASTBuilder(1, result.tokens);
-    const ast = builder.build(result.tree);
+    const ast = parseSource('')!;
     const edits = formatDocument('', ast);
     expect(edits).toHaveLength(0);
   });

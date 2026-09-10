@@ -22,10 +22,10 @@ import {
   ActivityLabeledStmt,
   ActivityLabeledScope,
   ActivityStmt,
-} from '../ast/generated';
-import { DiagramGraph } from './DiagramGraph';
-import { DiagramNodeKind } from '../types/DiagramNode';
-import { DiagramEdgeStyle } from '../types/DiagramEdge';
+} from '../ast/generated/index.js';
+import { DiagramGraph } from './DiagramGraph.js';
+import { DiagramNodeKind } from '../types/DiagramNode.js';
+import { DiagramEdgeStyle } from '../types/DiagramEdge.js';
 
 /**
  * Walk an ActivityDecl AST and produce a DiagramGraph per the mapping

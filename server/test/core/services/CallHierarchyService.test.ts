@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { prepareCallHierarchy, getOutgoingCalls, getIncomingCalls } from '../../../src/core/services/CallHierarchyService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { prepareCallHierarchy, getOutgoingCalls, getIncomingCalls } from '../../../src/core/services/CallHierarchyService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

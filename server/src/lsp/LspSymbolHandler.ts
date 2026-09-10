@@ -1,7 +1,7 @@
-import { DocumentSymbolParams, DocumentSymbol } from 'vscode-languageserver/node';
-import { GlobalScope } from '../core/ast/generated';
-import { getDocumentSymbols } from '../core/services/SymbolService';
-import { convertDocumentSymbol } from './LspTypeConverters';
+import { DocumentSymbolParams, DocumentSymbol } from 'vscode-languageserver/node.js';
+import { GlobalScope } from '../core/ast/generated/index.js';
+import { getDocumentSymbols } from '../core/services/SymbolService.js';
+import { convertDocumentSymbol } from './LspTypeConverters.js';
 
 /**
  * Handles textDocument/documentSymbol requests.

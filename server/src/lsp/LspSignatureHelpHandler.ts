@@ -1,6 +1,6 @@
-import { SignatureHelpParams, SignatureHelp, SignatureInformation, ParameterInformation } from 'vscode-languageserver/node';
-import { getSignatureHelp } from '../core/services/SignatureService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { SignatureHelpParams, SignatureHelp, SignatureInformation, ParameterInformation } from 'vscode-languageserver/node.js';
+import { getSignatureHelp } from '../core/services/SignatureService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export function handleSignatureHelp(
   params: SignatureHelpParams,

@@ -1,6 +1,6 @@
-import { DefinitionParams, Location } from 'vscode-languageserver/node';
-import { getDefinition } from '../core/services/DefinitionService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { DefinitionParams, Location } from 'vscode-languageserver/node.js';
+import { getDefinition } from '../core/services/DefinitionService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 /**
  * LSP handler for textDocument/definition requests.

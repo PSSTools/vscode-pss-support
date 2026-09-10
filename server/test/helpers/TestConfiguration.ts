@@ -1,4 +1,4 @@
-import { IConfiguration } from '../../src/core/io/IConfiguration';
+import { IConfiguration } from '../../src/core/io/IConfiguration.js';
 
 export class TestConfiguration implements IConfiguration {
   private values = new Map<string, unknown>();

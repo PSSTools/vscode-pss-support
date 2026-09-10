@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getDefinition } from '../../../src/core/services/DefinitionService';
-import { getHover } from '../../../src/core/services/HoverService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getDefinition } from '../../../src/core/services/DefinitionService.js';
+import { getHover } from '../../../src/core/services/HoverService.js';
 
 /**
  * Tests for navigating to action definitions from `do` traversals,

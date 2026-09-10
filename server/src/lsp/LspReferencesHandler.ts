@@ -1,6 +1,6 @@
-import { ReferenceParams, Location } from 'vscode-languageserver/node';
-import { getReferences } from '../core/services/ReferencesService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { ReferenceParams, Location } from 'vscode-languageserver/node.js';
+import { getReferences } from '../core/services/ReferencesService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 /**
  * LSP handler for textDocument/references requests.

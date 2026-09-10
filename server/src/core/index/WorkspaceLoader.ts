@@ -1,9 +1,9 @@
-import { WorkspaceIndex } from './WorkspaceIndex';
-import { IFileDiscovery } from '../io/IFileDiscovery';
-import { IFileSystem } from '../io/IFileSystem';
-import { nodeFileSystem } from '../io/NodeFileSystem';
-import { FileSystemDiscovery } from '../io/FileSystemDiscovery';
-import { uriToPath } from '../io/UriUtils';
+import { WorkspaceIndex } from './WorkspaceIndex.js';
+import { IFileDiscovery } from '../io/IFileDiscovery.js';
+import { IFileSystem } from '../io/IFileSystem.js';
+import { nodeFileSystem } from '../io/NodeFileSystem.js';
+import { FileSystemDiscovery } from '../io/FileSystemDiscovery.js';
+import { uriToPath } from '../io/UriUtils.js';
 
 export interface WorkspaceLoaderOptions {
   /** Filesystem to read through. Defaults to the real one. */

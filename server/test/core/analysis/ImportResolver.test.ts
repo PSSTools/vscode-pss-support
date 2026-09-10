@@ -1,19 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder';
-import { ImportResolver } from '../../../src/core/analysis/ImportResolver';
-import { GlobalScope, RootSymbolScope, SymbolScope } from '../../../src/core/ast/generated';
+import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder.js';
+import { ImportResolver } from '../../../src/core/analysis/ImportResolver.js';
+import { newParser } from '../../../src/core/parser/ParserHost.js';
+import { GlobalScope, RootSymbolScope, SymbolScope } from '../../../src/core/ast/generated/index.js';
 
 function buildAndResolve(sources: string[]) {
-  const parser = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
-  for (let i = 0; i < sources.length; i++) {
-    const result = parser.parse(sources[i], i + 1);
-    const builder = new PSSASTBuilder(i + 1, result.tokens);
-    const gs = builder.build(result.tree);
-    gs.filename = `file_${i}.pss`;
-    scopes.push(gs);
+  const parser = newParser();
+  let scopes: GlobalScope[];
+  try {
+    // One call per source, so a deliberately-malformed fixture fails only
+    // itself -- `parseSources` abandons the whole batch at the first error.
+    for (let i = 0; i < sources.length; i++) {
+      parser.parseSources([{ name: `file_${i}.pss`, content: sources[i] }]);
+    }
+    try {
+      parser.link();
+    } catch {
+      // These fixtures exercise unresolved imports on purpose.
+    }
+    const names = parser.fileMap();
+    scopes = parser.userUnits();
+    for (const gs of scopes) {
+      gs.filename = names.get(gs.fileid) ?? '';
+    }
+  } finally {
+    parser.dispose();
   }
 
   const symBuilder = new SymbolTableBuilder();

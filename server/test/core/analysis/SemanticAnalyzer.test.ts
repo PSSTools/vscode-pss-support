@@ -1,19 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { SemanticAnalyzer } from '../../../src/core/analysis/SemanticAnalyzer';
-import { GlobalScope } from '../../../src/core/ast/generated';
+import { parseSources } from '../../helpers/ParseHelper.js';
+import { SemanticAnalyzer } from '../../../src/core/analysis/SemanticAnalyzer.js';
+import { GlobalScope } from '../../../src/core/ast/generated/index.js';
 
 function parseFiles(sources: string[]): GlobalScope[] {
-  const parser = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
-  for (let i = 0; i < sources.length; i++) {
-    const result = parser.parse(sources[i], i + 1);
-    const builder = new PSSASTBuilder(i + 1, result.tokens);
-    const gs = builder.build(result.tree);
-    gs.filename = `file_${i}.pss`;
-    scopes.push(gs);
-  }
+  const scopes = parseSources(sources).scopes;
   return scopes;
 }
 

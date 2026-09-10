@@ -1,6 +1,6 @@
-import { FoldingRangeParams, FoldingRange as LspFoldingRange, FoldingRangeKind } from 'vscode-languageserver/node';
-import { getFoldingRanges } from '../core/services/FoldingService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { FoldingRangeParams, FoldingRange as LspFoldingRange, FoldingRangeKind } from 'vscode-languageserver/node.js';
+import { getFoldingRanges } from '../core/services/FoldingService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export function handleFoldingRanges(
   params: FoldingRangeParams,

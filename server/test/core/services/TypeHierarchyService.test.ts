@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { prepareTypeHierarchy, getSupertypes, getSubtypes } from '../../../src/core/services/TypeHierarchyService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { prepareTypeHierarchy, getSupertypes, getSubtypes } from '../../../src/core/services/TypeHierarchyService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

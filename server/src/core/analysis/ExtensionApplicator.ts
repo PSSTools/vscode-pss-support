@@ -19,10 +19,10 @@ import {
   SymbolExtendScope,
   TypeIdentifier,
   enums,
-} from '../ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic';
-import { getNodeName } from '../ast/ASTUtils';
-import { collectAllSymbolNames, findBestMatch } from './SpellSuggest';
+} from '../ast/generated/index.js';
+import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
+import { getNodeName } from '../ast/ASTUtils.js';
+import { collectAllSymbolNames, findBestMatch } from './SpellSuggest.js';
 
 export interface ExtensionResult {
   diagnostics: Diagnostic[];

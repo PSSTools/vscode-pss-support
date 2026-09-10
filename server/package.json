@@ -2,6 +2,7 @@
   "name": "pss-language-server",
   "description": "PSS Language Server",
   "version": "1.0.0",
+  "type": "module",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=18"

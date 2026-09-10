@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { check } from '../../src/cli/pss-check';
+import { check } from '../../src/cli/pss-check.js';
 
 /**
  * The CLI is the headless surface: it runs the same WorkspaceIndex pipeline the

@@ -1,14 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { getDocumentSymbols } from '../../../src/core/services/SymbolService';
-import { SymbolKind } from '../../../src/core/types/DocumentSymbol';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { getDocumentSymbols } from '../../../src/core/services/SymbolService.js';
+import { SymbolKind } from '../../../src/core/types/DocumentSymbol.js';
 
 function getSymbols(source: string) {
-  const facade = new PSSParserFacade();
-  const result = facade.parse(source);
-  const builder = new PSSASTBuilder(0, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
   return getDocumentSymbols(ast);
 }
 

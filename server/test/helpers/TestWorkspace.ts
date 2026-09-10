@@ -1,22 +1,37 @@
-import { PSSParserFacade, ParseResult } from '../../src/core/parser/PSSParserFacade';
-import { SourcePosition } from '../../src/core/types/SourcePosition';
+import { GlobalScope } from '../../src/core/ast/generated/index.js';
+import { Diagnostic } from '../../src/core/types/Diagnostic.js';
+import { SourcePosition } from '../../src/core/types/SourcePosition.js';
+import { parseSources } from './ParseHelper.js';
+
+/**
+ * What a parse yields here.
+ *
+ * `tree` replaces the ANTLR parse tree the facade used to return. Nothing in
+ * these tests inspected that tree -- they asserted it was defined and read
+ * `errors` -- so it is the AST now, which is the thing a caller can actually
+ * use.
+ */
+export interface ParseResult {
+  tree: GlobalScope | undefined;
+  errors: Diagnostic[];
+}
 
 export class TestWorkspace {
   private files = new Map<string, string>();
-  private parser = new PSSParserFacade();
 
   addFile(name: string, content: string): void {
     this.files.set(name, content);
   }
 
   parseOne(content: string): ParseResult {
-    return this.parser.parse(content);
+    const { scopes, diagnostics } = parseSources([content]);
+    return { tree: scopes[0], errors: diagnostics };
   }
 
   parseFile(name: string): ParseResult {
     const content = this.files.get(name);
     if (!content) throw new Error(`File not found: ${name}`);
-    return this.parser.parse(content);
+    return this.parseOne(content);
   }
 
   // Find position of a cursor marker (|) in the source text and return the position.

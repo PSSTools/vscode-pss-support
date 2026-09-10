@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getCodeLenses } from '../../../src/core/services/CodeLensService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getCodeLenses } from '../../../src/core/services/CodeLensService.js';
 
 describe('CodeLensService', () => {
   it('should produce CodeLens for type with references', () => {

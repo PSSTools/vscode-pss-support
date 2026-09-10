@@ -1,17 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder';
-import { GlobalScope, SymbolTypeScope, SymbolEnumScope, SymbolFunctionScope } from '../../../src/core/ast/generated';
+import { parseSources } from '../../helpers/ParseHelper.js';
+import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder.js';
+import { GlobalScope, SymbolTypeScope, SymbolEnumScope, SymbolFunctionScope } from '../../../src/core/ast/generated/index.js';
 
 function buildSymbolTable(sources: string[]) {
-  const facade = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
-  for (let i = 0; i < sources.length; i++) {
-    const result = facade.parse(sources[i]);
-    const builder = new PSSASTBuilder(i, result.tokens);
-    scopes.push(builder.build(result.tree));
-  }
+  const scopes = parseSources(sources).scopes;
   const stb = new SymbolTableBuilder();
   return stb.build(scopes);
 }

@@ -1,4 +1,4 @@
-import { SourceRange } from './SourceRange';
+import { SourceRange } from './SourceRange.js';
 
 export enum SymbolKind {
   Package = 1,

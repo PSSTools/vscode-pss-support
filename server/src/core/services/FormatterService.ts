@@ -28,11 +28,11 @@ import {
   GlobalScope,
   flags,
   enums,
-} from '../ast/generated';
-import { TextEdit } from '../types/TextEdit';
-import { SourceRange } from '../types/SourceRange';
-import { IConfiguration } from '../io/IConfiguration';
-import { getNodeName, getNodeSignature } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { TextEdit } from '../types/TextEdit.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { IConfiguration } from '../io/IConfiguration.js';
+import { getNodeName, getNodeSignature } from '../ast/ASTUtils.js';
 
 export interface FormatOptions {
   indentSize: number;

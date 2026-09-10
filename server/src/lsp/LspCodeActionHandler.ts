@@ -3,11 +3,11 @@ import {
   CodeAction as LspCodeAction,
   CodeActionKind,
   WorkspaceEdit,
-} from 'vscode-languageserver/node';
-import { getCodeActions } from '../core/services/CodeActionService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { convertDiagnostic } from './LspTypeConverters';
-import { Diagnostic } from '../core/types/Diagnostic';
+} from 'vscode-languageserver/node.js';
+import { getCodeActions } from '../core/services/CodeActionService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { convertDiagnostic } from './LspTypeConverters.js';
+import { Diagnostic } from '../core/types/Diagnostic.js';
 
 export function handleCodeAction(
   params: CodeActionParams,

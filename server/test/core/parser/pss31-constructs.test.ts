@@ -10,25 +10,22 @@
  * describe at the bottom, which is the recorded Phase 2 gap.
  */
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import * as AST from '../../../src/core/ast/generated';
-import { enums, flags } from '../../../src/core/ast/generated';
-
-const facade = new PSSParserFacade();
+import { parseSources } from '../../helpers/ParseHelper.js';
+import * as AST from '../../../src/core/ast/generated/index.js';
+import { enums, flags } from '../../../src/core/ast/generated/index.js';
 
 /** Parse and assert the source is syntactically clean, returning the AST. */
 function build(source: string): AST.GlobalScope {
-  const result = facade.parse(source);
+  const { scopes, diagnostics } = parseSources([source]);
   expect(
-    result.errors.map(e => `${e.range.start.line + 1}:${e.range.start.character + 1} ${e.message}`),
+    diagnostics.map(d => `${d.range.start.line + 1}:${d.range.start.character + 1} ${d.message}`),
   ).toEqual([]);
-  return new PSSASTBuilder(0, result.tokens).build(result.tree);
+  return scopes[0];
 }
 
 /** Parse and assert the source is rejected. */
 function expectSyntaxError(source: string): void {
-  expect(facade.parse(source).errors.length).toBeGreaterThan(0);
+  expect(parseSources([source]).diagnostics.length).toBeGreaterThan(0);
 }
 
 /**

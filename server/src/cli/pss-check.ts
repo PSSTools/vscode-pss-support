@@ -9,12 +9,11 @@
  * Imports only from server/src/core/ -- no LSP/VSCode dependencies.
  */
 import { relative } from 'path';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { WorkspaceLoader } from '../core/index/WorkspaceLoader';
-import { nodeFileSystem } from '../core/io/NodeFileSystem';
-import { pathToUri, uriToPath } from '../core/io/UriUtils';
-import { resolveStdlibDir } from '../core/analysis/StdlibLoader';
-import { DiagnosticSeverity } from '../core/types/Diagnostic';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { WorkspaceLoader } from '../core/index/WorkspaceLoader.js';
+import { nodeFileSystem } from '../core/io/NodeFileSystem.js';
+import { pathToUri, uriToPath } from '../core/io/UriUtils.js';
+import { DiagnosticSeverity } from '../core/types/Diagnostic.js';
 
 function severityString(sev: DiagnosticSeverity): string {
   switch (sev) {
@@ -37,7 +36,7 @@ export interface CheckResult {
  * process or capturing stdout.
  */
 export async function check(target: string, cwd: string = process.cwd()): Promise<CheckResult> {
-  const index = new WorkspaceIndex(resolveStdlibDir());
+  const index = new WorkspaceIndex();
   const loader = new WorkspaceLoader();
 
   let uris: string[];

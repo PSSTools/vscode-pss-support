@@ -2,10 +2,10 @@ import {
   ScopeChild, Scope, TypeScope, Action, Component, Struct, Field,
   EnumDecl, GlobalScope, ActivityDecl, NamedScopeChild,
   SymbolChildrenScope, flags,
-} from '../ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic';
-import { getNodeName, walkScope } from '../ast/ASTUtils';
-import { IConfiguration } from '../io/IConfiguration';
+} from '../ast/generated/index.js';
+import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
+import { getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { IConfiguration } from '../io/IConfiguration.js';
 
 export interface LintRule {
   name: string;

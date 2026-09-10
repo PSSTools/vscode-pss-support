@@ -1,5 +1,5 @@
-import { GlobalScope } from '../ast/generated';
-import { Diagnostic } from '../types/Diagnostic';
+import { GlobalScope } from '../ast/generated/index.js';
+import { Diagnostic } from '../types/Diagnostic.js';
 
 /**
  * Per-file state: holds the AST, diagnostics, and dependency information

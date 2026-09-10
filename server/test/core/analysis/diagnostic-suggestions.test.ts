@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
 
 describe('diagnostic suggestions', () => {
   it('should suggest similar type for a typo in field declaration', () => {

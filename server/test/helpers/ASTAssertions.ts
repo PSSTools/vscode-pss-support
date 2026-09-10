@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { Diagnostic } from '../../src/core/types/Diagnostic';
+import { Diagnostic } from '../../src/core/types/Diagnostic.js';
 
 export function assertDiagnosticAt(
   diagnostics: Diagnostic[],

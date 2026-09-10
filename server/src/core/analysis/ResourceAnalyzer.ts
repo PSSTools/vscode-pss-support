@@ -1,8 +1,8 @@
 import {
   ScopeChild, Scope, Action, Field, FieldRef, FieldClaim,
   GlobalScope, TypeScope,
-} from '../ast/generated';
-import { walkScope, getNodeName } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { walkScope, getNodeName } from '../ast/ASTUtils.js';
 
 export interface ResourceBinding {
   actionName: string;

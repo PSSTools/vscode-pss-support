@@ -1,6 +1,5 @@
 import { bench, describe } from 'vitest';
-import { PSSParserFacade } from '../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../src/core/parser/PSSASTBuilder';
+import { newParser } from '../src/core/parser/ParserHost.js';
 
 function generatePSS(lines: number): string {
   const parts: string[] = ['package bench_pkg {'];
@@ -42,34 +41,44 @@ function generatePSS(lines: number): string {
   return parts.join('\n');
 }
 
-const parser = new PSSParserFacade();
+/**
+ * A fresh parser per iteration.
+ *
+ * Sessions accumulate parsed units, so reusing one would measure a workspace
+ * growing without bound rather than the cost of parsing the source once.
+ *
+ * "parse" and "AST build" are no longer separable, which is why those variants
+ * are gone: the tree is materialised out of the wire format during `link()`,
+ * so the honest split is parse-only against parse-and-link.
+ */
+function parseOnly(src: string): void {
+  const parser = newParser();
+  try {
+    parser.parseSources([{ name: 'bench.pss', content: src }]);
+  } finally {
+    parser.dispose();
+  }
+}
+
+function parseAndLink(src: string): void {
+  const parser = newParser();
+  try {
+    parser.parseSources([{ name: 'bench.pss', content: src }]);
+    parser.link();
+  } finally {
+    parser.dispose();
+  }
+}
 
 describe('Parse Benchmarks', () => {
   const src1k = generatePSS(1000);
   const src5k = generatePSS(5000);
   const src10k = generatePSS(10000);
 
-  bench('parse 1K lines', () => {
-    parser.parse(src1k, 1);
-  });
+  bench('parse 1K lines', () => parseOnly(src1k));
+  bench('parse 5K lines', () => parseOnly(src5k));
+  bench('parse 10K lines', () => parseOnly(src10k));
 
-  bench('parse 5K lines', () => {
-    parser.parse(src5k, 2);
-  });
-
-  bench('parse 10K lines', () => {
-    parser.parse(src10k, 3);
-  });
-
-  bench('parse + AST build 1K lines', () => {
-    const result = parser.parse(src1k, 4);
-    const builder = new PSSASTBuilder(4, result.tokens);
-    builder.build(result.tree);
-  });
-
-  bench('parse + AST build 5K lines', () => {
-    const result = parser.parse(src5k, 5);
-    const builder = new PSSASTBuilder(5, result.tokens);
-    builder.build(result.tree);
-  });
+  bench('parse + link 1K lines', () => parseAndLink(src1k));
+  bench('parse + link 5K lines', () => parseAndLink(src5k));
 });

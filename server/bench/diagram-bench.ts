@@ -1,9 +1,8 @@
 import { bench, describe } from 'vitest';
-import { PSSParserFacade } from '../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../src/core/parser/PSSASTBuilder';
-import { ActivityDiagramBuilder } from '../src/core/diagram/ActivityDiagramBuilder';
-import { ActivityDecl } from '../src/core/ast/generated';
-import { walkScope } from '../src/core/ast/ASTUtils';
+import { parseSource } from '../test/helpers/ParseHelper.js';
+import { ActivityDiagramBuilder } from '../src/core/diagram/ActivityDiagramBuilder.js';
+import { ActivityDecl } from '../src/core/ast/generated/index.js';
+import { walkScope } from '../src/core/ast/ASTUtils.js';
 
 function generateActivity(actionCount: number): string {
   const lines = ['component c {'];
@@ -22,10 +21,7 @@ function generateActivity(actionCount: number): string {
 }
 
 function buildActivity(source: string): ActivityDecl | null {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
   for (const child of walkScope(ast)) {
     if (child instanceof ActivityDecl) return child;
   }

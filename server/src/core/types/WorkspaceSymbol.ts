@@ -1,5 +1,5 @@
-import { SymbolKind } from './DocumentSymbol';
-import { SourceRange } from './SourceRange';
+import { SymbolKind } from './DocumentSymbol.js';
+import { SourceRange } from './SourceRange.js';
 
 /**
  * A symbol in the workspace-wide symbol list (Ctrl-T), flattened out of the

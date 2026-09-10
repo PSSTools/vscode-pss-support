@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getInlayHints } from '../../../src/core/services/InlayHintService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getInlayHints } from '../../../src/core/services/InlayHintService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

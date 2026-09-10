@@ -1,4 +1,4 @@
-import { IDocumentProvider } from '../../src/core/io/IDocumentProvider';
+import { IDocumentProvider } from '../../src/core/io/IDocumentProvider.js';
 
 export class InMemoryDocumentProvider implements IDocumentProvider {
   private docs = new Map<string, { content: string; version: number }>();

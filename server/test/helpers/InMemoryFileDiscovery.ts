@@ -1,4 +1,4 @@
-import { IFileDiscovery } from '../../src/core/io/IFileDiscovery';
+import { IFileDiscovery } from '../../src/core/io/IFileDiscovery.js';
 
 export class InMemoryFileDiscovery implements IFileDiscovery {
   private files: string[] = [];

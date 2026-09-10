@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder';
-import { ExtensionApplicator } from '../../../src/core/analysis/ExtensionApplicator';
-import { GlobalScope, SymbolScope, SymbolTypeScope, SymbolEnumScope } from '../../../src/core/ast/generated';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder.js';
+import { ExtensionApplicator } from '../../../src/core/analysis/ExtensionApplicator.js';
+import { GlobalScope, SymbolScope, SymbolTypeScope, SymbolEnumScope } from '../../../src/core/ast/generated/index.js';
 
 function buildSymbolTree(source: string) {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const gs = builder.build(result.tree);
+  const gs = parseSource(source)!;
   const symBuilder = new SymbolTableBuilder();
   return symBuilder.build([gs]);
 }

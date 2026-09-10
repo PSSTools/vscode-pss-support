@@ -1,6 +1,6 @@
-import { CodeLensParams, CodeLens } from 'vscode-languageserver/node';
-import { getCodeLenses } from '../core/services/CodeLensService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { CodeLensParams, CodeLens } from 'vscode-languageserver/node.js';
+import { getCodeLenses } from '../core/services/CodeLensService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export function handleCodeLens(
   params: CodeLensParams,

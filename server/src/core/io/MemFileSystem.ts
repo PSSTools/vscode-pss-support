@@ -1,4 +1,4 @@
-import { IFileSystem } from './IFileSystem';
+import { IFileSystem } from './IFileSystem.js';
 
 /**
  * In-memory IFileSystem. Ships in `src/` rather than `test/` because the test

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { levenshtein, findBestMatch } from '../../../src/core/analysis/SpellSuggest';
+import { levenshtein, findBestMatch } from '../../../src/core/analysis/SpellSuggest.js';
 
 describe('levenshtein', () => {
   it('identical strings -> 0', () => {

@@ -39,11 +39,11 @@ import {
   PackageImportStmt,
   GlobalScope,
   FunctionDefinition,
-} from '../ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic';
-import { getNodeName, walkScope } from '../ast/ASTUtils';
-import { ImportResolver } from './ImportResolver';
-import { collectAllSymbolNames, findBestMatch } from './SpellSuggest';
+} from '../ast/generated/index.js';
+import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
+import { getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { ImportResolver } from './ImportResolver.js';
+import { collectAllSymbolNames, findBestMatch } from './SpellSuggest.js';
 
 export interface ReferenceResolveResult {
   diagnostics: Diagnostic[];

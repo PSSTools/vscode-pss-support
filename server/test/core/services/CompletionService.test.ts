@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getCompletions, resolveCompletionItem, parseLineContext } from '../../../src/core/services/CompletionService';
-import { CompletionKind } from '../../../src/core/types/CompletionResult';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getCompletions, resolveCompletionItem, parseLineContext } from '../../../src/core/services/CompletionService.js';
+import { CompletionKind } from '../../../src/core/types/CompletionResult.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

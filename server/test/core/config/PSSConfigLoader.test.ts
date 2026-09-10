@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { loadPSSConfig, PSSConfigAdapter } from '../../../src/core/config/PSSConfigLoader';
-import { MemFileSystem } from '../../../src/core/io/MemFileSystem';
+import { loadPSSConfig, PSSConfigAdapter } from '../../../src/core/config/PSSConfigLoader.js';
+import { MemFileSystem } from '../../../src/core/io/MemFileSystem.js';
 
 describe('loadPSSConfig', () => {
   it('reads .pssconfig.json from the workspace root', () => {

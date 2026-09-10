@@ -39,13 +39,13 @@ import {
   TemplateValueParamDecl,
   enums,
   flags,
-} from '../ast/generated';
-import { CompletionResult, CompletionKind } from '../types/CompletionResult';
-import { SourcePosition } from '../types/SourcePosition';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils';
-import { findSymbolScope } from '../analysis/SymbolLookup';
-import { IConfiguration } from '../io/IConfiguration';
+} from '../ast/generated/index.js';
+import { CompletionResult, CompletionKind } from '../types/CompletionResult.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
+import { findSymbolScope } from '../analysis/SymbolLookup.js';
+import { IConfiguration } from '../io/IConfiguration.js';
 
 // ── Keyword lists ───────────────────────────────────────────────
 

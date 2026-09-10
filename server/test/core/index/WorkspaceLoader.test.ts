@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { MemFileSystem } from '../../../src/core/io/MemFileSystem';
-import { FileSystemDiscovery } from '../../../src/core/io/FileSystemDiscovery';
-import { WorkspaceLoader } from '../../../src/core/index/WorkspaceLoader';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { pathToUri } from '../../../src/core/io/UriUtils';
+import { MemFileSystem } from '../../../src/core/io/MemFileSystem.js';
+import { FileSystemDiscovery } from '../../../src/core/io/FileSystemDiscovery.js';
+import { WorkspaceLoader } from '../../../src/core/index/WorkspaceLoader.js';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { pathToUri } from '../../../src/core/io/UriUtils.js';
 
 function projectFs(): MemFileSystem {
   return new MemFileSystem({

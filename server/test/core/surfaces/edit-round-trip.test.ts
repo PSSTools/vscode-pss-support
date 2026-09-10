@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TestProject } from '../../helpers/TestProject';
+import { TestProject } from '../../helpers/TestProject.js';
 
 /**
  * Apply-then-reparse tests.

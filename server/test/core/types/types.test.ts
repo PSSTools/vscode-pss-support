@@ -5,7 +5,7 @@ import {
   SymbolKind,
   DiagramNodeKind,
   DiagramEdgeStyle,
-} from '../../../src/core/types';
+} from '../../../src/core/types/index.js';
 
 describe('Model Types', () => {
   it('DiagnosticSeverity has correct values', () => {

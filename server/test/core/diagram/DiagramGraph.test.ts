@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { DiagramGraph } from '../../../src/core/diagram/DiagramGraph';
-import { DiagramNodeKind } from '../../../src/core/types/DiagramNode';
-import { DiagramEdgeStyle } from '../../../src/core/types/DiagramEdge';
+import { DiagramGraph } from '../../../src/core/diagram/DiagramGraph.js';
+import { DiagramNodeKind } from '../../../src/core/types/DiagramNode.js';
+import { DiagramEdgeStyle } from '../../../src/core/types/DiagramEdge.js';
 
 describe('DiagramGraph', () => {
   it('should create an empty graph', () => {

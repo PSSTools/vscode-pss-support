@@ -11,12 +11,12 @@ import {
   SymbolScope,
   SymbolTypeScope,
   RootSymbolScope,
-} from '../ast/generated';
-import { SourcePosition } from '../types/SourcePosition';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils';
-import { SymbolChildrenScope } from '../ast/generated';
+} from '../ast/generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { SymbolChildrenScope } from '../ast/generated/index.js';
 
 export interface CallHierarchyItem {
   name: string;

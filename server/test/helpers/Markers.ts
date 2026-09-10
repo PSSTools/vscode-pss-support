@@ -1,4 +1,4 @@
-import { SourcePosition } from '../../src/core/types/SourcePosition';
+import { SourcePosition } from '../../src/core/types/SourcePosition.js';
 
 /**
  * Marker syntax for test sources.

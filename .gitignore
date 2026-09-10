@@ -12,18 +12,23 @@ out/
 packages/
 docs/_build/
 
-# DERIVED FROM pssparser, NOT SOURCE. Both trees are produced by `npm run
-# generate` from ivpm-supplied inputs: the ANTLR parser from src/PSS*.g4, the
-# AST classes from ast/*.yaml.
+# DERIVED FROM pssparser, NOT SOURCE. Produced by `npm run generate` from
+# ivpm-supplied inputs: the ANTLR parser from src/PSS*.g4.
 #
-# They were tracked until now, and that is what let them go stale: the parser
-# sat 24 tokens behind the grammar for three weeks while CI stayed green,
-# because the committed copy satisfied every consumer and nothing ever compared
-# it against its source. Checking in derived output means the drift is silent;
-# deriving it at build means an upstream grammar change turns CI red, which is
-# the signal we want.
+# It was tracked until now, and that is what let it go stale: the parser sat 24
+# tokens behind the grammar for three weeks while CI stayed green, because the
+# committed copy satisfied every consumer and nothing ever compared it against
+# its source. Checking in derived output means the drift is silent; deriving it
+# at build means an upstream grammar change turns CI red, which is the signal
+# we want.
+#
+# server/src/core/ast/generated/ is deliberately NOT here any more. Nothing
+# generates it: it is a one-line checked-in re-export of the AST classes that
+# ship inside @psstools/pssparser, so that the parser and this server share one
+# set of constructors. See the header in that file -- `instanceof` depends on
+# it. The reasoning above does not apply, because there is no second copy left
+# to drift from.
 server/src/generated/
-server/src/core/ast/generated/
 
 .agents/
 .claude/

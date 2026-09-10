@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pathToUri, uriToPath, joinPath, normalizePath } from '../../../src/core/io/UriUtils';
+import { pathToUri, uriToPath, joinPath, normalizePath } from '../../../src/core/io/UriUtils.js';
 
 describe('UriUtils', () => {
   it('round-trips POSIX paths', () => {

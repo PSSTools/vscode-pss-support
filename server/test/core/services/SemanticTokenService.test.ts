@@ -1,13 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { getSemanticTokens, TokenType, TokenModifier } from '../../../src/core/services/SemanticTokenService';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { getSemanticTokens, TokenType, TokenModifier } from '../../../src/core/services/SemanticTokenService.js';
 
 function buildAST(source: string) {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  return builder.build(result.tree);
+  return parseSource(source)!;
 }
 
 describe('SemanticTokenService', () => {

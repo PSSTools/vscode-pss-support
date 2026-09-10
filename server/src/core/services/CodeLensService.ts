@@ -1,11 +1,11 @@
 import {
   ScopeChild, Scope, TypeScope, Action, Component, Struct, Monitor,
   EnumDecl, GlobalScope, ExtendType, NamedScope, ActivityDecl,
-} from '../ast/generated';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { getNodeName, walkScope } from '../ast/ASTUtils';
-import { getReferences } from './ReferencesService';
+} from '../ast/generated/index.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { getNodeName, walkScope } from '../ast/ASTUtils.js';
+import { getReferences } from './ReferencesService.js';
 
 export interface CodeLensItem {
   range: SourceRange;

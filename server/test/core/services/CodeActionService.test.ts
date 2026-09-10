@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getCodeActions } from '../../../src/core/services/CodeActionService';
-import { DiagnosticSeverity } from '../../../src/core/types/Diagnostic';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getCodeActions } from '../../../src/core/services/CodeActionService.js';
+import { DiagnosticSeverity } from '../../../src/core/types/Diagnostic.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

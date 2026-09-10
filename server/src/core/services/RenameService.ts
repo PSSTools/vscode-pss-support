@@ -17,11 +17,11 @@ import {
   ActivityActionTypeTraversal,
   EnumDecl,
   FunctionDefinition,
-} from '../ast/generated';
-import { SourcePosition } from '../types/SourcePosition';
-import { TextEdit } from '../types/TextEdit';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { TextEdit } from '../types/TextEdit.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition, getNodeName, walkScope } from '../ast/ASTUtils.js';
 
 export interface RenameResult {
   /** Map from URI to text edits for that file */

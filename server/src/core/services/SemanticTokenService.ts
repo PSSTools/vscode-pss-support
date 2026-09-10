@@ -28,10 +28,10 @@ import {
   GlobalScope,
   flags,
   enums,
-} from '../ast/generated';
-import { SemanticToken } from '../types/SemanticToken';
-import { getNodeName } from '../ast/ASTUtils';
-import { Location } from '../ast/generated/structs';
+} from '../ast/generated/index.js';
+import { SemanticToken } from '../types/SemanticToken.js';
+import { getNodeName } from '../ast/ASTUtils.js';
+import { Location } from '../ast/generated/index.js';
 
 // Token type indices (must match the legend registered with the LSP)
 export enum TokenType {

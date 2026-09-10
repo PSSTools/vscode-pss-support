@@ -1,6 +1,6 @@
-import { IConfiguration } from '../io/IConfiguration';
-import { IFileSystem } from '../io/IFileSystem';
-import { nodeFileSystem } from '../io/NodeFileSystem';
+import { IConfiguration } from '../io/IConfiguration.js';
+import { IFileSystem } from '../io/IFileSystem.js';
+import { nodeFileSystem } from '../io/NodeFileSystem.js';
 
 export interface PSSConfig {
   include?: string[];

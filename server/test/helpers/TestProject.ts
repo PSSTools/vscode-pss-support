@@ -1,39 +1,41 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { expect } from 'vitest';
-import { WorkspaceIndex } from '../../src/core/index/WorkspaceIndex';
-import { WorkspaceLoader } from '../../src/core/index/WorkspaceLoader';
-import { MemFileSystem } from '../../src/core/io/MemFileSystem';
-import { nodeFileSystem } from '../../src/core/io/NodeFileSystem';
-import { pathToUri, joinPath } from '../../src/core/io/UriUtils';
-import { IConfiguration } from '../../src/core/io/IConfiguration';
-import { SourcePosition } from '../../src/core/types/SourcePosition';
-import { SourceRange } from '../../src/core/types/SourceRange';
-import { Diagnostic } from '../../src/core/types/Diagnostic';
-import { TextEdit } from '../../src/core/types/TextEdit';
-import { DefinitionResult } from '../../src/core/types/DefinitionResult';
-import { HoverResult } from '../../src/core/types/HoverResult';
-import { CompletionResult } from '../../src/core/types/CompletionResult';
-import { DocumentSymbol } from '../../src/core/types/DocumentSymbol';
-import { WorkspaceSymbol } from '../../src/core/types/WorkspaceSymbol';
-import { SemanticToken } from '../../src/core/types/SemanticToken';
-import { GlobalScope } from '../../src/core/ast/generated';
+import { WorkspaceIndex } from '../../src/core/index/WorkspaceIndex.js';
+import { WorkspaceLoader } from '../../src/core/index/WorkspaceLoader.js';
+import { MemFileSystem } from '../../src/core/io/MemFileSystem.js';
+import { nodeFileSystem } from '../../src/core/io/NodeFileSystem.js';
+import { pathToUri, joinPath } from '../../src/core/io/UriUtils.js';
+import { IConfiguration } from '../../src/core/io/IConfiguration.js';
+import { SourcePosition } from '../../src/core/types/SourcePosition.js';
+import { SourceRange } from '../../src/core/types/SourceRange.js';
+import { Diagnostic } from '../../src/core/types/Diagnostic.js';
+import { TextEdit } from '../../src/core/types/TextEdit.js';
+import { DefinitionResult } from '../../src/core/types/DefinitionResult.js';
+import { HoverResult } from '../../src/core/types/HoverResult.js';
+import { CompletionResult } from '../../src/core/types/CompletionResult.js';
+import { DocumentSymbol } from '../../src/core/types/DocumentSymbol.js';
+import { WorkspaceSymbol } from '../../src/core/types/WorkspaceSymbol.js';
+import { SemanticToken } from '../../src/core/types/SemanticToken.js';
+import { GlobalScope } from '../../src/core/ast/generated/index.js';
 
-import { getDefinition } from '../../src/core/services/DefinitionService';
-import { getHover } from '../../src/core/services/HoverService';
-import { getCompletions } from '../../src/core/services/CompletionService';
-import { getReferences } from '../../src/core/services/ReferencesService';
-import { getDocumentSymbols, getWorkspaceSymbols } from '../../src/core/services/SymbolService';
-import { getSemanticTokens } from '../../src/core/services/SemanticTokenService';
-import { getFoldingRanges, FoldingRange } from '../../src/core/services/FoldingService';
-import { getInlayHints, InlayHint } from '../../src/core/services/InlayHintService';
-import { getSignatureHelp } from '../../src/core/services/SignatureService';
-import { getCodeLenses, CodeLensItem } from '../../src/core/services/CodeLensService';
-import { getCodeActions, CodeAction } from '../../src/core/services/CodeActionService';
-import { prepareRename, rename } from '../../src/core/services/RenameService';
-import { formatDocument } from '../../src/core/services/FormatterService';
-import { prepareCallHierarchy } from '../../src/core/services/CallHierarchyService';
-import { prepareTypeHierarchy } from '../../src/core/services/TypeHierarchyService';
+import { getDefinition } from '../../src/core/services/DefinitionService.js';
+import { getHover } from '../../src/core/services/HoverService.js';
+import { getCompletions } from '../../src/core/services/CompletionService.js';
+import { getReferences } from '../../src/core/services/ReferencesService.js';
+import { getDocumentSymbols, getWorkspaceSymbols } from '../../src/core/services/SymbolService.js';
+import { getSemanticTokens } from '../../src/core/services/SemanticTokenService.js';
+import { getFoldingRanges, FoldingRange } from '../../src/core/services/FoldingService.js';
+import { getInlayHints, InlayHint } from '../../src/core/services/InlayHintService.js';
+import { getSignatureHelp } from '../../src/core/services/SignatureService.js';
+import { getCodeLenses, CodeLensItem } from '../../src/core/services/CodeLensService.js';
+import { getCodeActions, CodeAction } from '../../src/core/services/CodeActionService.js';
+import { prepareRename, rename } from '../../src/core/services/RenameService.js';
+import { formatDocument } from '../../src/core/services/FormatterService.js';
+import { prepareCallHierarchy } from '../../src/core/services/CallHierarchyService.js';
+import { prepareTypeHierarchy } from '../../src/core/services/TypeHierarchyService.js';
 
-import { Marker, parseMarkers, positionToOffset } from './Markers';
+import { Marker, parseMarkers, positionToOffset } from './Markers.js';
 
 /** Root every TestProject file lives under. */
 const ROOT = '/ws';
@@ -107,7 +109,7 @@ export class TestProject {
    * touch the real tree and tests stay independent of each other.
    */
   static fromFixture(fixtureName: string, options: TestProjectOptions = {}): TestProject {
-    const root = joinPath(__dirname, '../fixtures', fixtureName);
+    const root = joinPath(dirname(fileURLToPath(import.meta.url)), '../fixtures', fixtureName);
     if (!nodeFileSystem.isDirectory(root)) {
       throw new Error(`Fixture not found: ${root}`);
     }

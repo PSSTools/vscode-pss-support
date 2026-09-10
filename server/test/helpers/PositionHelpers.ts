@@ -1,5 +1,5 @@
-import { SourcePosition } from '../../src/core/types/SourcePosition';
-import { SourceRange } from '../../src/core/types/SourceRange';
+import { SourcePosition } from '../../src/core/types/SourcePosition.js';
+import { SourceRange } from '../../src/core/types/SourceRange.js';
 
 export function pos(line: number, character: number): SourcePosition {
   return { line, character };

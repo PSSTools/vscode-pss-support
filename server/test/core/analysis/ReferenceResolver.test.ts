@@ -1,24 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder';
-import { ReferenceResolver } from '../../../src/core/analysis/ReferenceResolver';
-import { GlobalScope, RootSymbolScope } from '../../../src/core/ast/generated';
+import { parseSources } from '../../helpers/ParseHelper.js';
+import { SymbolTableBuilder } from '../../../src/core/analysis/SymbolTableBuilder.js';
+import { ReferenceResolver } from '../../../src/core/analysis/ReferenceResolver.js';
+import { GlobalScope, RootSymbolScope } from '../../../src/core/ast/generated/index.js';
 
 function buildAndResolve(sources: string[]): {
   root: RootSymbolScope;
   diagnostics: ReturnType<ReferenceResolver['resolve']>['diagnostics'];
   crossFileRefs: ReturnType<ReferenceResolver['resolve']>['crossFileRefs'];
 } {
-  const parser = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
-  for (let i = 0; i < sources.length; i++) {
-    const result = parser.parse(sources[i], i + 1);
-    const builder = new PSSASTBuilder(i + 1, result.tokens);
-    const gs = builder.build(result.tree);
-    gs.filename = `file_${i}.pss`;
-    scopes.push(gs);
-  }
+  const scopes = parseSources(sources).scopes;
 
   const symBuilder = new SymbolTableBuilder();
   const { root } = symBuilder.build(scopes);

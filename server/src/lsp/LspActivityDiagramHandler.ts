@@ -1,6 +1,6 @@
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { ActivityDiagramBuilder } from '../core/diagram/ActivityDiagramBuilder';
-import { findActivityAtLine } from '../core/diagram/ActivityLookup';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { ActivityDiagramBuilder } from '../core/diagram/ActivityDiagramBuilder.js';
+import { findActivityAtLine } from '../core/diagram/ActivityLookup.js';
 
 export interface ActivityDiagramParams {
   uri: string;

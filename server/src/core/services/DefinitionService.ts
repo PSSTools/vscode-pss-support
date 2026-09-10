@@ -28,12 +28,12 @@ import {
   ActivityActionTypeTraversal,
   SymbolScope,
   RootSymbolScope,
-} from '../ast/generated';
-import { DefinitionResult } from '../types/DefinitionResult';
-import { SourcePosition } from '../types/SourcePosition';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils';
-import { findSymbolScope, resolveTypeAtPosition } from '../analysis/SymbolLookup';
+} from '../ast/generated/index.js';
+import { DefinitionResult } from '../types/DefinitionResult.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
+import { findSymbolScope, resolveTypeAtPosition } from '../analysis/SymbolLookup.js';
 
 /**
  * Given a position in a file, find the declaration location of the

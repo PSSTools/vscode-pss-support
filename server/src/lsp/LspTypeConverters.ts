@@ -3,9 +3,9 @@ import {
   SymbolKind as LspSymbolKind,
   DiagnosticSeverity as LspDiagnosticSeverity,
   Diagnostic as LspDiagnostic,
-} from 'vscode-languageserver/node';
-import { DocumentSymbol, SymbolKind } from '../core/types/DocumentSymbol';
-import { Diagnostic, DiagnosticSeverity } from '../core/types/Diagnostic';
+} from 'vscode-languageserver/node.js';
+import { DocumentSymbol, SymbolKind } from '../core/types/DocumentSymbol.js';
+import { Diagnostic, DiagnosticSeverity } from '../core/types/Diagnostic.js';
 
 export function convertSymbolKind(kind: SymbolKind): LspSymbolKind {
   switch (kind) {

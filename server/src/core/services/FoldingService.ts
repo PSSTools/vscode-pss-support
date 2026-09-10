@@ -7,7 +7,7 @@ import {
   ExecBlock,
   GlobalScope,
   PackageImportStmt,
-} from '../ast/generated';
+} from '../ast/generated/index.js';
 
 export interface FoldingRange {
   startLine: number;

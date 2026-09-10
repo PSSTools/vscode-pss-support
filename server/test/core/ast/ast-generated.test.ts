@@ -10,8 +10,8 @@ import {
   ExprId,
   enums,
   flags,
-} from '../../../src/core/ast/generated';
-import { ASTFactory } from '../../../src/core/ast/generated/factory';
+} from '../../../src/core/ast/generated/index.js';
+import { ASTFactory } from '../../../src/core/ast/generated/index.js';
 
 describe('Generated AST', () => {
   it('Action class can be instantiated', () => {

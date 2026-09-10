@@ -32,13 +32,13 @@ import {
   RootSymbolScope,
   enums,
   flags,
-} from '../ast/generated';
-import { HoverResult } from '../types/HoverResult';
-import { SourcePosition } from '../types/SourcePosition';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition, getNodeName, getNodeSignature } from '../ast/ASTUtils';
-import { resolveTypeAtPosition, findSymbolScope } from '../analysis/SymbolLookup';
+} from '../ast/generated/index.js';
+import { HoverResult } from '../types/HoverResult.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition, getNodeName, getNodeSignature } from '../ast/ASTUtils.js';
+import { resolveTypeAtPosition, findSymbolScope } from '../analysis/SymbolLookup.js';
 
 /**
  * Given a position in a file, produce hover information including

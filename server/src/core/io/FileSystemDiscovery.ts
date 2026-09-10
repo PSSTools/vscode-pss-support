@@ -1,7 +1,7 @@
-import { IFileDiscovery } from './IFileDiscovery';
-import { IFileSystem } from './IFileSystem';
-import { nodeFileSystem } from './NodeFileSystem';
-import { pathToUri, uriToPath, joinPath } from './UriUtils';
+import { IFileDiscovery } from './IFileDiscovery.js';
+import { IFileSystem } from './IFileSystem.js';
+import { nodeFileSystem } from './NodeFileSystem.js';
+import { pathToUri, uriToPath, joinPath } from './UriUtils.js';
 
 /** Directories never descended into, matching the behaviour server.ts had inline. */
 const DEFAULT_EXCLUDES = ['node_modules'];

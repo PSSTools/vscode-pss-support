@@ -1,14 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { analyzeResources } from '../../../src/core/analysis/ResourceAnalyzer';
-import { GlobalScope } from '../../../src/core/ast/generated';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { analyzeResources } from '../../../src/core/analysis/ResourceAnalyzer.js';
+import { GlobalScope } from '../../../src/core/ast/generated/index.js';
 
 function analyze(source: string) {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
   const asts = new Map([['file:///t.pss', ast]]);
   return analyzeResources(asts);
 }

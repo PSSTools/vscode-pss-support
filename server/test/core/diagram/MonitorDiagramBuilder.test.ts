@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { DiagramGraph } from '../../../src/core/diagram/DiagramGraph';
-import { MonitorDiagramBuilder } from '../../../src/core/diagram/MonitorDiagramBuilder';
-import { MonitorActivityDecl, MonitorActivityConcat, MonitorActivityEventually, MonitorActivityOverlap, MonitorActivityActionTraversal } from '../../../src/core/ast/generated';
-import { DiagramNodeKind } from '../../../src/core/types/DiagramNode';
-import { DiagramEdgeStyle } from '../../../src/core/types/DiagramEdge';
+import { DiagramGraph } from '../../../src/core/diagram/DiagramGraph.js';
+import { MonitorDiagramBuilder } from '../../../src/core/diagram/MonitorDiagramBuilder.js';
+import { MonitorActivityDecl, MonitorActivityConcat, MonitorActivityEventually, MonitorActivityOverlap, MonitorActivityActionTraversal } from '../../../src/core/ast/generated/index.js';
+import { DiagramNodeKind } from '../../../src/core/types/DiagramNode.js';
+import { DiagramEdgeStyle } from '../../../src/core/types/DiagramEdge.js';
 
 describe('MonitorDiagramBuilder', () => {
   it('should produce start and end for empty monitor', () => {

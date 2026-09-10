@@ -1,22 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { TestProject } from '../helpers/TestProject';
-import { handleHover } from '../../src/lsp/LspHoverHandler';
-import { handleDefinition } from '../../src/lsp/LspDefinitionHandler';
-import { handleReferences } from '../../src/lsp/LspReferencesHandler';
-import { handleCompletion, handleCompletionResolve } from '../../src/lsp/LspCompletionHandler';
-import { handleSignatureHelp } from '../../src/lsp/LspSignatureHelpHandler';
-import { handleFoldingRanges } from '../../src/lsp/LspFoldingHandler';
-import { handleSemanticTokensFull } from '../../src/lsp/LspSemanticTokensHandler';
-import { handlePrepareRename, handleRename } from '../../src/lsp/LspRenameHandler';
-import { handleCodeAction } from '../../src/lsp/LspCodeActionHandler';
-import { handleInlayHints } from '../../src/lsp/LspInlayHintHandler';
-import { handleCodeLens } from '../../src/lsp/LspCodeLensHandler';
-import { handleFormatting, handleRangeFormatting } from '../../src/lsp/LspFormattingHandler';
-import { handleWorkspaceSymbol } from '../../src/lsp/LspWorkspaceSymbolHandler';
-import { handleActivityDiagram } from '../../src/lsp/LspActivityDiagramHandler';
-import { handlePrepareCallHierarchy } from '../../src/lsp/LspCallHierarchyHandler';
-import { handlePrepareTypeHierarchy } from '../../src/lsp/LspTypeHierarchyHandler';
-import { CompletionItemKind, SymbolKind as LspSymbolKind } from 'vscode-languageserver/node';
+import { TestProject } from '../helpers/TestProject.js';
+import { handleHover } from '../../src/lsp/LspHoverHandler.js';
+import { handleDefinition } from '../../src/lsp/LspDefinitionHandler.js';
+import { handleReferences } from '../../src/lsp/LspReferencesHandler.js';
+import { handleCompletion, handleCompletionResolve } from '../../src/lsp/LspCompletionHandler.js';
+import { handleSignatureHelp } from '../../src/lsp/LspSignatureHelpHandler.js';
+import { handleFoldingRanges } from '../../src/lsp/LspFoldingHandler.js';
+import { handleSemanticTokensFull } from '../../src/lsp/LspSemanticTokensHandler.js';
+import { handlePrepareRename, handleRename } from '../../src/lsp/LspRenameHandler.js';
+import { handleCodeAction } from '../../src/lsp/LspCodeActionHandler.js';
+import { handleInlayHints } from '../../src/lsp/LspInlayHintHandler.js';
+import { handleCodeLens } from '../../src/lsp/LspCodeLensHandler.js';
+import { handleFormatting, handleRangeFormatting } from '../../src/lsp/LspFormattingHandler.js';
+import { handleWorkspaceSymbol } from '../../src/lsp/LspWorkspaceSymbolHandler.js';
+import { handleActivityDiagram } from '../../src/lsp/LspActivityDiagramHandler.js';
+import { handlePrepareCallHierarchy } from '../../src/lsp/LspCallHierarchyHandler.js';
+import { handlePrepareTypeHierarchy } from '../../src/lsp/LspTypeHierarchyHandler.js';
+import { CompletionItemKind, SymbolKind as LspSymbolKind } from 'vscode-languageserver/node.js';
 
 /**
  * Adapter-layer tests: assert the shape that actually crosses the process

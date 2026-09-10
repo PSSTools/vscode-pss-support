@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getHover } from '../../../src/core/services/HoverService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getHover } from '../../../src/core/services/HoverService.js';
 
 describe('hover doc-comment rendering', () => {
   it('should render multi-line /** */ comment as clean markdown', () => {

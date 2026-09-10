@@ -1,5 +1,5 @@
-import { GlobalScope, ActivityDecl } from '../ast/generated';
-import { walkScope } from '../ast/ASTUtils';
+import { GlobalScope, ActivityDecl } from '../ast/generated/index.js';
+import { walkScope } from '../ast/ASTUtils.js';
 
 /**
  * Find the ActivityDecl a given 0-based line falls within.

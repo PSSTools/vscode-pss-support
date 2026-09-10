@@ -1,9 +1,8 @@
 import { bench, describe } from 'vitest';
-import { PSSParserFacade } from '../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../src/core/parser/PSSASTBuilder';
-import { SemanticAnalyzer } from '../src/core/analysis/SemanticAnalyzer';
-import { WorkspaceIndex } from '../src/core/index/WorkspaceIndex';
-import { GlobalScope } from '../src/core/ast/generated';
+import { parseSources } from '../test/helpers/ParseHelper.js';
+import { SemanticAnalyzer } from '../src/core/analysis/SemanticAnalyzer.js';
+import { WorkspaceIndex } from '../src/core/index/WorkspaceIndex.js';
+import { GlobalScope } from '../src/core/ast/generated/index.js';
 
 function generatePSSFile(fileIdx: number, lines: number): string {
   const parts: string[] = [`package bench_pkg_${fileIdx} {`];
@@ -34,16 +33,11 @@ function generatePSSFile(fileIdx: number, lines: number): string {
 }
 
 function buildScopes(fileCount: number, linesPerFile: number): GlobalScope[] {
-  const parser = new PSSParserFacade();
-  const scopes: GlobalScope[] = [];
+  const sources: Record<string, string> = {};
   for (let i = 0; i < fileCount; i++) {
-    const src = generatePSSFile(i, linesPerFile);
-    const result = parser.parse(src, i + 1);
-    const builder = new PSSASTBuilder(i + 1, result.tokens);
-    const gs = builder.build(result.tree);
-    gs.filename = `file_${i}.pss`;
-    scopes.push(gs);
+    sources[`file_${i}.pss`] = generatePSSFile(i, linesPerFile);
   }
+  const scopes = parseSources(sources).scopes;
   return scopes;
 }
 
@@ -57,7 +51,6 @@ describe('Analysis Benchmarks', () => {
 
   bench('hover query (after analysis)', () => {
     const idx = new WorkspaceIndex();
-    const parser = new PSSParserFacade();
     const src = generatePSSFile(0, 1000);
     idx.addFile('file:///test.pss', src);
     // Simulates hover at a known position

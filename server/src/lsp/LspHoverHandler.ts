@@ -1,6 +1,6 @@
-import { HoverParams, Hover } from 'vscode-languageserver/node';
-import { getHover } from '../core/services/HoverService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { HoverParams, Hover } from 'vscode-languageserver/node.js';
+import { getHover } from '../core/services/HoverService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 /**
  * LSP handler for textDocument/hover requests.

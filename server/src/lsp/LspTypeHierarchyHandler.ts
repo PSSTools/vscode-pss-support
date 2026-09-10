@@ -4,14 +4,14 @@ import {
   TypeHierarchySubtypesParams,
   TypeHierarchyItem as LspTypeHierarchyItem,
   SymbolKind,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 import {
   prepareTypeHierarchy,
   getSupertypes,
   getSubtypes,
   TypeHierarchyItem,
-} from '../core/services/TypeHierarchyService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+} from '../core/services/TypeHierarchyService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 function toLspItem(item: TypeHierarchyItem): LspTypeHierarchyItem {
   return {

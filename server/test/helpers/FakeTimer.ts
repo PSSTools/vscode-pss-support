@@ -1,4 +1,4 @@
-import { ITimer, TimerHandle } from '../../src/core/index/DocumentSession';
+import { ITimer, TimerHandle } from '../../src/core/index/DocumentSession.js';
 
 interface Scheduled {
   id: number;

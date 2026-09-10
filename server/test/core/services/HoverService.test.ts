@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getHover } from '../../../src/core/services/HoverService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getHover } from '../../../src/core/services/HoverService.js';
 
 function createIndex(content: string, uri: string = 'file:///test.pss'): WorkspaceIndex {
   const index = new WorkspaceIndex();

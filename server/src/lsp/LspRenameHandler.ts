@@ -1,6 +1,6 @@
-import { RenameParams, WorkspaceEdit, PrepareRenameParams, Range } from 'vscode-languageserver/node';
-import { prepareRename, rename } from '../core/services/RenameService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+import { RenameParams, WorkspaceEdit, PrepareRenameParams, Range } from 'vscode-languageserver/node.js';
+import { prepareRename, rename } from '../core/services/RenameService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export function handlePrepareRename(
   params: PrepareRenameParams,

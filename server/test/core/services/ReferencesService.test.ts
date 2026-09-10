@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { getReferences } from '../../../src/core/services/ReferencesService';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { getReferences } from '../../../src/core/services/ReferencesService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
   const index = new WorkspaceIndex();

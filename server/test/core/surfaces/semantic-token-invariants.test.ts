@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TestProject } from '../../helpers/TestProject';
-import { TOKEN_TYPES } from '../../../src/core/services/SemanticTokenService';
+import { TestProject } from '../../helpers/TestProject.js';
+import { TOKEN_TYPES } from '../../../src/core/services/SemanticTokenService.js';
 
 /**
  * Structural invariants the LSP requires of semantic tokens.

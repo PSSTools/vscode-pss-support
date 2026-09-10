@@ -1,12 +1,11 @@
-import { GlobalScope, RootSymbolScope } from '../ast/generated';
-import { Diagnostic } from '../types/Diagnostic';
-import { SymbolTableBuilder, SymbolTableResult } from './SymbolTableBuilder';
-import { ExtensionApplicator } from './ExtensionApplicator';
-import { ImportResolver } from './ImportResolver';
-import { ReferenceResolver } from './ReferenceResolver';
-import { StdlibLoader } from './StdlibLoader';
-import { IFileSystem } from '../io/IFileSystem';
-import { nodeFileSystem } from '../io/NodeFileSystem';
+import { GlobalScope, RootSymbolScope } from '../ast/generated/index.js';
+import { Diagnostic } from '../types/Diagnostic.js';
+import { SymbolTableBuilder, SymbolTableResult } from './SymbolTableBuilder.js';
+import { ExtensionApplicator } from './ExtensionApplicator.js';
+import { ImportResolver } from './ImportResolver.js';
+import { ReferenceResolver } from './ReferenceResolver.js';
+import { IFileSystem } from '../io/IFileSystem.js';
+import { nodeFileSystem } from '../io/NodeFileSystem.js';
 
 export interface AnalysisResult {
   root: RootSymbolScope;
@@ -31,17 +30,22 @@ export class SemanticAnalyzer {
     this.fs = fs;
   }
 
+  /**
+   * Supply the standard-library scopes to analyse alongside the user's files.
+   *
+   * These used to be found on disk and parsed here. The parser now links its
+   * own built-in copy into every parse, so the caller already holds them and
+   * re-reading them would be both redundant and a second source of truth.
+   */
+  public setStdlibScopes(scopes: GlobalScope[]): void {
+    this.stdlibScopes = scopes;
+  }
+
   public analyze(scopes: GlobalScope[]): AnalysisResult {
     const allDiagnostics = new Map<number, Diagnostic[]>();
 
-    // Load stdlib if not already loaded
-    if (!this.stdlibScopes) {
-      const loader = new StdlibLoader(this.stdlibDir, this.fs);
-      this.stdlibScopes = loader.load();
-    }
-
     // Prepend stdlib scopes
-    const allScopes = [...this.stdlibScopes, ...scopes];
+    const allScopes = [...(this.stdlibScopes ?? []), ...scopes];
 
     // Pass 1: Build symbol table
     const symBuilder = new SymbolTableBuilder();

@@ -2,9 +2,9 @@ import {
   InlayHintParams,
   InlayHint as LspInlayHint,
   InlayHintKind,
-} from 'vscode-languageserver/node';
-import { getInlayHints } from '../core/services/InlayHintService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
+} from 'vscode-languageserver/node.js';
+import { getInlayHints } from '../core/services/InlayHintService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 
 export function handleInlayHints(
   params: InlayHintParams,

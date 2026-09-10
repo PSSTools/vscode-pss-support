@@ -1,8 +1,8 @@
-import { WorkspaceSymbolParams, SymbolInformation } from 'vscode-languageserver/node';
-import { getWorkspaceSymbols } from '../core/services/SymbolService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { GlobalScope } from '../core/ast/generated';
-import { convertSymbolKind } from './LspTypeConverters';
+import { WorkspaceSymbolParams, SymbolInformation } from 'vscode-languageserver/node.js';
+import { getWorkspaceSymbols } from '../core/services/SymbolService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { GlobalScope } from '../core/ast/generated/index.js';
+import { convertSymbolKind } from './LspTypeConverters.js';
 
 /**
  * LSP handler for workspace/symbol requests.

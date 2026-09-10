@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MemFileSystem } from '../../../src/core/io/MemFileSystem';
+import { MemFileSystem } from '../../../src/core/io/MemFileSystem.js';
 
 describe('MemFileSystem', () => {
   const fs = () => new MemFileSystem({

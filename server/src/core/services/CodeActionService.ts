@@ -3,11 +3,11 @@ import {
   GlobalScope,
   PackageImportStmt,
   Scope,
-} from '../ast/generated';
-import { Diagnostic } from '../types/Diagnostic';
-import { TextEdit } from '../types/TextEdit';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
+} from '../ast/generated/index.js';
+import { Diagnostic } from '../types/Diagnostic.js';
+import { TextEdit } from '../types/TextEdit.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 
 export interface CodeAction {
   title: string;

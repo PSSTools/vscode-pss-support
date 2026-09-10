@@ -11,11 +11,11 @@ import {
   SymbolScope,
   SymbolTypeScope,
   RootSymbolScope,
-} from '../ast/generated';
-import { SourcePosition } from '../types/SourcePosition';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { walkScope, getNodeName } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { walkScope, getNodeName } from '../ast/ASTUtils.js';
 
 export interface InlayHint {
   position: SourcePosition;

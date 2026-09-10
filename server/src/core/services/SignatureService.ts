@@ -9,10 +9,10 @@ import {
   DataTypeString,
   DataTypeFloat,
   DataTypeUserDefined,
-} from '../ast/generated';
-import { SourcePosition } from '../types/SourcePosition';
-import { WorkspaceIndex } from '../index/WorkspaceIndex';
-import { findNodeAtPosition } from '../ast/ASTUtils';
+} from '../ast/generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
+import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
+import { findNodeAtPosition } from '../ast/ASTUtils.js';
 
 export interface SignatureResult {
   label: string;

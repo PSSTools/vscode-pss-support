@@ -2,10 +2,10 @@ import {
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
   TextEdit as LspTextEdit,
-} from 'vscode-languageserver/node';
-import { formatDocument, formatRange } from '../core/services/FormatterService';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { IConfiguration } from '../core/io/IConfiguration';
+} from 'vscode-languageserver/node.js';
+import { formatDocument, formatRange } from '../core/services/FormatterService.js';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { IConfiguration } from '../core/io/IConfiguration.js';
 
 export function handleFormatting(
   params: DocumentFormattingParams,

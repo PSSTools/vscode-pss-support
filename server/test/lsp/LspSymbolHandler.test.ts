@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../src/core/parser/PSSASTBuilder';
-import { handleDocumentSymbol } from '../../src/lsp/LspSymbolHandler';
-import { GlobalScope } from '../../src/core/ast/generated';
+import { parseSource } from '../helpers/ParseHelper.js';
+import { handleDocumentSymbol } from '../../src/lsp/LspSymbolHandler.js';
+import { GlobalScope } from '../../src/core/ast/generated/index.js';
 
 describe('LspSymbolHandler', () => {
   it('returns empty array when no AST cached', () => {
@@ -14,10 +13,7 @@ describe('LspSymbolHandler', () => {
   });
 
   it('returns symbols for cached AST', () => {
-    const facade = new PSSParserFacade();
-    const parseResult = facade.parse('component c { action a { } }');
-    const builder = new PSSASTBuilder(0, parseResult.tokens);
-    const ast = builder.build(parseResult.tree);
+    const ast = parseSource('component c { action a { } }')!;
 
     const result = handleDocumentSymbol(
       { textDocument: { uri: 'file:///test.pss' } },
@@ -31,10 +27,7 @@ describe('LspSymbolHandler', () => {
   });
 
   it('returns correct LSP symbol kinds', () => {
-    const facade = new PSSParserFacade();
-    const parseResult = facade.parse('struct s { }\nenum e { A }');
-    const builder = new PSSASTBuilder(0, parseResult.tokens);
-    const ast = builder.build(parseResult.tree);
+    const ast = parseSource('struct s { }\nenum e { A }')!;
 
     const result = handleDocumentSymbol(
       { textDocument: { uri: 'file:///test.pss' } },

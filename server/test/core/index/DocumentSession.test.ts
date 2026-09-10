@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { DocumentSession } from '../../../src/core/index/DocumentSession';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex';
-import { Diagnostic } from '../../../src/core/types/Diagnostic';
-import { FakeTimer } from '../../helpers/FakeTimer';
+import { DocumentSession } from '../../../src/core/index/DocumentSession.js';
+import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { Diagnostic } from '../../../src/core/types/Diagnostic.js';
+import { FakeTimer } from '../../helpers/FakeTimer.js';
 
 const URI = 'file:///ws/top.pss';
 

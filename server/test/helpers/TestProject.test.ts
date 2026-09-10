@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TestProject, applyTextEdits } from './TestProject';
+import { TestProject, applyTextEdits } from './TestProject.js';
 
 describe('TestProject.fromFiles', () => {
   it('indexes every file and strips markers before parsing', () => {

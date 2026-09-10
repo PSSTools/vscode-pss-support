@@ -1,5 +1,5 @@
-import { DiagramNode, DiagramNodeKind } from '../types/DiagramNode';
-import { DiagramEdge, DiagramEdgeStyle } from '../types/DiagramEdge';
+import { DiagramNode, DiagramNodeKind } from '../types/DiagramNode.js';
+import { DiagramEdge, DiagramEdgeStyle } from '../types/DiagramEdge.js';
 
 /**
  * Plain data model for directed graphs used by activity diagram

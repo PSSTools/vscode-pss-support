@@ -18,15 +18,15 @@ import {
   ExecBlock,
   enums,
   flags,
-} from '../ast/generated';
+} from '../ast/generated/index.js';
 import {
   DocumentSymbol,
   SymbolKind,
-} from '../types/DocumentSymbol';
-import { SourceRange } from '../types/SourceRange';
-import { WorkspaceSymbol } from '../types/WorkspaceSymbol';
-import { getNodeName } from '../ast/ASTUtils';
-import { Location } from '../ast/generated/structs';
+} from '../types/DocumentSymbol.js';
+import { SourceRange } from '../types/SourceRange.js';
+import { WorkspaceSymbol } from '../types/WorkspaceSymbol.js';
+import { getNodeName } from '../ast/ASTUtils.js';
+import { Location } from '../ast/generated/index.js';
 
 function locationToRange(loc: Location, endLoc?: Location): SourceRange {
   const startLine = Math.max(0, loc.lineno - 1);

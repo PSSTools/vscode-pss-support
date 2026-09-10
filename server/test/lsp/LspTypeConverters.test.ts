@@ -2,15 +2,15 @@ import { describe, it, expect } from 'vitest';
 import {
   SymbolKind as LspSymbolKind,
   DiagnosticSeverity as LspDiagnosticSeverity,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 import {
   convertSymbolKind,
   convertSeverity,
   convertDiagnostic,
   convertDocumentSymbol,
-} from '../../src/lsp/LspTypeConverters';
-import { SymbolKind, DocumentSymbol } from '../../src/core/types/DocumentSymbol';
-import { DiagnosticSeverity } from '../../src/core/types/Diagnostic';
+} from '../../src/lsp/LspTypeConverters.js';
+import { SymbolKind, DocumentSymbol } from '../../src/core/types/DocumentSymbol.js';
+import { DiagnosticSeverity } from '../../src/core/types/Diagnostic.js';
 
 /**
  * The converters are two hand-written enum tables that decide which icon the

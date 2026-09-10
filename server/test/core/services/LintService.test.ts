@@ -1,14 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { PSSParserFacade } from '../../../src/core/parser/PSSParserFacade';
-import { PSSASTBuilder } from '../../../src/core/parser/PSSASTBuilder';
-import { lint } from '../../../src/core/services/LintService';
-import { TestConfiguration } from '../../helpers/TestConfiguration';
+import { parseSource } from '../../helpers/ParseHelper.js';
+import { lint } from '../../../src/core/services/LintService.js';
+import { TestConfiguration } from '../../helpers/TestConfiguration.js';
 
 function buildAndLint(source: string, config?: TestConfiguration) {
-  const parser = new PSSParserFacade();
-  const result = parser.parse(source, 1);
-  const builder = new PSSASTBuilder(1, result.tokens);
-  const ast = builder.build(result.tree);
+  const ast = parseSource(source)!;
   return lint(ast, config);
 }
 

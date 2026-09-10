@@ -25,35 +25,34 @@ import {
   TypeHierarchySubtypesParams,
   InlayHintParams,
   CodeLensParams,
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { WorkspaceIndex } from '../core/index/WorkspaceIndex';
-import { WorkspaceLoader } from '../core/index/WorkspaceLoader';
-import { DocumentSession } from '../core/index/DocumentSession';
-import { handleDocumentSymbol } from './LspSymbolHandler';
-import { handleHover } from './LspHoverHandler';
-import { handleDefinition } from './LspDefinitionHandler';
-import { handleReferences } from './LspReferencesHandler';
-import { handleCompletion, handleCompletionResolve } from './LspCompletionHandler';
-import { handleSignatureHelp } from './LspSignatureHelpHandler';
-import { handleSemanticTokensFull, SEMANTIC_TOKENS_LEGEND } from './LspSemanticTokensHandler';
-import { handleFoldingRanges } from './LspFoldingHandler';
-import { handlePrepareRename, handleRename } from './LspRenameHandler';
-import { handleCodeAction } from './LspCodeActionHandler';
-import { handlePrepareCallHierarchy, handleIncomingCalls, handleOutgoingCalls } from './LspCallHierarchyHandler';
-import { handlePrepareTypeHierarchy, handleSupertypes, handleSubtypes } from './LspTypeHierarchyHandler';
-import { handleInlayHints } from './LspInlayHintHandler';
-import { handleWorkspaceSymbol } from './LspWorkspaceSymbolHandler';
-import { convertDiagnostic } from './LspTypeConverters';
-import { handleFormatting, handleRangeFormatting } from './LspFormattingHandler';
-import { handleCodeLens } from './LspCodeLensHandler';
-import { handleActivityDiagram } from './LspActivityDiagramHandler';
-import { loadPSSConfig, PSSConfigAdapter } from '../core/config/PSSConfigLoader';
-import { IConfiguration } from '../core/io/IConfiguration';
-import { uriToPath } from '../core/io/UriUtils';
-import { nodeFileSystem } from '../core/io/NodeFileSystem';
-import { resolveStdlibDir } from '../core/analysis/StdlibLoader';
+import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
+import { WorkspaceLoader } from '../core/index/WorkspaceLoader.js';
+import { DocumentSession } from '../core/index/DocumentSession.js';
+import { handleDocumentSymbol } from './LspSymbolHandler.js';
+import { handleHover } from './LspHoverHandler.js';
+import { handleDefinition } from './LspDefinitionHandler.js';
+import { handleReferences } from './LspReferencesHandler.js';
+import { handleCompletion, handleCompletionResolve } from './LspCompletionHandler.js';
+import { handleSignatureHelp } from './LspSignatureHelpHandler.js';
+import { handleSemanticTokensFull, SEMANTIC_TOKENS_LEGEND } from './LspSemanticTokensHandler.js';
+import { handleFoldingRanges } from './LspFoldingHandler.js';
+import { handlePrepareRename, handleRename } from './LspRenameHandler.js';
+import { handleCodeAction } from './LspCodeActionHandler.js';
+import { handlePrepareCallHierarchy, handleIncomingCalls, handleOutgoingCalls } from './LspCallHierarchyHandler.js';
+import { handlePrepareTypeHierarchy, handleSupertypes, handleSubtypes } from './LspTypeHierarchyHandler.js';
+import { handleInlayHints } from './LspInlayHintHandler.js';
+import { handleWorkspaceSymbol } from './LspWorkspaceSymbolHandler.js';
+import { convertDiagnostic } from './LspTypeConverters.js';
+import { handleFormatting, handleRangeFormatting } from './LspFormattingHandler.js';
+import { handleCodeLens } from './LspCodeLensHandler.js';
+import { handleActivityDiagram } from './LspActivityDiagramHandler.js';
+import { loadPSSConfig, PSSConfigAdapter } from '../core/config/PSSConfigLoader.js';
+import { IConfiguration } from '../core/io/IConfiguration.js';
+import { uriToPath } from '../core/io/UriUtils.js';
+import { nodeFileSystem } from '../core/io/NodeFileSystem.js';
 
 /**
  * Wire every LSP request handler onto a connection.
@@ -77,7 +76,7 @@ export function startLanguageServer(
   let initParams: InitializeParams;
   const documents = new TextDocuments(TextDocument);
 
-  const index = new WorkspaceIndex(options.stdlibDir ?? resolveStdlibDir());
+  const index = new WorkspaceIndex(options.stdlibDir);
 
   const session = new DocumentSession(index, {
     debounceMs: options.debounceMs,

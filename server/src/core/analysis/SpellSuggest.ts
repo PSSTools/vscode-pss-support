@@ -4,7 +4,7 @@ import {
   SymbolEnumScope,
   SymbolFunctionScope,
   RootSymbolScope,
-} from '../ast/generated';
+} from '../ast/generated/index.js';
 
 /**
  * Levenshtein edit distance between two strings.

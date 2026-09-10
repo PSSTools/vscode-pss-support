@@ -14,8 +14,8 @@ import {
   enums,
   flags,
   SymbolChildrenScope,
-} from './generated';
-import { SourcePosition } from '../types/SourcePosition';
+} from './generated/index.js';
+import { SourcePosition } from '../types/SourcePosition.js';
 
 /**
  * Find the deepest AST node at a given source position.

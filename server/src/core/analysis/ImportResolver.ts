@@ -9,8 +9,8 @@ import {
   SymbolImportSpec,
   SymbolRefPath,
   TypeIdentifier,
-} from '../ast/generated';
-import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic';
+} from '../ast/generated/index.js';
+import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
 
 export interface ImportResolveResult {
   diagnostics: Diagnostic[];
