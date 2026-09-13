@@ -62,8 +62,8 @@ export function getSupertypes(
   index: WorkspaceIndex,
 ): TypeHierarchyItem[] {
   const results: TypeHierarchyItem[] = [];
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return results;
+  const root = index.getSymbolRoot();
+  if (!root) return results;
 
   // Find the type scope
   const typeNode = findTypeByName(item.name, index);

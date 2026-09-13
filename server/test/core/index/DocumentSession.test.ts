@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { DocumentSession } from '../../../src/core/index/DocumentSession.js';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { Diagnostic } from '../../../src/core/types/Diagnostic.js';
 import { FakeTimer } from '../../helpers/FakeTimer.js';
 
 const URI = 'file:///ws/top.pss';
 
 function setup(debounceMs = 300) {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   const timer = new FakeTimer();
   const published: Array<{ uri: string; diagnostics: Diagnostic[] }> = [];
   const session = new DocumentSession(index, {

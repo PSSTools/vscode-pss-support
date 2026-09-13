@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getReferences } from '../../../src/core/services/ReferencesService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) {
     index.addFile(uri, content);
   }
@@ -121,7 +122,7 @@ describe('ReferencesService', () => {
   });
 
   it('should return empty for nonexistent file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const results = getReferences(
       'file:///nonexistent.pss',
       { line: 0, character: 0 },

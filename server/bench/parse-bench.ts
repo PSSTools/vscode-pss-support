@@ -1,45 +1,6 @@
 import { bench, describe } from 'vitest';
 import { newParser } from '../src/core/parser/ParserHost.js';
-
-function generatePSS(lines: number): string {
-  const parts: string[] = ['package bench_pkg {'];
-  let lineCount = 1;
-
-  let actionIdx = 0;
-  while (lineCount < lines) {
-    const actionName = `action_${actionIdx++}`;
-    parts.push(`  action ${actionName} {`);
-    lineCount++;
-
-    // Add fields
-    for (let f = 0; f < 5 && lineCount < lines; f++) {
-      parts.push(`    rand bit[32] field_${f};`);
-      lineCount++;
-    }
-
-    // Add a constraint
-    if (lineCount < lines) {
-      parts.push(`    constraint c {`);
-      parts.push(`      field_0 > 0;`);
-      parts.push(`      field_1 < 100;`);
-      parts.push(`    }`);
-      lineCount += 4;
-    }
-
-    // Add activity
-    if (lineCount < lines) {
-      parts.push(`    activity {`);
-      parts.push(`    }`);
-      lineCount += 2;
-    }
-
-    parts.push(`  }`);
-    lineCount++;
-  }
-
-  parts.push('}');
-  return parts.join('\n');
-}
+import { assertParses, generatePSS } from './Sources.js';
 
 /**
  * A fresh parser per iteration.
@@ -74,6 +35,11 @@ describe('Parse Benchmarks', () => {
   const src1k = generatePSS(1000);
   const src5k = generatePSS(5000);
   const src10k = generatePSS(10000);
+
+  // Measure parsing, not error recovery. See Sources.ts.
+  assertParses(src1k, '1K');
+  assertParses(src5k, '5K');
+  assertParses(src10k, '10K');
 
   bench('parse 1K lines', () => parseOnly(src1k));
   bench('parse 5K lines', () => parseOnly(src5k));

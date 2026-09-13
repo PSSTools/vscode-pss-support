@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getCompletions, resolveCompletionItem, parseLineContext } from '../../../src/core/services/CompletionService.js';
 import { CompletionKind } from '../../../src/core/types/CompletionResult.js';
 
@@ -22,7 +23,7 @@ function createIndex(
   files: Record<string, string>,
   typing?: { uri: string; line: number },
 ): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) {
     if (typing && uri === typing.uri) {
       const lines = content.split('\n');
@@ -34,7 +35,7 @@ function createIndex(
   }
   if (typing) {
     // Force the seed parse before the update, so there is a good tree to keep.
-    index.getAnalysisResult();
+    index.getSymbolRoot();
     index.updateFile(typing.uri, files[typing.uri]);
   }
   return index;
@@ -258,7 +259,7 @@ describe('CompletionService', () => {
   });
 
   it('should return completions for nonexistent file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const results = getCompletions('file:///nonexistent.pss', { line: 0, character: 0 }, index);
     expect(results.length).toBeGreaterThan(0);
   });
@@ -414,7 +415,7 @@ describe('CompletionService do-target', () => {
   });
 
   it('should fall back to all workspace actions when context unavailable', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', '');
     const results = getCompletions(
       'file:///test.pss',

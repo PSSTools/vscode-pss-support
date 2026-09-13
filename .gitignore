@@ -12,23 +12,20 @@ out/
 packages/
 docs/_build/
 
-# DERIVED FROM pssparser, NOT SOURCE. Produced by `npm run generate` from
-# ivpm-supplied inputs: the ANTLR parser from src/PSS*.g4.
+# NOTHING GENERATED IS IGNORED HERE ANY MORE, and the absence is the point.
 #
-# It was tracked until now, and that is what let it go stale: the parser sat 24
-# tokens behind the grammar for three weeks while CI stayed green, because the
-# committed copy satisfied every consumer and nothing ever compared it against
-# its source. Checking in derived output means the drift is silent; deriving it
-# at build means an upstream grammar change turns CI red, which is the signal
-# we want.
+# server/src/generated/ held an ANTLR lexer and parser generated from
+# src/PSS*.g4. There is no ANTLR front end in this repository now: the server
+# parses through @psstools/pssparser, the pssparser C++ core compiled to
+# WebAssembly, which ivpm fetches and npm's `prepare` hook builds. The grammar
+# is upstream's, and so is the generation of it.
 #
-# server/src/core/ast/generated/ is deliberately NOT here any more. Nothing
-# generates it: it is a one-line checked-in re-export of the AST classes that
-# ship inside @psstools/pssparser, so that the parser and this server share one
-# set of constructors. See the header in that file -- `instanceof` depends on
-# it. The reasoning above does not apply, because there is no second copy left
-# to drift from.
-server/src/generated/
+# server/src/core/ast/generated/ is likewise not ignored, but for the opposite
+# reason -- it is a checked-in re-export of the AST classes that ship inside
+# @psstools/pssparser, so that the parser and this server share one set of
+# constructors. See the header in that file; `instanceof` depends on it.
+#
+# packages/ above is where ivpm puts the parser, and covers the built wasm.
 
 .agents/
 .claude/

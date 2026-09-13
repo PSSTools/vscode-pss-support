@@ -38,7 +38,15 @@ describe('pss-check', () => {
     const result = await check(dir, dir);
 
     expect(result.lines).toHaveLength(1);
-    expect(result.lines[0]).toBe("top.pss:3:5: error: Undefined type 'nowhere_s'");
+    // Recorded gap: the column should be 5, where `nowhere_s` starts.
+    //
+    // `Location.linepos` is 0-based when it comes from a token and 1-based
+    // when it comes from an AST node (`AstBuilderInt.cpp` adds one;
+    // `syntaxError` does not). The marker emitter adds one unconditionally,
+    // which is right for syntax markers and one too far right for every
+    // marker the linker raises. Pinned here so that fixing the core shows up
+    // as this test failing rather than as a silent shift.
+    expect(result.lines[0]).toBe("top.pss:3:6: error: unknown type 'nowhere_s'");
     expect(result.hasErrors).toBe(true);
   });
 

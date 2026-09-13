@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 
 describe('diagnostic suggestions', () => {
   it('should suggest similar type for a typo in field declaration', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///types.pss', 'struct my_data_s { }');
     index.addFile('file:///test.pss', [
       'component c {',
@@ -21,7 +21,7 @@ describe('diagnostic suggestions', () => {
   });
 
   it('should suggest similar type for misspelled component', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///comp.pss', 'component mycomp_c { }');
     index.addFile('file:///top.pss', [
       'component top {',
@@ -36,20 +36,22 @@ describe('diagnostic suggestions', () => {
   });
 
   it('should suggest similar type for misspelled base type', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', [
       'struct base_s { }',
       'struct child_s : base_z { }',  // typo: base_z -> base_s
     ].join('\n'));
 
     const diags = index.getDiagnostics('file:///test.pss');
-    const d = diags.find(d => d.code === 'unresolved-base-type');
-    expect(d).toBeDefined();
+    // One code covers every unresolved name; the old analyzer had a separate
+    // one per syntactic position (base type, extend target, field type).
+    const d = diags.find(d => d.message.includes("'base_z'"));
+    expect(d?.code).toBe('undefined-type');
     expect(d!.message).toMatch(/did you mean 'base_s'/i);
   });
 
   it('should not suggest when nothing is close', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', [
       'component c {',
       '  action a {',
@@ -65,7 +67,7 @@ describe('diagnostic suggestions', () => {
   });
 
   it('should suggest for extend target typo', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///comp.pss', 'component mycomp_c { }');
     index.addFile('file:///ext.pss', [
       'extend component mycomp_d {',   // typo: _d -> _c
@@ -74,13 +76,13 @@ describe('diagnostic suggestions', () => {
     ].join('\n'));
 
     const diags = index.getDiagnostics('file:///ext.pss');
-    const d = diags.find(d => d.code === 'unresolved-extend-target');
-    expect(d).toBeDefined();
+    const d = diags.find(d => d.message.includes("'mycomp_d'"));
+    expect(d?.code).toBe('undefined-type');
     expect(d!.message).toMatch(/did you mean 'mycomp_c'/i);
   });
 
   it('should handle case-insensitive matching', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', [
       'struct MyStruct { }',
       'component c {',

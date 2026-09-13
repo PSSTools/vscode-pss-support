@@ -7,7 +7,7 @@
  * package. Two generated copies of one schema is one copy too many, and the
  * duplicate was not merely redundant: it was *wrong*.
  *
- * `core/analysis/` dispatches on node type with `instanceof` in 63 places.
+ * The services dispatch on node type with `instanceof` in dozens of places.
  * `instanceof` compares constructor identity, not shape, so a tree built by
  * the parser out of *its* classes fails every check written against *ours* --
  * silently. Nothing throws; the analyzer simply finds nothing. Sharing one set

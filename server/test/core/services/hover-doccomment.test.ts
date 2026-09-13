@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getHover } from '../../../src/core/services/HoverService.js';
 
 describe('hover doc-comment rendering', () => {
@@ -13,7 +13,7 @@ describe('hover doc-comment rendering', () => {
       '  action completion_wait_a { }',
       '}',
     ].join('\n');
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', src);
 
     const hover = getHover('file:///test.pss', { line: 5, character: 10 }, index);
@@ -31,7 +31,7 @@ describe('hover doc-comment rendering', () => {
       '  action dma_read_a { }',
       '}',
     ].join('\n');
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', src);
 
     const hover = getHover('file:///test.pss', { line: 2, character: 10 }, index);
@@ -52,7 +52,7 @@ describe('hover doc-comment rendering', () => {
       '  rand bit[64] addr;',
       '}',
     ].join('\n');
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', src);
 
     const hover = getHover('file:///test.pss', { line: 7, character: 8 }, index);
@@ -68,7 +68,7 @@ describe('hover doc-comment rendering', () => {
       '/** Brief description */',
       'struct s { }',
     ].join('\n');
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', src);
 
     const hover = getHover('file:///test.pss', { line: 1, character: 5 }, index);
@@ -90,7 +90,7 @@ describe('hover doc-comment rendering', () => {
       '  }',
       '}',
     ].join('\n');
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', src);
 
     const hover = getHover('file:///test.pss', { line: 7, character: 12 }, index);

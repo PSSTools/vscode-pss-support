@@ -2,6 +2,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect } from 'vitest';
 import { WorkspaceIndex } from '../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from './Indexes.js';
 import { WorkspaceLoader } from '../../src/core/index/WorkspaceLoader.js';
 import { MemFileSystem } from '../../src/core/io/MemFileSystem.js';
 import { nodeFileSystem } from '../../src/core/io/NodeFileSystem.js';
@@ -91,7 +92,7 @@ export class TestProject {
       fs.addFile(joinPath(ROOT, name), parsed.text);
     }
 
-    const index = new WorkspaceIndex(options.stdlibDir, fs);
+    const index = makeIndex();
     for (const [name, text] of sources) {
       index.addFile(pathToUri(joinPath(ROOT, name)), text);
     }
@@ -147,7 +148,7 @@ export class TestProject {
     for (const [name, content] of Object.entries(files)) {
       fs.addFile(joinPath(ROOT, name), content);
     }
-    const index = new WorkspaceIndex(options.stdlibDir, fs);
+    const index = makeIndex();
     await new WorkspaceLoader({ fs }).loadInto(index, [pathToUri(ROOT)]);
 
     const project = new TestProject(index, fs, options.config);

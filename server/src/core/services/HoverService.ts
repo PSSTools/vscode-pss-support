@@ -38,7 +38,7 @@ import { SourcePosition } from '../types/SourcePosition.js';
 import { SourceRange } from '../types/SourceRange.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName, getNodeSignature } from '../ast/ASTUtils.js';
-import { resolveTypeAtPosition, findSymbolScope } from '../analysis/SymbolLookup.js';
+import { resolveTypeAtPosition, findSymbolScope } from '../ast/SymbolLookup.js';
 import { lspChar } from '../ast/SourceLoc.js';
 
 /**
@@ -56,12 +56,10 @@ export function getHover(
   const node = findNodeAtPosition(ast, position);
   if (!node) return undefined;
 
-  const analysisResult = index.getAnalysisResult();
+  const root = index.getSymbolRoot();
 
   // Try resolving a type reference at the cursor position first
-  const resolved = analysisResult
-    ? resolveTypeRefForHover(node, position, analysisResult.root)
-    : null;
+  const resolved = root ? resolveTypeRefForHover(node, position, root) : null;
 
   const contents = resolved
     ? buildHoverContent(resolved, index, uri)

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 
 /**
  * Multi-file diagnostic tests. Validates that type references across
@@ -14,7 +15,7 @@ import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
  */
 describe('multi-file diagnostics', () => {
   function buildProjectIndex(): WorkspaceIndex {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///mycomp_c.pss', [
       'component mycomp_c {',
       '  int a;',
@@ -73,7 +74,7 @@ describe('multi-file diagnostics', () => {
   });
 
   it('should resolve cross-file type when file is added after reference', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     // Add pss_top first (before mycomp_c exists)
     index.addFile('file:///pss_top.pss', [
       'component pss_top {',
@@ -93,7 +94,7 @@ describe('multi-file diagnostics', () => {
   });
 
   it('should report error when referenced file is removed', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///mycomp_c.pss', 'component mycomp_c { }');
     index.addFile('file:///pss_top.pss', [
       'component pss_top {',
@@ -114,7 +115,7 @@ describe('multi-file diagnostics', () => {
   });
 
   it('should handle struct references across files', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///types.pss', [
       'struct my_data_s {',
       '  rand int value;',
@@ -133,7 +134,7 @@ describe('multi-file diagnostics', () => {
   });
 
   it('should handle package-scoped types across files', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///pkg.pss', [
       'package my_pkg {',
       '  struct data_s { }',
@@ -155,7 +156,7 @@ describe('multi-file diagnostics', () => {
   });
 
   it('should flag truly undefined types, not cross-file types', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///a.pss', [
       'struct real_type { }',
       'component comp_a { }',

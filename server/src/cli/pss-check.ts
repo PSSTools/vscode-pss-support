@@ -36,7 +36,22 @@ export interface CheckResult {
  * process or capturing stdout.
  */
 export async function check(target: string, cwd: string = process.cwd()): Promise<CheckResult> {
+  // Disposed in the `finally` below. A one-shot CLI would get away without it,
+  // but `check` is also called repeatedly from tests, and the WASM session it
+  // holds is not something the JavaScript collector can reclaim.
   const index = new WorkspaceIndex();
+  try {
+    return await runCheck(index, target, cwd);
+  } finally {
+    index.dispose();
+  }
+}
+
+async function runCheck(
+  index: WorkspaceIndex,
+  target: string,
+  cwd: string,
+): Promise<CheckResult> {
   const loader = new WorkspaceLoader();
 
   let uris: string[];

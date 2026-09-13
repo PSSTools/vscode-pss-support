@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { prepareTypeHierarchy, getSupertypes, getSubtypes } from '../../../src/core/services/TypeHierarchyService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) index.addFile(uri, content);
   return index;
 }

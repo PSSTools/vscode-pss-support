@@ -1,59 +1,62 @@
-import { bench, describe } from 'vitest';
-import { parseSources } from '../test/helpers/ParseHelper.js';
-import { SemanticAnalyzer } from '../src/core/analysis/SemanticAnalyzer.js';
+/**
+ * The cost of the whole-workspace parse and link.
+ *
+ * This used to time `SemanticAnalyzer.analyze`, which is gone: the parser's
+ * `link()` builds the symbol table now. What is left is worth keeping and is
+ * the number the design rests on -- `WorkspaceIndex` re-parses and re-links
+ * every file on every edit rather than maintaining incremental state, and that
+ * is only defensible while a whole workspace stays in the low hundreds of
+ * milliseconds. If this benchmark starts climbing, that decision needs
+ * revisiting, not the benchmark.
+ */
+import { afterAll, bench, describe } from 'vitest';
+
 import { WorkspaceIndex } from '../src/core/index/WorkspaceIndex.js';
-import { GlobalScope } from '../src/core/ast/generated/index.js';
+import { assertParses, generatePSS } from './Sources.js';
 
-function generatePSSFile(fileIdx: number, lines: number): string {
-  const parts: string[] = [`package bench_pkg_${fileIdx} {`];
-  let lineCount = 1;
-  let actionIdx = 0;
+const SOURCES: Array<[string, string]> = Array.from({ length: 10 }, (_, i) =>
+  [`file:///file_${i}.pss`, generatePSS(1000, `_${i}`)] as [string, string],
+);
 
-  while (lineCount < lines) {
-    const actionName = `action_${fileIdx}_${actionIdx++}`;
-    parts.push(`  action ${actionName} {`);
-    lineCount++;
-
-    for (let f = 0; f < 3 && lineCount < lines; f++) {
-      parts.push(`    rand bit[32] field_${f};`);
-      lineCount++;
-    }
-
-    if (lineCount < lines) {
-      parts.push(`    constraint c { field_0 > 0; }`);
-      lineCount++;
-    }
-
-    parts.push(`  }`);
-    lineCount++;
-  }
-
-  parts.push('}');
-  return parts.join('\n');
+// Measure linking, not error recovery: WorkspaceIndex swallows parse failures
+// per file, so bad source here would benchmark ten files failing quietly.
+for (const [uri, text] of SOURCES) {
+  assertParses(text, uri);
 }
 
-function buildScopes(fileCount: number, linesPerFile: number): GlobalScope[] {
-  const sources: Record<string, string> = {};
-  for (let i = 0; i < fileCount; i++) {
-    sources[`file_${i}.pss`] = generatePSSFile(i, linesPerFile);
+/** Populate an index without parsing: `addFile` only marks the parse stale. */
+function loadedIndex(): WorkspaceIndex {
+  const index = new WorkspaceIndex();
+  for (const [uri, text] of SOURCES) {
+    index.addFile(uri, text);
   }
-  const scopes = parseSources(sources).scopes;
-  return scopes;
+  return index;
 }
 
-describe('Analysis Benchmarks', () => {
-  const scopes10 = buildScopes(10, 1000);
+describe('Workspace benchmarks', () => {
+  bench('parse and link - 10 files x 1K lines', () => {
+    const index = loadedIndex();
+    try {
+      // Reading diagnostics is what forces the parse; nothing before it does.
+      index.getAllDiagnostics();
+    } finally {
+      index.dispose();
+    }
+  });
+});
 
-  bench('full analysis - 10 files x 1K lines', () => {
-    const analyzer = new SemanticAnalyzer();
-    analyzer.analyze(scopes10);
+describe('Workspace query benchmarks', () => {
+  // Parsed once, outside the bench body. Building the index inside it made
+  // this time identical to the benchmark above -- the parse swamped the query
+  // by three orders of magnitude, and the number meant nothing.
+  const parsed = loadedIndex();
+  parsed.getAllDiagnostics();
+
+  afterAll(() => {
+    parsed.dispose();
   });
 
-  bench('hover query (after analysis)', () => {
-    const idx = new WorkspaceIndex();
-    const src = generatePSSFile(0, 1000);
-    idx.addFile('file:///test.pss', src);
-    // Simulates hover at a known position
-    idx.findSymbolAtPosition('file:///test.pss', { line: 2, character: 10 });
+  bench('symbol lookup on an already-parsed workspace', () => {
+    parsed.findSymbolAtPosition(SOURCES[0][0], { line: 2, character: 10 });
   });
 });

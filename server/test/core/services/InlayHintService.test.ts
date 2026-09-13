@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getInlayHints } from '../../../src/core/services/InlayHintService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) index.addFile(uri, content);
   return index;
 }
@@ -16,7 +17,7 @@ describe('InlayHintService', () => {
   });
 
   it('should return empty for nonexistent file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const hints = getInlayHints('file:///nope.pss', { start: { line: 0, character: 0 }, end: { line: 10, character: 0 } }, index);
     expect(hints).toHaveLength(0);
   });

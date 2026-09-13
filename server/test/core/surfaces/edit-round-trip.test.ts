@@ -71,40 +71,43 @@ describe('rename round-trip', () => {
 
 describe('code action round-trip', () => {
   /**
-   * Finding: the "suggest import" quick fix is unreachable in production.
+   * The "suggest import" quick fix is reachable, and these pin the loop.
    *
-   * It triggers only on an `undefined-type` diagnostic and then looks for a
-   * package that declares the type. But the analyzer resolves unqualified
+   * It was not, under the old analyzer: that resolved unqualified
    * cross-package references without requiring an import, so `undefined-type`
-   * is raised only for types that exist in no package at all -- exactly the
-   * case where there is nothing to import.
+   * was raised only for types that existed in no package at all -- exactly
+   * the case where there is nothing to import. The parser's linker follows
+   * the LRM and requires the import, which puts the diagnostic and the fix
+   * back in the same place.
    *
-   * The pre-existing CodeActionService test could not see this because it
-   * fabricated the diagnostic by hand instead of getting one from the analyzer.
-   *
-   * These two tests pin both halves of the contradiction. Resolving it means
-   * deciding whether the analyzer should require imports (making the fix live)
-   * or whether the quick fix should be removed.
+   * The CodeActionService unit test cannot see any of this: it fabricates the
+   * diagnostic by hand rather than getting one from the analyzer, so it would
+   * have passed either way.
    */
-  it('does not diagnose a cross-package type used without an import', () => {
+  it('diagnoses a cross-package type used without an import', () => {
     const p = TestProject.fromFiles({
       'pkg.pss': 'package my_pkg {\n    struct target_s { }\n}',
       'top.pss': 'component top {\n    target_s x;\n}',
     });
 
-    expect(
-      p.diagnostics('top.pss').filter(d => d.code === 'undefined-type'),
-      'analyzer now requires imports -- the import quick fix may be reachable; ' +
-      'give it a round-trip test',
-    ).toHaveLength(0);
+    expect(p.diagnostics('top.pss').filter(d => d.code === 'undefined-type')).toHaveLength(1);
   });
 
-  it('offers no import fix, because nothing is diagnosed to fix', () => {
+  it('offers an import fix whose edit makes the diagnostic go away', () => {
     const p = TestProject.fromFiles({
       'pkg.pss': 'package my_pkg {\n    struct target_s { }\n}',
       'top.pss': 'component top {\n    target_s x;\n}',
     });
-    expect(p.codeActionsAt('top.pss')).toEqual([]);
+
+    const fixes = p.codeActionsAt('top.pss')
+      .filter(a => a.title.toLowerCase().includes('import'));
+    expect(fixes).toHaveLength(1);
+
+    p.applyEdits(fixes[0].edits);
+
+    // The round trip: the fix the server offered has to actually fix it.
+    expect(p.text('top.pss')).toContain('import my_pkg::target_s;');
+    expect(p.diagnostics('top.pss').filter(d => d.code === 'undefined-type')).toHaveLength(0);
   });
 
   it('offers no import fix for a type that exists nowhere', () => {

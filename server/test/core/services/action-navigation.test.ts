@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getDefinition } from '../../../src/core/services/DefinitionService.js';
 import { getHover } from '../../../src/core/services/HoverService.js';
 
@@ -20,7 +20,7 @@ describe('action navigation', () => {
         '  }',                                     // 6
         '}',                                       // 7
       ].join('\n');
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///test.pss', src);
 
       // "      do target_a;" -- "target_a" starts at col 9
@@ -44,7 +44,7 @@ describe('action navigation', () => {
         '  }',                                     // 9
         '}',                                       // 10
       ].join('\n');
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///test.pss', src);
 
       // cursor on "completion_wait_a" part (col 22+)
@@ -66,7 +66,7 @@ describe('action navigation', () => {
         '  }',                                     // 8
         '}',                                       // 9
       ].join('\n');
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///test.pss', src);
 
       // cursor on "iommu_c" part (col 9-16)
@@ -76,7 +76,7 @@ describe('action navigation', () => {
     });
 
     it('should navigate cross-file to action added via extend', () => {
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///iommu_c.pss', [
         'component iommu_c { }',
       ].join('\n'));
@@ -103,7 +103,7 @@ describe('action navigation', () => {
     });
 
     it('should navigate in package-scoped project', () => {
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///iommu.pss', [
         'package iommu_pkg {',
         '  component iommu_c {',
@@ -144,7 +144,7 @@ describe('action navigation', () => {
         '  }',
         '}',
       ].join('\n');
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///test.pss', src);
 
       const hover = getHover('file:///test.pss', { line: 4, character: 12 }, index);
@@ -153,7 +153,7 @@ describe('action navigation', () => {
     });
 
     it('hover range should point to the reference site, not the declaration', () => {
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///a.pss', [
         'component iommu_c {',
         '  action completion_wait_a { }',
@@ -190,7 +190,7 @@ describe('action navigation', () => {
         '  }',
         '}',
       ].join('\n');
-      const index = new WorkspaceIndex();
+      const index = makeIndex();
       index.addFile('file:///test.pss', src);
 
       const hover = getHover('file:///test.pss', { line: 5, character: 14 }, index);

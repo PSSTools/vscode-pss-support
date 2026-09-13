@@ -44,7 +44,7 @@ import { CompletionResult, CompletionKind } from '../types/CompletionResult.js';
 import { SourcePosition } from '../types/SourcePosition.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
-import { findSymbolScope } from '../analysis/SymbolLookup.js';
+import { findSymbolScope } from '../ast/SymbolLookup.js';
 import { IConfiguration } from '../io/IConfiguration.js';
 
 // ── Keyword lists ───────────────────────────────────────────────
@@ -132,7 +132,9 @@ export function getCompletions(
 
     // Qualified path: after `::`
     if (lineCtx.qualifiedPrefix) {
-      return getQualifiedPathCompletions(lineCtx.qualifiedPrefix, lineCtx.partial, index);
+      return getQualifiedPathCompletions(
+        lineCtx.qualifiedPrefix, lineCtx.partial, index, lineCtx.afterDo,
+      );
     }
 
     // Inheritance position: after `action X :` or `struct X :`
@@ -344,8 +346,8 @@ function getDoTargetCompletions(
   partial: string,
   index: WorkspaceIndex,
 ): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
   const results: CompletionResult[] = [];
 
@@ -353,10 +355,10 @@ function getDoTargetCompletions(
   const enclosingAction = findEnclosingNode(node, Action) as Action | null;
   const enclosingComponent = findEnclosingNode(node, Component) as Component | null;
 
-  if (enclosingComponent && analysis.root) {
+  if (enclosingComponent && root) {
     // Collect reachable component scopes: the enclosing component + comp-ref field targets
     const reachableCompScopes = collectReachableComponentScopes(
-      enclosingAction, enclosingComponent, analysis.root,
+      enclosingAction, enclosingComponent, root,
     );
 
     if (reachableCompScopes.length > 0) {
@@ -436,8 +438,8 @@ function getMemberAccessCompletions(
   partial: string,
   index: WorkspaceIndex,
 ): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
   // Find the enclosing type (Action, Struct, Component) to start resolution
   const enclosingType = findEnclosingNode(node, Action)
@@ -456,7 +458,7 @@ function getMemberAccessCompletions(
     if (!fieldTypeName) return [];
 
     // Resolve through the symbol table
-    const typeScope = findSymbolScope(fieldTypeName, analysis.root);
+    const typeScope = findSymbolScope(fieldTypeName, root);
     if (!typeScope?.target) return [];
     if (!(typeScope.target instanceof Scope)) return [];
 
@@ -469,7 +471,7 @@ function getMemberAccessCompletions(
 
   // Walk the super type chain for inherited members
   if (currentScope instanceof TypeScope) {
-    walkSuperTypes(currentScope, analysis.root, (superScope) => {
+    walkSuperTypes(currentScope, root, (superScope) => {
       collectFieldsFromType(superScope, results, '1_');
     });
   }
@@ -568,10 +570,10 @@ function getTemplateParamCompletions(
   partial: string,
   index: WorkspaceIndex,
 ): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
-  const typeScope = findSymbolScope(typeName, analysis.root);
+  const typeScope = findSymbolScope(typeName, root);
   if (!typeScope) return getTypeCompletions(index); // fallback to all types
 
   // Find the template parameter declaration list on the AST target
@@ -622,10 +624,10 @@ function addCategoryFilteredTypes(
   category: enums.TypeCategory,
   paramName: string,
 ): void {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return;
+  const root = index.getSymbolRoot();
+  if (!root) return;
 
-  collectCategoryTypes(analysis.root, results, category, paramName);
+  collectCategoryTypes(root, results, category, paramName);
 }
 
 function collectCategoryTypes(
@@ -679,11 +681,11 @@ function collectCategoryTypes(
 // ── Annotation completions ──────────────────────────────────────
 
 function getAnnotationCompletions(partial: string, index: WorkspaceIndex): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
   const results: CompletionResult[] = [];
-  collectAnnotationsFromScope(analysis.root, results);
+  collectAnnotationsFromScope(root, results);
 
   return applyPartialFilter(results, partial);
 }
@@ -711,11 +713,11 @@ function getInheritanceCompletions(
   partial: string,
   index: WorkspaceIndex,
 ): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
   const results: CompletionResult[] = [];
-  collectInheritanceCandidates(analysis.root, results, category);
+  collectInheritanceCandidates(root, results, category);
 
   return applyPartialFilter(results, partial);
 }
@@ -912,10 +914,10 @@ function getTypeCompletions(index: WorkspaceIndex): CompletionResult[] {
 
 function getImportPathCompletions(index: WorkspaceIndex): CompletionResult[] {
   const results: CompletionResult[] = [];
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return results;
+  const root = index.getSymbolRoot();
+  if (!root) return results;
 
-  for (const [name] of analysis.root.symtab) {
+  for (const [name] of root.symtab) {
     results.push({ label: name, kind: CompletionKind.Package, detail: 'package' });
   }
 
@@ -924,15 +926,24 @@ function getImportPathCompletions(index: WorkspaceIndex): CompletionResult[] {
 
 // ── Qualified-path completions ──────────────────────────────────
 
+/**
+ * What `prefix::` can be completed to.
+ *
+ * `actionsOnly` narrows it to the one thing that is legal after `do`. It
+ * matters more than it used to: a linked component carries its inherited
+ * standard-library members, so `do mycomp_c::` would otherwise offer
+ * `set_executor` alongside the component's actions.
+ */
 function getQualifiedPathCompletions(
   prefixParts: string[],
   partial: string,
   index: WorkspaceIndex,
+  actionsOnly = false,
 ): CompletionResult[] {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
-  let scope: SymbolScope = analysis.root;
+  let scope: SymbolScope = root;
   for (const seg of prefixParts) {
     const idx = scope.symtab.get(seg);
     if (idx === undefined) return [];
@@ -943,6 +954,13 @@ function getQualifiedPathCompletions(
 
   const results: CompletionResult[] = [];
   collectTypesFromScope(scope, results, '0_', /* recurse */ false);
+
+  if (actionsOnly) {
+    return applyPartialFilter(
+      results.filter(r => r.kind === CompletionKind.Action),
+      partial,
+    );
+  }
 
   for (const [name, idx] of scope.symtab) {
     const child = scope.children[idx];
@@ -965,10 +983,10 @@ function addTypeCompletionsFromIndex(
   index: WorkspaceIndex,
   sortPrefix: string,
 ): void {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return;
+  const root = index.getSymbolRoot();
+  if (!root) return;
 
-  collectTypesFromScope(analysis.root, results, sortPrefix);
+  collectTypesFromScope(root, results, sortPrefix);
 }
 
 function collectTypesFromScope(
@@ -1024,9 +1042,9 @@ function addActionCompletionsFromIndex(
   index: WorkspaceIndex,
   sortPrefix: string = '1_',
 ): void {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return;
-  collectActionsFromScope(analysis.root, results, sortPrefix);
+  const root = index.getSymbolRoot();
+  if (!root) return;
+  collectActionsFromScope(root, results, sortPrefix);
 }
 
 function addComponentCompletionsFromIndex(
@@ -1034,9 +1052,9 @@ function addComponentCompletionsFromIndex(
   index: WorkspaceIndex,
   sortPrefix: string = '2_',
 ): void {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return;
-  collectComponentsFromScope(analysis.root, results, sortPrefix);
+  const root = index.getSymbolRoot();
+  if (!root) return;
+  collectComponentsFromScope(root, results, sortPrefix);
 }
 
 function addFunctionsFromIndex(
@@ -1044,9 +1062,9 @@ function addFunctionsFromIndex(
   index: WorkspaceIndex,
   sortPrefix: string = '2_',
 ): void {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return;
-  collectFunctionsFromScope(analysis.root, results, sortPrefix);
+  const root = index.getSymbolRoot();
+  if (!root) return;
+  collectFunctionsFromScope(root, results, sortPrefix);
 }
 
 function collectComponentsFromScope(

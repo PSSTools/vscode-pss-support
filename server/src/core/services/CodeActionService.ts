@@ -54,12 +54,12 @@ function suggestImport(
   index: WorkspaceIndex,
   diag: Diagnostic,
 ): CodeAction | null {
-  const analysis = index.getAnalysisResult();
-  if (!analysis) return null;
+  const root = index.getSymbolRoot();
+  if (!root) return null;
 
   // Search for the type in all packages
-  for (const [pkgName, pkgIdx] of analysis.root.symtab) {
-    const pkg = analysis.root.children[pkgIdx];
+  for (const [pkgName, pkgIdx] of root.symtab) {
+    const pkg = root.children[pkgIdx];
     if (pkg && 'symtab' in pkg) {
       const symtab = (pkg as any).symtab as Map<string, number>;
       if (symtab.has(typeName)) {

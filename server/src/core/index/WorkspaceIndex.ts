@@ -14,24 +14,28 @@ import { Diagnostic, DiagnosticSeverity } from '../types/Diagnostic.js';
 import { SourcePosition } from '../types/SourcePosition.js';
 import { newParser } from '../parser/ParserHost.js';
 import { markerToDiagnostic } from '../parser/MarkerDiagnostics.js';
-import { SemanticAnalyzer, AnalysisResult } from '../analysis/SemanticAnalyzer.js';
 import { FileState } from './FileState.js';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
-import { IFileSystem } from '../io/IFileSystem.js';
 import { lspChar } from '../ast/SourceLoc.js';
 
 /**
- * Cross-file symbol table and dependency graph.
- * Manages file states, triggers parsing and analysis,
- * and provides query APIs for LSP services.
+ * The workspace's files, their trees, and the symbol table linking them.
+ *
+ * Everything here comes out of one `parse` + `link` over every file at once.
+ * There used to be a second stage on top -- a symbol-table builder, extension
+ * applicator, import resolver and reference resolver written in TypeScript --
+ * which rebuilt from the AST what `link()` had already built in the core. Two
+ * implementations of the same rules disagree eventually, and while both ran
+ * every undefined type was reported twice, once in each vocabulary.
  */
 export class WorkspaceIndex {
   private fileStates = new Map<string, FileState>();
   private parser = newParser();
-  private analyzer: SemanticAnalyzer;
-  private analysisResult: AnalysisResult | null = null;
   private uriToFileId = new Map<string, number>();
   private fileIdToUri = new Map<number, string>();
+
+  /** The last link that produced user units. See `ensureParsed`. */
+  private symbolRoot: RootSymbolScope | null = null;
 
   /**
    * Set when the parse is stale.
@@ -42,15 +46,11 @@ export class WorkspaceIndex {
    * parse, and `ensureParsed` redoes it on the next read.
    *
    * This is affordable and was measured before being relied on: the full
-   * 92-file corpus parses and links in ~136ms, roughly 1.5ms per file. Both
-   * `ensureParsed` and `ensureAnalyzed` are lazy, so a burst of edits between
-   * two reads costs one parse rather than one per edit.
+   * 92-file corpus parses and links in ~136ms, roughly 1.5ms per file.
+   * `ensureParsed` is lazy, so a burst of edits between two reads costs one
+   * parse rather than one per edit.
    */
   private parseStale = true;
-
-  constructor(stdlibDir?: string, fs?: IFileSystem) {
-    this.analyzer = new SemanticAnalyzer(stdlibDir, fs);
-  }
 
   /** Add a new file to the index. */
   public addFile(uri: string, content: string): void {
@@ -84,14 +84,6 @@ export class WorkspaceIndex {
 
   /** Remove a file from the index. */
   public removeFile(uri: string): void {
-    const state = this.fileStates.get(uri);
-    if (state) {
-      // Clean up dependency tracking
-      for (const dep of state.dependencies) {
-        const depState = this.fileStates.get(dep);
-        if (depState) depState.dependents.delete(uri);
-      }
-    }
     this.fileStates.delete(uri);
     this.invalidate();
   }
@@ -111,15 +103,15 @@ export class WorkspaceIndex {
     return this.fileStates.get(uri)?.text;
   }
 
-  /** Get all diagnostics for a file (triggers re-analysis if needed). */
+  /** Get all diagnostics for a file (triggers a re-parse if needed). */
   public getDiagnostics(uri: string): Diagnostic[] {
-    this.ensureAnalyzed();
+    this.ensureParsed();
     return this.fileStates.get(uri)?.diagnostics ?? [];
   }
 
   /** Get all diagnostics for all files. */
   public getAllDiagnostics(): Map<string, Diagnostic[]> {
-    this.ensureAnalyzed();
+    this.ensureParsed();
     const result = new Map<string, Diagnostic[]>();
     for (const [uri, state] of this.fileStates) {
       result.set(uri, state.diagnostics);
@@ -129,11 +121,11 @@ export class WorkspaceIndex {
 
   /** Find a type by qualified name across the workspace. */
   public findType(qualifiedName: string): SymbolScope | null {
-    this.ensureAnalyzed();
-    if (!this.analysisResult) return null;
+    const root = this.getSymbolRoot();
+    if (!root) return null;
 
     const parts = qualifiedName.split('::');
-    let current: SymbolScope = this.analysisResult.root;
+    let current: SymbolScope = root;
     for (const part of parts) {
       if (!current.symtab.has(part)) return null;
       const idx = current.symtab.get(part)!;
@@ -156,8 +148,6 @@ export class WorkspaceIndex {
     const node = findNodeAtPosition(state.ast, pos);
     if (!node) return null;
 
-    this.ensureAnalyzed();
-
     // Find the enclosing symbol scope
     const scope = this.findEnclosingSymbolScope(node, uri);
 
@@ -171,7 +161,7 @@ export class WorkspaceIndex {
     uri: string;
     range: { start: SourcePosition; end: SourcePosition };
   }> {
-    this.ensureAnalyzed();
+    this.ensureParsed();
     const results: Array<{
       name: string;
       kind: string;
@@ -189,16 +179,31 @@ export class WorkspaceIndex {
     return results;
   }
 
-  /** Get files that depend on the given file. */
+  /**
+   * Files whose diagnostics may have changed because `uri` did.
+   *
+   * Every other file in the workspace. A dependency graph used to be built
+   * here from references that resolved, which had a hole its own callers had
+   * to work around: an edit that *breaks* a dependency also deletes the edge
+   * pointing at the dependent, so the dependent never got re-diagnosed.
+   * Linking is whole-workspace anyway -- one edit re-links everything -- so
+   * the graph bought nothing but the hole. Every file is already diagnosed by
+   * the time this is called; the caller is only choosing what to publish.
+   */
   public getDependents(uri: string): string[] {
-    const state = this.fileStates.get(uri);
-    return state ? [...state.dependents] : [];
+    return [...this.fileStates.keys()].filter(u => u !== uri);
   }
 
-  /** Get the analysis result (triggers analysis if needed). */
-  public getAnalysisResult(): AnalysisResult | null {
-    this.ensureAnalyzed();
-    return this.analysisResult;
+  /**
+   * The linked symbol table for the whole workspace.
+   *
+   * Null until the parser has linked user code at least once. After that it
+   * is never null again: a pass in which nothing links keeps the previous
+   * root rather than dropping to a standard-library-only one.
+   */
+  public getSymbolRoot(): RootSymbolScope | null {
+    this.ensureParsed();
+    return this.symbolRoot;
   }
 
   /** Get all file URIs in the index. */
@@ -280,7 +285,19 @@ export class WorkspaceIndex {
     }
 
     const reparsed = new Set<string>();
-    for (const unit of this.parser.userUnits()) {
+    const units = this.parser.userUnits();
+
+    // Hold on to the last root that had any user code in it, for the same
+    // reason the trees above are held: a file being typed into does not link,
+    // and a root containing nothing but the standard library would make every
+    // symbol the user has written disappear from completion and go-to-
+    // definition at exactly the moment they are asking for it. A root that
+    // still has user units in it is this pass's; it supersedes the old one.
+    if (units.length > 0 || this.fileStates.size === 0) {
+      this.symbolRoot = this.parser.root;
+    }
+
+    for (const unit of units) {
       const uri = this.fileIdToUri.get(unit.fileid);
       if (uri === undefined) continue;
       const state = this.fileStates.get(uri);
@@ -327,81 +344,11 @@ export class WorkspaceIndex {
 
   private invalidate(): void {
     this.parseStale = true;
-    this.invalidateAnalysis();
-  }
-
-  private invalidateAnalysis(): void {
-    this.analysisResult = null;
-    // Clear semantic diagnostics
-    for (const state of this.fileStates.values()) {
-      state.semanticDiagnostics = [];
-    }
-  }
-
-  private ensureAnalyzed(): void {
-    this.ensureParsed();
-    if (this.analysisResult) return;
-
-    // The standard library comes out of the parser, which links it into every
-    // parse from its own built-in copy. `userUnits()` filters it out, so the
-    // stdlib units are the ones the root holds that no user file claims.
-    const userIds = new Set(this.parser.userUnits().map(u => u.fileid));
-    this.analyzer.setStdlibScopes(
-      (this.parser.root?.units ?? []).filter(u => !userIds.has(u.fileid)),
-    );
-
-    const scopes: GlobalScope[] = [];
-    for (const state of this.fileStates.values()) {
-      if (state.ast) scopes.push(state.ast);
-    }
-
-    if (scopes.length === 0) return;
-
-    this.analysisResult = this.analyzer.analyze(scopes);
-
-    // Distribute semantic diagnostics to files
-    for (const [fileId, diags] of this.analysisResult.diagnostics) {
-      const uri = this.fileIdToUri.get(fileId);
-      if (uri) {
-        const state = this.fileStates.get(uri);
-        if (state) {
-          state.semanticDiagnostics = diags;
-        }
-      }
-    }
-
-    // Update dependency graph from cross-file refs
-    this.updateDependencyGraph(this.analysisResult.crossFileRefs);
-  }
-
-  private updateDependencyGraph(crossFileRefs: Map<number, Set<number>>): void {
-    // Clear old deps
-    for (const state of this.fileStates.values()) {
-      state.dependencies.clear();
-      state.dependents.clear();
-    }
-
-    for (const [sourceFileId, targetFileIds] of crossFileRefs) {
-      const sourceUri = this.fileIdToUri.get(sourceFileId);
-      if (!sourceUri) continue;
-      const sourceState = this.fileStates.get(sourceUri);
-      if (!sourceState) continue;
-
-      for (const targetFileId of targetFileIds) {
-        const targetUri = this.fileIdToUri.get(targetFileId);
-        if (!targetUri) continue;
-        const targetState = this.fileStates.get(targetUri);
-        if (!targetState) continue;
-
-        sourceState.dependencies.add(targetUri);
-        targetState.dependents.add(sourceUri);
-      }
-    }
   }
 
   private findEnclosingSymbolScope(node: ScopeChild, uri: string): SymbolScope | null {
-    if (!this.analysisResult) return null;
-    const root = this.analysisResult.root;
+    const root = this.getSymbolRoot();
+    if (!root) return null;
 
     // Walk the symbol tree to find the scope containing this node
     const name = getNodeName(node);

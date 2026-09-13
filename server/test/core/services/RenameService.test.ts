@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { prepareRename, rename } from '../../../src/core/services/RenameService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) index.addFile(uri, content);
   return index;
 }
@@ -63,7 +64,7 @@ describe('RenameService', () => {
   });
 
   it('should return empty edits for nonexistent file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const result = rename('file:///nope.pss', { line: 0, character: 0 }, 'x', index);
     expect(result.edits.size).toBe(0);
   });

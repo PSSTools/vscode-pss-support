@@ -25,6 +25,22 @@ function severityOf(s: MarkerSeverity): DiagnosticSeverity {
   }
 }
 
+/**
+ * Recover `undefined-type` from a marker the core left unclassified.
+ *
+ * `Marker.code` is optional because the core does not yet call `setId()` for
+ * every marker it raises, and the name-resolution ones are among the missing.
+ * Something has to fill the gap, because a code is not decoration here: the
+ * "add the missing import" quick fix triggers on exactly this classification,
+ * and without it the fix silently stops being offered.
+ *
+ * Matching message text is the same second source of truth the Python API
+ * resorts to, and it is no better here -- it is just confined to one function
+ * at the one boundary that already translates markers. It should be deleted
+ * the moment `TaskResolveRef` assigns these markers an id of their own.
+ */
+const UNDEFINED_TYPE = /^unknown (type|identifier) '/;
+
 export function markerToDiagnostic(marker: Marker): Diagnostic {
   const line = Math.max(0, marker.line - 1);
   const character = Math.max(0, marker.col - 1);
@@ -44,6 +60,8 @@ export function markerToDiagnostic(marker: Marker): Diagnostic {
 
   if (marker.code !== undefined) {
     diagnostic.code = marker.code;
+  } else if (UNDEFINED_TYPE.test(marker.message)) {
+    diagnostic.code = 'undefined-type';
   }
 
   if (marker.related.length > 0) {

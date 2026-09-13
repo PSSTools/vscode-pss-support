@@ -39,9 +39,9 @@ export function getInlayHints(
   if (!ast) return [];
 
   const hints: InlayHint[] = [];
-  const analysis = index.getAnalysisResult();
+  const root = index.getSymbolRoot();
 
-  collectHints(ast, range, hints, index, analysis?.root ?? null);
+  collectHints(ast, range, hints, index, root ?? null);
 
   return hints;
 }

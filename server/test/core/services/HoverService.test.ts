@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getHover } from '../../../src/core/services/HoverService.js';
 
 function createIndex(content: string, uri: string = 'file:///test.pss'): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   index.addFile(uri, content);
   return index;
 }
@@ -92,7 +93,7 @@ describe('HoverService', () => {
   });
 
   it('should return undefined for nonexistent file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const result = getHover('file:///nonexistent.pss', { line: 0, character: 0 }, index);
     expect(result).toBeUndefined();
   });
@@ -109,7 +110,7 @@ describe('HoverService', () => {
 });
 
 function createMultiFileIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) {
     index.addFile(uri, content);
   }

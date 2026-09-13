@@ -1,10 +1,15 @@
 {
+  // Typechecking for the test and benchmark trees.
+  //
+  // `tsconfig.json` covers `src/` only, because it drives the build and the
+  // build has no business emitting tests. Nothing covered the rest, and vitest
+  // does not fill the gap: esbuild strips types without checking them. Three
+  // calls kept passing a `stdlibDir` and an `IFileSystem` to a WorkspaceIndex
+  // constructor that had stopped taking either, and the suite stayed green.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
-    "rootDir": ".",
-    "types": ["node"]
+    "rootDir": "."
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "bench/**/*.ts"]
 }

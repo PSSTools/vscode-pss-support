@@ -1,3 +1,4 @@
-1:1: error[unresolved-import]: Cannot resolve import 'no_such_pkg'
-4:5: error[undefined-type]: Undefined type 'missing_t'
-5:5: error[undefined-type]: Undefined type 'another_missing_t'
+1:9: error[undefined-type]: unknown type 'no_such_pkg'
+1:9: error[undefined-type]: unknown type 'no_such_pkg'
+4:6: error[undefined-type]: unknown type 'missing_t'
+5:6: error[undefined-type]: unknown type 'another_missing_t'

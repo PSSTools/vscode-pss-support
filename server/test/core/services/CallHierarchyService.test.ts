@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { prepareCallHierarchy, getOutgoingCalls, getIncomingCalls } from '../../../src/core/services/CallHierarchyService.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) index.addFile(uri, content);
   return index;
 }

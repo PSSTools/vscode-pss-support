@@ -1,11 +1,18 @@
+/**
+ * Queries over the linked symbol table.
+ *
+ * Lives beside the AST rather than under an `analysis/` directory because it
+ * performs none: the parser's `link()` builds the tree and resolves the
+ * references, and these two functions only look things up in the result.
+ */
 import {
   ScopeChild,
   SymbolScope,
   RootSymbolScope,
   TypeIdentifier,
-} from '../ast/generated/index.js';
+} from './generated/index.js';
 import { SourcePosition } from '../types/SourcePosition.js';
-import { lspChar } from '../ast/SourceLoc.js';
+import { lspChar } from './SourceLoc.js';
 
 /**
  * Resolve a qualified name (e.g. "mycomp_c::A") to its SymbolScope
@@ -74,7 +81,20 @@ export function resolveTypeAtPosition(
   const resolveElems = typeId.elems.slice(0, elemCount);
   const name = resolveElems.map(e => e.id?.id ?? '').join('::');
   const scope = findSymbolScope(name, root);
-  if (!scope?.target) return null;
+  return scope ? declarationOf(scope) : null;
+}
 
-  return scope.target as ScopeChild;
+/**
+ * The node standing for a symbol scope's declaration.
+ *
+ * Usually `target`, the declaration the scope was built from. An enum scope
+ * has none, deliberately: `target` is a traversal edge in the core, so
+ * pointing it at the EnumDecl made visitors descend into the declaration a
+ * second time from inside the enum and broke resolution of the enum's own
+ * base type. The scope carries the declaration's location anyway -- the core
+ * copies the extent onto it -- so for anything that wants to navigate to or
+ * describe the declaration, the scope itself stands in perfectly well.
+ */
+export function declarationOf(scope: SymbolScope): ScopeChild {
+  return (scope.target as ScopeChild | null) ?? scope;
 }

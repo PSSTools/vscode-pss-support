@@ -81,6 +81,14 @@ describe('surface goldens: cross-package fixture', () => {
 });
 
 describe('surface goldens: diagnostics', () => {
+  /**
+   * Two recorded gaps are visible in this golden, both in the core.
+   *
+   * Columns are one too far right on every marker the linker raises: node
+   * locations are 1-based and token locations are 0-based, and the marker
+   * emitter adds one to both. And the unresolved import is reported twice --
+   * once for the import statement and once for the reference through it.
+   */
   it('renders undefined types and unresolved imports', async () => {
     const p = TestProject.fromFiles({
       'broken.pss': [

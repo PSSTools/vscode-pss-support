@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 import { getCodeActions } from '../../../src/core/services/CodeActionService.js';
 import { DiagnosticSeverity } from '../../../src/core/types/Diagnostic.js';
 
 function createIndex(files: Record<string, string>): WorkspaceIndex {
-  const index = new WorkspaceIndex();
+  const index = makeIndex();
   for (const [uri, content] of Object.entries(files)) index.addFile(uri, content);
   return index;
 }

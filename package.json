@@ -105,11 +105,8 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run build",
-        "bootstrap": "ivpm update -a -d default-dev -j 1 && npm run generate",
-        "generate": "cd server && npm run generate",
-        "build": "npm run generate && tsc -b",
-        "build:grammar": "cd server && npm run build:grammar",
-        "gen:ast": "cd server && npm run gen:ast",
+        "bootstrap": "ivpm update -a -d default-dev -j 1 && npm install",
+        "build": "npm run compile",
         "compile": "tsc -b",
         "watch": "tsc -b -w",
         "test": "npm run test:core && npm run test:lsp && npm run test:client && npm run test:contrib && npm run test:grammar",

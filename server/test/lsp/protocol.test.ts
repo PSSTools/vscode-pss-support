@@ -31,7 +31,7 @@ import {
   PublishDiagnosticsParams,
   TextEdit,
   SemanticTokens,
-} from 'vscode-languageserver-protocol/node';
+} from 'vscode-languageserver-protocol/node.js';
 import { startLanguageServer } from '../../src/lsp/PSSLanguageServer.js';
 
 /**

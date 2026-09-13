@@ -63,8 +63,6 @@ import { nodeFileSystem } from '../core/io/NodeFileSystem.js';
  * lines that create a stdio connection and hand it here.
  */
 export interface LanguageServerOptions {
-  /** Directory of packaged stdlib sources. Defaults to the resolved location. */
-  stdlibDir?: string;
   /** Debounce for re-parsing after an edit; 0 makes edits apply synchronously. */
   debounceMs?: number;
 }
@@ -76,7 +74,7 @@ export function startLanguageServer(
   let initParams: InitializeParams;
   const documents = new TextDocuments(TextDocument);
 
-  const index = new WorkspaceIndex(options.stdlibDir);
+  const index = new WorkspaceIndex();
 
   const session = new DocumentSession(index, {
     debounceMs: options.debounceMs,

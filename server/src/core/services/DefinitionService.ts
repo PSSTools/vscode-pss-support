@@ -33,7 +33,7 @@ import { DefinitionResult } from '../types/DefinitionResult.js';
 import { SourcePosition } from '../types/SourcePosition.js';
 import { WorkspaceIndex } from '../index/WorkspaceIndex.js';
 import { findNodeAtPosition, getNodeName } from '../ast/ASTUtils.js';
-import { findSymbolScope, resolveTypeAtPosition } from '../analysis/SymbolLookup.js';
+import { declarationOf, findSymbolScope, resolveTypeAtPosition } from '../ast/SymbolLookup.js';
 import { lspChar } from '../ast/SourceLoc.js';
 
 /**
@@ -52,8 +52,8 @@ export function getDefinition(
   const node = findNodeAtPosition(ast, position);
   if (!node) return [];
 
-  const analysisResult = index.getAnalysisResult();
-  if (!analysisResult) return [];
+  const root = index.getSymbolRoot();
+  if (!root) return [];
 
   const results: DefinitionResult[] = [];
 
@@ -74,21 +74,21 @@ export function getDefinition(
   }
 
   // Try to resolve type references
-  const typeResult = resolveTypeReference(node, position, analysisResult.root, index);
+  const typeResult = resolveTypeReference(node, position, root, index);
   if (typeResult) {
     results.push(typeResult);
     return results;
   }
 
   // Try field type references
-  const fieldResult = resolveFieldTypeReference(node, analysisResult.root, index);
+  const fieldResult = resolveFieldTypeReference(node, root, index);
   if (fieldResult) {
     results.push(fieldResult);
     return results;
   }
 
   // Try super type references
-  const superResult = resolveSuperTypeReference(node, analysisResult.root, index);
+  const superResult = resolveSuperTypeReference(node, root, index);
   if (superResult) {
     results.push(superResult);
     return results;
@@ -194,10 +194,9 @@ function resolveTypeIdentifierToDefinition(
 
   const name = typeId.elems.map(e => e.id?.id ?? '').join('::');
   const scope = findSymbolScope(name, root);
-  if (!scope?.target) return null;
+  if (!scope) return null;
 
-  const target = scope.target as ScopeChild;
-  const loc = target.location;
+  const loc = declarationOf(scope).location;
   if (!loc || loc.lineno < 0) return null;
 
   const fileUri = index.getUriForFileId(loc.fileid);

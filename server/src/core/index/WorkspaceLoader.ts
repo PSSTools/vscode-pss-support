@@ -12,8 +12,6 @@ export interface WorkspaceLoaderOptions {
   discovery?: IFileDiscovery;
   /** Filename suffix to index. */
   pattern?: string;
-  /** Directory holding stdlib .pss sources, passed through to the index. */
-  stdlibDir?: string;
 }
 
 /**
@@ -62,7 +60,7 @@ export class WorkspaceLoader {
     rootUris: string[],
     options: WorkspaceLoaderOptions = {},
   ): Promise<WorkspaceIndex> {
-    const index = new WorkspaceIndex(options.stdlibDir, options.fs);
+    const index = new WorkspaceIndex();
     await new WorkspaceLoader(options).loadInto(index, rootUris);
     return index;
   }

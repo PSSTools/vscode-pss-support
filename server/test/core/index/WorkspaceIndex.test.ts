@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex } from '../../helpers/Indexes.js';
 
 describe('WorkspaceIndex', () => {
   it('should add and retrieve a file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct my_struct { }');
 
     const ast = index.getAST('file:///test.pss');
@@ -11,7 +12,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should update a file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct old_s { }');
     index.updateFile('file:///test.pss', 'struct new_s { }');
 
@@ -20,7 +21,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should remove a file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct my_struct { }');
     index.removeFile('file:///test.pss');
 
@@ -29,7 +30,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should return diagnostics after analysis', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'component c { action my_action { rand undefined_type x; } }');
 
     const diags = index.getDiagnostics('file:///test.pss');
@@ -37,7 +38,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should find type by qualified name', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct my_struct { }');
 
     const scope = index.findType('my_struct');
@@ -45,7 +46,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should find symbol at position', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct my_struct { rand bit[32] addr; }');
 
     const result = index.findSymbolAtPosition('file:///test.pss', { line: 0, character: 10 });
@@ -53,7 +54,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should search all symbols', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', `
       struct alpha_struct { }
       struct beta_struct { }
@@ -65,7 +66,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should handle cross-file references', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///types.pss', 'struct shared_data { rand bit[32] val; }');
     index.addFile('file:///user.pss', 'component c { action user_a { rand shared_data d; } }');
 
@@ -74,7 +75,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should re-analyze dependents on update', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///types.pss', 'struct data_s { rand bit[32] val; }');
     index.addFile('file:///user.pss', 'component c { action user_a { rand data_s d; } }');
 
@@ -85,7 +86,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should return empty diagnostics for removed file', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'struct my_struct { }');
     index.removeFile('file:///test.pss');
 
@@ -94,7 +95,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should list all file URIs', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///a.pss', 'struct a { }');
     index.addFile('file:///b.pss', 'struct b { }');
 
@@ -104,7 +105,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should return all diagnostics for all files', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///a.pss', 'struct a { }');
     index.addFile('file:///b.pss', 'struct b { }');
 
@@ -113,7 +114,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should handle package-scoped type lookup', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///test.pss', 'package my_pkg { struct pkg_struct { } }');
 
     const scope = index.findType('my_pkg');
@@ -121,7 +122,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should return dependents list', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     index.addFile('file:///base.pss', 'struct base_s { }');
     index.addFile('file:///user.pss', 'component c { action user_a { rand base_s b; } }');
 
@@ -131,7 +132,7 @@ describe('WorkspaceIndex', () => {
   });
 
   it('should handle empty workspace', () => {
-    const index = new WorkspaceIndex();
+    const index = makeIndex();
     const diags = index.getDiagnostics('file:///nonexistent.pss');
     expect(diags).toHaveLength(0);
   });

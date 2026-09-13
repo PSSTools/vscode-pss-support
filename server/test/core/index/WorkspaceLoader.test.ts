@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { MemFileSystem } from '../../../src/core/io/MemFileSystem.js';
 import { FileSystemDiscovery } from '../../../src/core/io/FileSystemDiscovery.js';
 import { WorkspaceLoader } from '../../../src/core/index/WorkspaceLoader.js';
-import { WorkspaceIndex } from '../../../src/core/index/WorkspaceIndex.js';
+import { makeIndex, trackIndex } from '../../helpers/Indexes.js';
 import { pathToUri } from '../../../src/core/io/UriUtils.js';
 
 function projectFs(): MemFileSystem {
@@ -46,7 +46,7 @@ describe('FileSystemDiscovery', () => {
 describe('WorkspaceLoader', () => {
   it('populates an index from a filesystem root', async () => {
     const fs = projectFs();
-    const index = await WorkspaceLoader.load(['file:///ws'], { fs });
+    const index = trackIndex(await WorkspaceLoader.load(['file:///ws'], { fs }));
 
     expect(index.getFileUris().sort()).toEqual([
       pathToUri('/ws/pkg/a.pss'),
@@ -58,13 +58,13 @@ describe('WorkspaceLoader', () => {
 
   it('keeps the source text alongside the AST', async () => {
     const fs = projectFs();
-    const index = await WorkspaceLoader.load(['file:///ws'], { fs });
+    const index = trackIndex(await WorkspaceLoader.load(['file:///ws'], { fs }));
     expect(index.getText(pathToUri('/ws/top.pss'))).toBe('component top { }');
   });
 
   it('does not clobber a file already in the index', async () => {
     const fs = projectFs();
-    const index = new WorkspaceIndex(undefined, fs);
+    const index = makeIndex();
     const uri = pathToUri('/ws/top.pss');
 
     // Simulate an open, edited buffer that differs from disk.
@@ -81,7 +81,7 @@ describe('WorkspaceLoader', () => {
       '/ws/pkg.pss': 'package p { struct s { } }',
       '/ws/top.pss': 'component top { p::s x; }',
     });
-    const index = await WorkspaceLoader.load(['file:///ws'], { fs });
+    const index = trackIndex(await WorkspaceLoader.load(['file:///ws'], { fs }));
 
     const diags = index.getDiagnostics(pathToUri('/ws/top.pss'));
     expect(diags.filter(d => d.code === 'undefined-type')).toHaveLength(0);
@@ -92,7 +92,7 @@ describe('WorkspaceLoader', () => {
       '/a/one.pss': 'component one { }',
       '/b/two.pss': 'component two { }',
     });
-    const index = await WorkspaceLoader.load(['file:///a', 'file:///b'], { fs });
+    const index = trackIndex(await WorkspaceLoader.load(['file:///a', 'file:///b'], { fs }));
     expect(index.getFileUris()).toHaveLength(2);
   });
 });

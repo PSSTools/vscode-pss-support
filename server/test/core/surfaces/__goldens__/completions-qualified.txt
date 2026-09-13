@@ -1,3 +1,3 @@
+Enum e -- enum
 Struct s1 -- struct
 Struct s2 -- struct
-Enum e -- enum
