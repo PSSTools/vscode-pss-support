@@ -100,6 +100,20 @@ package:
     deps:
     - name: pssfmt
       url: https://github.com/psstools/pssfmt.git
+      # EXPLICIT, and it is not optional here the way it is in default-dev.
+      # A dependency entry naming no `dep-set` inherits THE NAME OF THE SET
+      # THAT DECLARES IT -- so this entry asks pssfmt for a `source-dev`, and
+      # pssfmt declares only `default`/`default-dev`. In default-dev the same
+      # entry inherits `default-dev` and resolves by coincidence of naming,
+      # which is why the two copies of this dependency are not interchangeable
+      # and why only the canary -- the one job that passes `-d source-dev` --
+      # went red on it:
+      #
+      #   fatal: package 'pssfmt' does not contain dep-set 'source-dev'
+      #
+      # This is the "added to only one set" failure the header above warns
+      # about, arriving in its other shape: present in both, resolvable in one.
+      dep-set: default-dev
 
     - name: sphinx-rtd-theme
       src: pypi
