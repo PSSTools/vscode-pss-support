@@ -1,11 +1,89 @@
+# WHAT SHIPS IS client/out, server/out, THEIR node_modules, AND THE STATIC
+# CONTRIBUTIONS (syntaxes, snippets, language-configuration.json, images).
+# Everything else is excluded here.
+#
+# `vsce package` WALKS THE WORKING TREE, NOT GIT. Nothing in .gitignore is
+# excluded by virtue of being ignored, and that is the whole reason this file
+# needed rewriting: ivpm populates packages/ with ~500 MB that git never sees
+# and vsce packaged all of it.
+#
+# A DIRECTORY SYMLINK IN THE FILE LIST IS A HARD FAILURE, not a size problem.
+# vsce lists a symlinked directory as ONE entry and secretlint then read()s it
+# as a file, which is EISDIR -- `Error occurred while scanning secrets (files)`
+# and exit 1, with no indication of which path did it. The ivpm tree carries
+# seven such symlinks (packages/python/lib64, the three skills/ivpm links,
+# packages/pssparser/packages/emsdk, and the two @psstools/pssparser links).
+# Every pattern below that covers one of those is load-bearing for the build
+# passing at all -- not a size optimisation.
+
+# ---------------------------------------------------------------------- #
+# ivpm's working tree. Not source, not runtime: fetched dependencies and
+# their build trees. packages/pssparser alone is 305 MB of C++ and Emscripten
+# output, packages/python is a 190 MB venv.
+#
+# NOTE ON THE PARSER. While server/package.json names the parser as
+# `file:../packages/pssparser/ts`, npm links it as a SYMLINK into packages/,
+# so excluding packages/ leaves that link dangling. It cannot be fixed by
+# re-including packages/pssparser/ts/dist: vsce would still emit the link
+# itself as a single entry, which is the EISDIR above. The fix is the
+# published @psstools/pssparser -- npm then writes a real directory into
+# server/node_modules and it ships through the server/node_modules rule with
+# no special case here. See the note next to that rule.
+# ---------------------------------------------------------------------- #
+packages/**
+ivpm.yaml
+packages.envrc
+
+# Agent skill directories, populated by ivpm as symlinks into packages/python.
+.agents/**
+.claude/**
+.cursor/**
+
+# ---------------------------------------------------------------------- #
+# Repository and CI machinery.
+# ---------------------------------------------------------------------- #
+.git/**
+.gitignore
+.gitmodules
+.github/**
+.forgejo/**
+azure-pipelines.yml
+.eslintrc.json
 .vscode/**
 .vscode-test/**
-.gitignore
+ws.vscode-pss-support-lsp.code-workspace
 vsc-extension-quickstart.md
-**/*.ts
-**/tsconfig.json
-.git/**
 *.vsix
+
+# ROOT node_modules ONLY -- client/node_modules and server/node_modules are
+# the runtime trees and are NOT matched by this pattern. The root manifest
+# declares no `dependencies`, only devDependencies (typescript, eslint,
+# vitest, vsce), so nothing here is needed at runtime. vsce already drops it
+# via `npm list --prod` returning empty, but that is a resolution result
+# rather than a stated intent; if a root runtime dependency is ever added,
+# this line is what has to change.
+node_modules/**
+
+# ---------------------------------------------------------------------- #
+# Sources, tests and docs. The compiled out/ trees are what run.
+#
+# `**/*.ts` also covers vitest.config.ts and every .d.ts under node_modules;
+# nothing resolves a .d.ts at runtime.
+# ---------------------------------------------------------------------- #
+**/*.ts
+**/tsconfig*.json
+**/*.map
+docs/**
+test/**
+server/test/**
+server/bench/**
+client/test/**
 *.g4
+
+# Grammar sources for the TextMate build live here; the built JSON in
+# syntaxes/ is what VS Code loads.
 **/.env
 
+# Stray build-log file of the same name as the (excluded) out/ directories.
+# `out` matches only the root path, so client/out and server/out are untouched.
+out

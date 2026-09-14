@@ -1,6 +1,6 @@
 {
     "name": "vscode-pss-support",
-    "version": "0.3.0",
+    "version": "0.0.0",
     "displayName": "VSCode Accellera PSS",
     "description": "VSCode support for the Accellera Portable Stimulus Specification (PSS) language",
     "publisher": "matthew-ballance",
@@ -106,6 +106,10 @@
     "scripts": {
         "vscode:prepublish": "npm run build",
         "bootstrap": "ivpm update -a -d default-dev -j 1 && npm install",
+        "bootstrap:source": "ivpm update -a -d source-dev -j 1 && npm install && npm run use:source",
+        "use:source": "cd server && npm install --no-save ../packages/pssparser/ts",
+        "use:prebuilt": "cd server && npm install",
+        "which:parser": "node -p \"'@psstools/pssparser ' + require('./server/node_modules/@psstools/pssparser/package.json').version + (require('fs').lstatSync('server/node_modules/@psstools/pssparser').isSymbolicLink() ? ' (source build)' : ' (prebuilt, from registry)')\"",
         "build": "npm run compile",
         "compile": "tsc -b",
         "watch": "tsc -b -w",

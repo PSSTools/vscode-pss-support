@@ -1,6 +1,11 @@
 package:
   name: vscode-pss-support
 
+  # PREBUILT IS THE DEFAULT. A bare `ivpm update`, and therefore a new
+  # contributor's first bootstrap, gets the published parser and never installs
+  # Emscripten. Opting into the source build is `-d source-dev`, below.
+  default-dep-set: default-dev
+
   with:
     node:
       # No <project_root>/node_modules symlink into packages/node/node_modules.
@@ -17,9 +22,34 @@ package:
       # `ivpm update` would delete @psstools/pssparser out from under the
       # server. server/package.json names the package directly instead, so the
       # link buys nothing to offset that.
+      #
+      # THIS IS ALSO WHY THE SWITCH BELOW IS NOT PURELY AN IVPM MATTER. Because
+      # the managed node environment is off the server's resolution path, what
+      # `import "@psstools/pssparser"` finds is decided by server/node_modules,
+      # which npm populates from server/package.json. IVPM chooses whether the
+      # SOURCE TREE is fetched and built; `npm run use:source` chooses which of
+      # the two the server resolves. See the note on those scripts in
+      # package.json.
       link-root: false
 
+  # ---------------------------------------------------------------------- #
+  # TWO DEP-SETS, AND THEY DUPLICATE RATHER THAN INHERIT. IVPM dep-sets have no
+  # `extends`: a dep-set is exactly its own `deps` list. The shared entries are
+  # therefore repeated in both, and adding a dependency means adding it twice.
+  # That is the format, not an oversight -- but it is the failure mode to watch,
+  # because a dep added to only one set produces a difference that shows up as
+  # "works in prebuilt, broken in source" rather than as a missing package.
+  # ---------------------------------------------------------------------- #
   dep-sets:
+
+  # ====================================================================== #
+  # PREBUILT (default). The server resolves @psstools/pssparser from the npm
+  # registry through server/package.json; nothing here builds a parser.
+  #
+  # NOTE WHAT IS ABSENT: the pssparser source recipe. It is not merely
+  # unnecessary here, it is the entire cost being avoided -- an ivpm fetch, a
+  # JDK, the pinned Emscripten toolchain and a C++ compile, about five minutes.
+  # ====================================================================== #
   - name: default-dev
     deps:
     # ALWAYS SPELL DEPENDENCIES AS github.com URLs. This manifest is public --
@@ -35,6 +65,52 @@ package:
     # `github.com/PSSTools/` is not. The mixed-case form silently bypasses the
     # mirror and clones from GitHub instead -- which works, and is therefore the
     # kind of thing nobody notices until the mirror and GitHub disagree.
+    - name: pssfmt
+      url: https://github.com/psstools/pssfmt.git
+
+    # docs/conf.py hardcodes `html_theme = 'sphinx_rtd_theme'`, and the CI docs
+    # job builds with `-W`, so a missing theme is a hard failure. Declared
+    # explicitly so the docs build depends on something stated rather than
+    # something inherited.
+    - name: sphinx-rtd-theme
+      src: pypi
+
+    # SPHINX ITSELF, EXPLICITLY, and only newly so. It used to arrive down a
+    # four-link transitive chain -- root -> pssparser -> pyastbuilder -> sphinx
+    # -- and this dep-set is precisely the one that no longer declares
+    # pssparser. `ivpm show deps` still shows a second path to it (pssfmt ->
+    # sphinx-pss), so dropping it silently happens to keep working, which is
+    # the worst of the available outcomes: the docs job would depend on which
+    # unrelated package happened to pull Sphinx in. Same reasoning as the theme
+    # above, and the same reasoning that put the theme there.
+    - name: sphinx
+      src: pypi
+
+  # ====================================================================== #
+  # SOURCE BUILD. Adds the pssparser source recipe on top of the same deps.
+  #
+  #   ivpm update -a -d source-dev -j 1 && npm install && npm run use:source
+  #
+  # `use:source` is the second half and is not optional: this dep-set builds
+  # the parser into packages/pssparser/ts/dist, but server/package.json still
+  # names the published range, so without it the server keeps resolving the
+  # registry copy and the source build sits unused. See package.json.
+  # ====================================================================== #
+  - name: source-dev
+    deps:
+    - name: pssfmt
+      url: https://github.com/psstools/pssfmt.git
+
+    - name: sphinx-rtd-theme
+      src: pypi
+
+    # Not repeated from default-dev's reasoning: here pssparser IS declared, so
+    # the root -> pssparser -> pyastbuilder -> sphinx chain exists again. Kept
+    # explicit anyway so the two dep-sets resolve Sphinx the same way rather
+    # than one inheriting it and one declaring it.
+    - name: sphinx
+      src: pypi
+
     - name: pssparser
       url: https://github.com/psstools/pssparser.git
       anonymous: true
@@ -43,6 +119,7 @@ package:
       # makes a bare `ivpm update` work for someone who does not know to pass it.
       # Without anonymous auth IVPM's default order is ['gh', 'ssh'], which needs
       # a credential this repo's CI does not hold.
+      #
       # The parser is consumed as a WebAssembly npm package built from source:
       # pssparser's ts/ directory is installed into the managed node
       # environment as a `file:` dependency, and npm's `prepare` hook compiles
@@ -82,15 +159,3 @@ package:
       # extension is already installed and the python step is a no-op, so the
       # node-only form appears to work right up until CI runs it.
       type: [raw, { node: { subdir: ts } }]
-
-    # docs/conf.py hardcodes `html_theme = 'sphinx_rtd_theme'`, and the CI docs
-    # job builds with `-W`, so a missing theme is a hard failure. Sphinx itself
-    # arrives transitively through pssparser; the theme did not, and was never
-    # declared anywhere -- it happened to be present in whatever venv the job
-    # last ran against. Declared explicitly so the docs build depends on
-    # something stated rather than something inherited.
-    - name: sphinx-rtd-theme
-      src: pypi
-
-    - name: pssfmt
-      url: https://github.com/psstools/pssfmt.git

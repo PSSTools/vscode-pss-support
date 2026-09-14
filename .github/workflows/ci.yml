@@ -6,16 +6,38 @@
 # mistaken release can at least be hidden. The Marketplace has no yank -- an
 # extension version, once accepted, is what users on that channel receive.
 #
-# Before this commit `vsce publish` was conditional on a push to master. This
-# repository is about to join a five-minute bidirectional mirror, where "a push
-# to master" is something a cron performs on someone else's commit. A mirror
-# operation must never be a publishing operation, which is the rule this whole
+# Before Phase 9 `vsce publish` was conditional on a push to master. This
+# repository joined a five-minute bidirectional mirror, where "a push to
+# master" is something a cron performs on someone else's commit. A mirror
+# operation must never be a publishing operation, which is the rule that whole
 # migration exists to establish.
+#
+# THE SHAPE, which is psstools/pssparser's and deliberately so -- build and
+# test always, release on a tag, and the tag IS the version:
+#
+#   * every job below runs on every push and every PR.
+#   * `build` stamps the version from the tag (a 0.0.<YYYYMMDD> date stamp
+#     otherwise), packages a VSIX, and uploads it -- always, so a PR run leaves
+#     an installable build behind.
+#   * `publish` is a terminal job gated on a `v*` tag AND the release-authority
+#     switch. It `needs` every build, test and docs job, so nothing reaches the
+#     Marketplace past a red anything, and it uploads the VSIX the build job
+#     produced rather than repackaging one of its own.
+#
+# TAGGING IS THE ENTIRE RELEASE PROCEDURE. There is no version to bump first:
+# package.json holds a 0.0.0 placeholder and CI substitutes. Two steps carried
+# the old contract -- a check that the tag matched a hand-edited package.json,
+# and a publish step inside `build` -- and both are gone; see the notes at the
+# stamp step and above `publish` for what replaced each.
 
 name: CI
 on:
   push:
     branches: ['**']
+    # EXPLICIT, because the moment `branches:` is present a bare `push:` no
+    # longer matches tags -- and a release here IS a tag. Without this line the
+    # publish job below is unreachable and nothing says so.
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -65,35 +87,57 @@ jobs:
                 exit 0 ;;
             esac
           fi
-          auth=$(printf '%s' "$body" | python3 -c 'import json,os,sys; d=json.load(sys.stdin); r=os.environ["GITHUB_REPOSITORY"]; print(d["repos"].get(r) or d["orgs"].get(r.split("/")[0]) or d["default"])')
+          # CASE-FOLDED, and on this forge that is load-bearing rather than
+          # defensive. The repository is `PSSTools/vscode-pss-support` on
+          # GitHub and `psstools/vscode-pss-support` on Forgejo, and
+          # $GITHUB_REPOSITORY carries whichever the host thinks it is.
+          # sync-policy.toml emits lowercase keys, so an exact-match lookup
+          # MISSES and silently falls through to d["default"] -- returning an
+          # authority this repository never pinned, with no error and no clue
+          # in the log.
+          #
+          # Verified on 2026-09-14: neither `repos` nor `orgs` pins this
+          # repository today, so the lookup lands on the default either way and
+          # the switch says "github" by accident rather than by intent. That is
+          # exactly the condition under which this goes unnoticed -- the wrong
+          # answer coincides with the right one until the day someone pins this
+          # repo, or the default moves, and then an unyankable publisher is the
+          # thing reading the wrong switch. pssparser's gate has carried the
+          # .lower() since 3.1.x; this copy was short.
+          auth=$(printf '%s' "$body" | python3 -c 'import json,os,sys; d=json.load(sys.stdin); r=os.environ["GITHUB_REPOSITORY"].lower(); print(d["repos"].get(r) or d["orgs"].get(r.split("/")[0]) or d["default"])')
           echo "release authority for $GITHUB_REPOSITORY: $auth"
           echo "authority=$auth" >> "$GITHUB_OUTPUT"
 
   # ---------------------------------------------------------------------- #
-  # THE PARSER IS BUILT, NOT GENERATED, and it is built once here.
+  # A CANARY. NOTHING IN THIS WORKFLOW DEPENDS ON THIS JOB.
   #
-  # This job replaced one called `generate`, which ran ANTLR over src/PSS*.g4
-  # to emit a TypeScript lexer and parser into server/src/generated/. There is
-  # no ANTLR front end in this repository any more: the server parses through
-  # @psstools/pssparser -- the pssparser C++ core compiled to WebAssembly --
-  # and the grammar, the generation and the ANTLR dependency are all upstream's
-  # now. `npm run generate` no longer exists in any manifest here.
+  # The server consumes @psstools/pssparser from the npm registry -- a version
+  # range in server/package.json, resolved and integrity-pinned by
+  # server/package-lock.json. Every other job just runs `npm install`.
   #
-  # ivpm fetches pssparser as a source dependency and npm's `prepare` hook in
-  # its ts/ directory drives cmake, Emscripten and tsc to produce dist/. No
-  # pssparser version is pinned, deliberately: an upstream change that breaks
-  # this repository SHOULD turn this red, which is the same reasoning the
-  # generate job was written under and the reason it is a build and not a
-  # vendored blob.
+  # This job still builds upstream pssparser FROM SOURCE and parses with the
+  # result, and it is kept for exactly one reason: to be the thing that goes
+  # red when upstream breaks. That signal is why the job it replaced
+  # (`generate`, which ran ANTLR over src/PSS*.g4 into server/src/generated/)
+  # was a build and not a vendored blob -- while the parser was committed it
+  # sat 24 tokens behind the grammar for three weeks and every job stayed
+  # green. No version is pinned here, deliberately; the published package the
+  # rest of the workflow installs is pinned, and those two facts are the point.
   #
-  # Built once and shared as an artifact because that build is expensive: an
-  # ivpm fetch, a JDK, the Emscripten toolchain and a C++ compile. Four jobs
-  # consume it and three deliberately do not -- see the note above `lint`
-  # below for which, and why that is decided by what a job resolves rather
-  # than by what it installs.
+  # WHY IT IS NOT ON THE CRITICAL PATH ANY MORE. It used to publish its dist/
+  # as an artifact that four jobs downloaded, because an ivpm fetch, a JDK,
+  # the Emscripten toolchain and a C++ compile is several minutes. Once the
+  # package was published that artifact stopped being consumed -- npm resolves
+  # the registry copy and ignores anything sitting in packages/ -- so the
+  # upload and the four `needs:` edges were removed rather than left to look
+  # load-bearing. A failure here means "upstream changed"; it does not block
+  # the tests or the VSIX, which are built against the released version.
+  #
+  # If this goes red while everything else is green, that is upstream main
+  # diverging from the published 3.x -- triage it, do not silence it.
   # ---------------------------------------------------------------------- #
   build-parser:
-    name: Build the pssparser WebAssembly package
+    name: Canary - build upstream pssparser from source
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -122,8 +166,16 @@ jobs:
       # into the managed node environment as a `file:` dependency, and npm runs
       # `prepare` on it. There is no separate build step to add here, and
       # adding one would be a second way to do it.
+      #
+      # `-d source-dev`, AND IT IS THE ONLY JOB THAT USES IT. source-dev is the
+      # dep-set that carries the pssparser source recipe; default-dev -- what
+      # every other job and a bare `ivpm update` get -- deliberately omits it,
+      # because those jobs resolve the published package from the registry.
+      # Pointed at default-dev this job would fetch, build nothing, and fail the
+      # wasm assertion below, which is the correct outcome but a confusing way
+      # to discover a one-word mistake.
       - name: Fetch pssparser and build it
-        run: ivpm update -a -d default-dev -j 1
+        run: ivpm update -a -d source-dev -j 1
       - name: Check the parser actually built
         # The wasm binary is the thing that cannot be faked by a partial build:
         # tsc will happily emit dist/*.js from the TypeScript wrapper alone,
@@ -145,22 +197,10 @@ jobs:
             p.dispose();
             console.log("parser loads, parses and links");
           '
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pssparser-wasm
-          # dist/ and package.json are the package; scripts/ is here because
-          # npm runs `prepare` on a `file:` dependency at every install and
-          # invokes it by path -- with scripts/ missing the consumer's
-          # `npm install` dies on MODULE_NOT_FOUND before any guard inside the
-          # script can decline to run. With it present, prepare.mjs sees no
-          # src/ alongside it and exits 0, which is the path it already
-          # documents for a consumer installing a prebuilt package.
-          path: |
-            packages/pssparser/ts/dist/
-            packages/pssparser/ts/package.json
-            packages/pssparser/ts/scripts/
-          if-no-files-found: error
-          retention-days: 1
+      # NO upload-artifact STEP, deliberately. This job's output is consumed by
+      # nobody: the jobs that used to download it install the published package
+      # instead. What is asserted here is that upstream still builds and still
+      # parses -- the exit status is the whole product.
 
   docs:
     runs-on: ubuntu-latest
@@ -224,136 +264,304 @@ jobs:
 
 
   build:
-    needs: gate
+    # NO `needs: gate` any more. This job stopped reading the switch when the
+    # publish moved out of it, and a `needs` edge that nothing consumes only
+    # parks the whole build behind a curl to dvkit.org. `publish` declares the
+    # edge, and `publish` is the only job that reads the output.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # WAS: a raw `git clone --depth=1` of zuspec/zuspec-fe-pss.
+      # NO PYTHON, NO IVPM, NO JDK IN THIS JOB, and the absence is worth a note
+      # because all three used to be here.
       #
-      # That checkout was retired upstream, and it left this job fetching its
-      # grammar by a mechanism no other job used: `docs` and `lint` resolve
-      # dependencies through ivpm, `build` cloned a URL. Two mechanisms meant
-      # they could disagree about which parser source the tree was built from,
-      # and after the retirement they did -- ivpm fetched pssparser while this
-      # job still generated the parser from the old grammar.
+      # This job's history is a list of mechanisms for getting a parser: a raw
+      # `git clone --depth=1` of zuspec/zuspec-fe-pss, then `npm run generate`
+      # over an ANTLR grammar, then an `ivpm update` that compiled pssparser's
+      # C++ core to wasm. Each was a second way of doing what another job
+      # already did, and twice they disagreed about which parser source the
+      # tree was built from.
       #
-      # ivpm.yaml is now the single declaration of that dependency. `-a` is
-      # anonymous auth: the runner holds no credential for the default
-      # ['gh', 'ssh'] order, and an ssh attempt against the public mirror hangs
-      # rather than failing, so this would time out instead of erroring.
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install ivpm
-        run: pip install ivpm
-      - name: Fetch packages
-        run: ivpm update -a -d default-dev -j 1
+      # There is one mechanism left and it is npm's: server/package.json names
+      # a version range, server/package-lock.json pins the resolved tarball and
+      # its integrity hash, `npm install` fetches it. Nothing this job packages
+      # comes from packages/, so nothing needs to fetch packages/.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Setup Java (pssparser's C++ front end is generated by ANTLR)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: Install dependencies
-        run: npm install
-      # THE ONE JOB THAT STILL BUILDS THE PARSER ITSELF rather than downloading
-      # `build-parser`'s artifact, and the reason is the same as it was when
-      # this job generated its own ANTLR sources: what ships must be built from
-      # what was fetched. `vsce package` below walks the tree it is given, and
-      # the wasm it packages is whatever sits in packages/pssparser/ts/dist.
-      # Sourcing that from another job's artifact would put a second mechanism
-      # between the published extension and pssparser, which is exactly the
-      # split this job was untangled from once already.
+      - name: Stamp version
+        # THE TAG IS THE VERSION. package.json carries a 0.0.0 placeholder; on
+        # a `v*` build this substitutes the tag into it, and everything else
+        # gets a date stamp. There is no version to bump before tagging and
+        # nothing in the tree to keep in step with the tag.
+        #
+        # This REPLACES a step that checked tag == package.json and failed the
+        # release when they disagreed. The check was correct and guarded
+        # against forgetting to hand-edit a file -- which is a step that should
+        # not exist. Substituting removes the step and the check together; what
+        # the check was really protecting (that what reaches the Marketplace
+        # carries the tag's version) is now asserted in the publish job against
+        # the VSIX ITSELF, which also catches a stamp that silently did
+        # nothing.
+        #
+        # `npm version` rather than an edit: it is npm's own mechanism, it
+        # updates package-lock.json in step, and it refuses a malformed version
+        # instead of writing it. --no-git-tag-version because a release is
+        # already on its tag and a second one is not wanted; it also skips
+        # npm's clean-tree check, so this works on a runner regardless.
+        #
+        # THE DEV STAMP IS 0.0.<YYYYMMDD>, and the shape is constrained from
+        # three directions:
+        #
+        #   * pssparser's `.<run-id>` suffix does not port. That is a fourth
+        #     PEP 440 segment, and a VSIX version is three fields.
+        #   * THE DATE CANNOT GO IN major OR minor. A dev build must sort BELOW
+        #     every real release, or a dogfooder who installed one is told they
+        #     are up to date and never offered the Marketplace upgrade --
+        #     silently, forever. 0.<YYYYMMDD>.<run> would outrank 0.4.0; in the
+        #     patch field, under a 0 minor, it cannot outrank any 0.N.x.
+        #   * It has to be legal semver, because vsce validates with
+        #     semver.valid() and nothing more.
+        #
+        # The cost, accepted: two builds on the same day carry the SAME
+        # version. The run number and commit are in the artifact name instead
+        # -- see the upload step. A prerelease spelling (0.0.0-dev.<date>.<run>)
+        # would be unique and sort even lower, but whether VS Code installs a
+        # prerelease-versioned VSIX cleanly was not verified, and this is not
+        # the place to find out.
+        #
+        # SHORT_SHA is set here rather than in the upload step because
+        # `github.sha` cannot be truncated in an expression.
+        run: |
+          set -eu
+          case "$GITHUB_REF" in
+            refs/tags/v*)
+              v="${GITHUB_REF#refs/tags/v}"
+              # STRICTLY <major>.<minor>.<patch>. Narrower than pssparser's
+              # grammar, which also takes `rc<N>`, and the difference is the
+              # Marketplace: it has no pre-release CHANNEL keyed on the version
+              # string. Pre-releases there are the --pre-release flag plus the
+              # even/odd-minor convention, which is a design decision rather
+              # than a port -- so an rc tag is refused here instead of being
+              # quietly shipped as a normal release.
+              #
+              # (The flag is named without its command on purpose. The shadow
+              # check in .forgejo/workflows/ci.yml reads these files as TEXT,
+              # and a comment naming a release command is indistinguishable
+              # from one -- so the full spelling here would register this
+              # stamping step as an ungated publisher. It did, once.)
+              bad=0
+              case "$v" in
+                ''|*[!0-9.]*) bad=1 ;;
+                *) n=$(printf '%s' "$v" | tr -cd '.' | wc -c)
+                   [ "$n" -eq 2 ] || bad=1 ;;
+              esac
+              if [ "$bad" -ne 0 ]; then
+                echo "::error::tag v$v is not <major>.<minor>.<patch>; the VS Code Marketplace has no pre-release channel keyed on the version string, so rc/alpha/beta tags are not accepted here"
+                exit 1
+              fi
+              ;;
+            *)
+              v="0.0.$(date -u +%Y%m%d)"
+              ;;
+          esac
+          npm version "$v" --no-git-tag-version --allow-same-version
+          # ANTI-VACUITY. `npm version` writing nothing would leave the 0.0.0
+          # placeholder to be packaged and -- on a tag -- published as a
+          # release. Read back what is on disk rather than trusting the
+          # command's exit status.
+          got=$(node -p "require('./package.json').version")
+          if [ "$got" != "$v" ]; then
+            echo "::error::failed to stamp version $v into package.json (it reads $got)"
+            exit 1
+          fi
+          echo "version: $got"
+          echo "VSIX_VERSION=$got" >> "$GITHUB_ENV"
+          echo "SHORT_SHA=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
+      # WHAT SHIPS IS THE PUBLISHED PARSER, not a locally built one. `npm
+      # install` resolves @psstools/pssparser from the registry at the version
+      # server/package-lock.json pins, and that is the copy `vsce package`
+      # writes into the VSIX -- out of server/node_modules, where npm put it.
+      #
+      # This job used to build the parser itself, on the reasoning that what
+      # ships must be built from what was fetched. That reasoning is now served
+      # better by the release: an integrity-pinned tarball is a stronger
+      # statement about what shipped than a rebuild on the runner. It also has
+      # to be this way -- a source build reaches server/node_modules as a
+      # SYMLINK into packages/, and vsce cannot package a symlinked directory
+      # at all (`not a file`, after secretlint EISDIRs on it first). The
+      # published package arrives as a real directory.
       #
       # `npm run generate` used to sit here. It is gone along with the ANTLR
-      # front end; the `ivpm update` above is now the whole of the build, via
-      # npm's `prepare` hook in pssparser's ts/.
+      # front end; there is no parser build in this job any more.
+      - name: Install dependencies
+        run: npm install
       - name: Build
         run: npm run compile
       - name: Install vsce
         run: npm install -g @vscode/vsce
       - name: Package extension
         run: vsce package
-      - name: Check the tag matches the package version
-        # Only on a tag, and BEFORE the publish step, because `vsce publish`
-        # takes its version from package.json and ignores the tag entirely.
-        # Tagging v0.4.0 while package.json still says 0.3.0 would publish
-        # 0.3.0 under the name of a release that is not it -- and, the
-        # Marketplace having no yank, that is not correctable afterwards.
+      - name: Upload the VSIX
+        # EVERY BUILD, not just tagged ones. On a tag this is the artifact the
+        # publish job uploads to the Marketplace; on a branch or a PR it is the
+        # build someone can install to try the change, which is the thing most
+        # often wanted from a run here and previously was not kept at all.
         #
-        # It CHECKS rather than rewrites, deliberately. A rewrite makes the
-        # published artifact differ from the commit it claims to be built
-        # from; for an extension shipped to users, the committed version is
-        # the thing that should be authoritative.
-        if: startsWith(github.ref, 'refs/tags/v')
+        # THE ARTIFACT NAME CARRIES WHAT THE VERSION CANNOT. Two dev builds on
+        # one day share a version (see the stamp step), so the run number and
+        # the commit go here, where there is no format to satisfy. The VSIX
+        # inside is still named for its version alone.
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ env.VSIX_VERSION }}-r${{ github.run_number }}-g${{ env.SHORT_SHA }}
+          path: '*.vsix'
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------- #
+  # THE RELEASE, and it is a JOB rather than a step for one reason: `needs`.
+  #
+  # `vsce publish` used to be the last step of `build`, which needs nothing but
+  # `gate`. lint, typecheck and all five test jobs run independently, so a
+  # fully red suite did not stop a Marketplace publish -- the tests and the
+  # release were simply unrelated. For the estate's only publisher to a
+  # registry with NO YANK, that was the wrong way round.
+  #
+  # The `needs` list below is the fix, and it is exhaustive on purpose: a
+  # release waits on everything that could say no.
+  #
+  # NOT `build-parser`, deliberately. That job is a canary (see its header) and
+  # it builds upstream pssparser's main with nothing pinned. Depending on it
+  # would let an upstream change block a release of code that does not contain
+  # it. If you are adding `needs: build-parser` here, re-read that header.
+  #
+  # NO CHECKOUT, and the absence is the point: what is published is the VSIX
+  # the build job built and this job verified, byte for byte, rather than a
+  # repackage from a second install that merely ought to match. It also takes
+  # the symlink hazard noted in `build` off the table for good.
+  # ---------------------------------------------------------------------- #
+  publish:
+    # Both halves are required and neither is redundant:
+    #
+    #   startsWith(github.ref, 'refs/tags/v')  -- a release is a deliberate
+    #     tag, never a branch push, so no mirrored commit can trigger one.
+    #   needs.gate.outputs.authority == 'github'  -- the master switch at
+    #     https://dvkit.org/.well-known/release-authority.json decides WHICH
+    #     forge releases this repo. Flipping it in sync-policy.toml moves the
+    #     release with no edit to this file.
+    #
+    # `needs: gate` is declared below. Without it this expression reads an
+    # EMPTY STRING, is false forever, and publishes nothing while going green
+    # -- see the note on the gate job.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.gate.outputs.authority == 'github' }}
+    needs:
+      - gate
+      - build
+      - lint
+      - typecheck
+      - test-core
+      - test-lsp
+      - test-client
+      - test-contributions
+      - test-bench
+      - docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve the release version from the tag
+        # The tag verbatim. The build job already rejected any spelling that is
+        # not <major>.<minor>.<patch>; this job does not re-derive the version
+        # from anything, it only states what the artifact must match.
         run: |
-          tag="${GITHUB_REF#refs/tags/v}"
-          pkg=$(node -p "require('./package.json').version")
-          echo "tag=$tag  package.json=$pkg"
-          if [ "$tag" != "$pkg" ]; then
-            echo "::error::tag v$tag does not match version $pkg in package.json"
+          set -eu
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_ENV"
+      - name: Download the VSIX
+        uses: actions/download-artifact@v4
+        with:
+          pattern: vsix-*
+          merge-multiple: true
+          path: vsix
+      - name: Check the VSIX
+        # THE LAST POINT BEFORE THE UPLOAD IS PERMANENT, so this asserts
+        # against the archive rather than against anything this workflow wrote.
+        # A `needs` edge proves the build job went green, not that it produced
+        # an artifact carrying the tag's version -- and the stamp step going
+        # quietly vacuous is exactly the failure that would otherwise reach
+        # users under the name of a release that is not it.
+        #
+        # ANTI-VACUITY: an empty vsix/ would otherwise reach `vsce publish`
+        # as an unexpanded glob, which reads as a tooling problem rather than
+        # as "the build artifact did not arrive".
+        run: |
+          set -eu
+          n=$(ls -1 vsix/*.vsix 2>/dev/null | wc -l)
+          if [ "$n" -ne 1 ]; then
+            echo "::error::expected exactly one .vsix to publish, found $n"
+            ls -la vsix || true
             exit 1
           fi
-
+          pkg=$(ls -1 vsix/*.vsix)
+          echo "$(basename "$pkg") ($(wc -c < "$pkg") bytes)"
+          if [ "$(basename "$pkg")" != "vscode-pss-support-${VERSION}.vsix" ]; then
+            echo "::error::$(basename "$pkg") is not vscode-pss-support-${VERSION}.vsix"
+            exit 1
+          fi
+          # The filename is vsce's rendering of package.json; the manifest
+          # INSIDE the archive is what the Marketplace actually reads, so check
+          # that too rather than trusting the two to agree.
+          unzip -p "$pkg" extension/package.json > manifest.json
+          node -e '
+            const fs = require("fs");
+            const want = process.env.VERSION;
+            const fail = (m) => { console.error(`::error::${m}`); process.exit(1); };
+            const p = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            if (p.name !== "vscode-pss-support") fail(`VSIX is ${p.name}, expected vscode-pss-support`);
+            if (p.publisher !== "matthew-ballance") fail(`VSIX publisher is ${p.publisher}, expected matthew-ballance`);
+            if (p.version !== want) fail(`VSIX manifest is version ${p.version}, expected ${want}`);
+            console.log(`VSIX OK: ${p.publisher}.${p.name}@${p.version}`);
+          '
+          echo "VSIX_PATH=$pkg" >> "$GITHUB_ENV"
       - name: Publish to VS Code Marketplace
-        # WAS: `github.event_name == 'push' && github.ref == 'refs/heads/master'`
-        #
-        # Both halves are required and neither is redundant:
-        #
-        #   startsWith(github.ref, 'refs/tags/v')  -- a release is a deliberate
-        #     tag, never a branch push, so no mirrored commit can trigger one.
-        #   needs.gate.outputs.authority == 'github'  -- the master switch at
-        #     https://dvkit.org/.well-known/release-authority.json decides
-        #     WHICH forge releases this repo. Flipping it in sync-policy.toml
-        #     moves the release with no edit to this file.
-        #
-        # `needs: gate` is declared on the job above. Without it this
-        # expression reads an empty string, is false forever, and publishes
-        # nothing while going green -- see the note on the gate job.
-        if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.gate.outputs.authority == 'github' }}
+        # --packagePath, so this uploads the bytes checked above. Without it
+        # `vsce publish` packages afresh from the working directory -- which
+        # this job does not even have -- and the artifact verified would not be
+        # the artifact shipped.
         env:
           VSCE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
         run: |
-          if [ -z "$VSCE_PAT" ]; then
+          set -eu
+          if [ -z "${VSCE_PAT:-}" ]; then
             echo "::error::VS_MARKETPLACE_PAT is not set for this repository"
             exit 1
           fi
-          vsce publish -p "$VSCE_PAT"
+          npm install -g @vscode/vsce
+          vsce publish --packagePath "$VSIX_PATH" -p "$VSCE_PAT"
+          echo "published vscode-pss-support ${VERSION}"
 
   # ---------------------------------------------------------------------- #
-  # A JOB THAT NEEDS THE PARSER DOWNLOADS IT BEFORE `npm install`, NOT AFTER,
-  # AND A JOB THAT DOES NOT NEED IT DOES NOT DEPEND ON build-parser AT ALL.
+  # EVERY JOB BELOW IS `npm install` AND NOTHING ELSE. No `needs:`, no
+  # artifact download, no ordering constraint -- they all start at once.
   #
-  # On the ordering: these jobs used to install first and drop the `generate`
-  # artifact into server/src/ afterwards, which was fine while the artifact was
-  # TypeScript source -- nothing resolved it until tsc or vitest ran. The
-  # parser is a dependency now, named by `file:` path in server/package.json,
-  # and npm resolves it during install.
+  # This used to be a real decision. While the parser was built in-workflow,
+  # each job had to declare whether it needed the artifact, and the answer was
+  # not "does it run npm install" (every job does, through the root
+  # postinstall) but "does anything it runs RESOLVE the parser" -- because a
+  # missing `file:` dependency does not fail an install. npm creates the
+  # symlink anyway, dangling, and exits 0. Getting it wrong was expensive in
+  # one direction (a thirty-second job waiting several minutes on a C++
+  # compile) and silent in the other.
   #
-  # On the dependency: note that a MISSING `file:` dependency does not fail the
-  # install. npm creates the symlink anyway, dangling, and exits 0 -- so this
-  # cannot be decided by "does the job run npm install", which every job does
-  # through the root postinstall. It has to be decided by whether anything the
-  # job runs resolves the parser:
+  # A registry dependency removes the question. npm either resolves the pinned
+  # tarball or fails the install loudly, so there is no dangling-symlink state
+  # to reason about and no artifact to sequence around. The parser arrives the
+  # same way vscode-languageserver does.
   #
-  #   test-core, test-lsp, test-bench   load the wasm and parse with it
-  #   typecheck                         reads dist/*.d.ts through the `file:` link
-  #   build                             packages the wasm into the .vsix
-  #
-  #   lint                              eslint here is NOT type-aware (there is
-  #                                     no parserOptions.project in
-  #                                     .eslintrc.json), so it never resolves an
-  #                                     import
-  #   test-client, test-contributions   neither touches server code
-  #
-  # The three below therefore stay off the critical path, as they were under
-  # the generate job. Getting this wrong is cheap in one direction and
-  # expensive in the other: an unnecessary `needs: build-parser` makes a
-  # thirty-second job wait several minutes on a C++ compile, while a missing
-  # one shows up immediately as an unresolved import rather than silently.
+  # `build-parser` above is a canary and nothing depends on it -- see its
+  # header. If you find yourself adding `needs: build-parser` to a job here,
+  # that is the sign something has been misunderstood: it exists to fail on its
+  # own, not to feed anyone.
   # ---------------------------------------------------------------------- #
   lint:
     runs-on: ubuntu-latest
@@ -370,35 +578,23 @@ jobs:
       - run: npm run lint
 
   test-core:
-    needs: build-parser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch the prebuilt parser
-        uses: actions/download-artifact@v4
-        with:
-          name: pssparser-wasm
-          path: packages/pssparser/ts
       - run: npm install
       - name: Run core tests
         run: npm run test:core
 
   test-lsp:
-    needs: build-parser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch the prebuilt parser
-        uses: actions/download-artifact@v4
-        with:
-          name: pssparser-wasm
-          path: packages/pssparser/ts
       - run: npm install
       - name: Run LSP tests
         run: npm run test:lsp
@@ -428,18 +624,12 @@ jobs:
         run: npm run test:grammar
 
   typecheck:
-    needs: build-parser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch the prebuilt parser
-        uses: actions/download-artifact@v4
-        with:
-          name: pssparser-wasm
-          path: packages/pssparser/ts
       - run: npm install
       # Vitest transpiles without typechecking, so type errors in test code are
       # invisible to the suites above. This is the only step that sees them --
@@ -450,18 +640,12 @@ jobs:
         run: npm run typecheck
 
   test-bench:
-    needs: build-parser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Fetch the prebuilt parser
-        uses: actions/download-artifact@v4
-        with:
-          name: pssparser-wasm
-          path: packages/pssparser/ts
       - run: npm install
       - name: Run benchmarks
         run: npm run test:bench
