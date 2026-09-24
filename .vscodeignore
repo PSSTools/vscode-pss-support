@@ -1,6 +1,14 @@
-# WHAT SHIPS IS client/out, server/out, THEIR node_modules, AND THE STATIC
+# WHAT SHIPS IS client/out, client/node_modules, AND THE STATIC
 # CONTRIBUTIONS (syntaxes, snippets, language-configuration.json, images).
 # Everything else is excluded here.
+#
+# THE LANGUAGE SERVER ARRIVES IN client/node_modules, as the
+# @psstools/pss-language-server npm package installed from its packed tarball
+# -- the same bytes that are published to npm -- together with its runtime
+# dependencies (the parser among them). Nothing under server/ ships: see the
+# `server/**` rule below. `npm run package:vsix` does the install; running
+# `vsce package` directly fails in the vscode:prepublish guard, because in a
+# checkout that path is the file:../server symlink (see the next paragraph).
 #
 # `vsce package` WALKS THE WORKING TREE, NOT GIT. Nothing in .gitignore is
 # excluded by virtue of being ignored, and that is the whole reason this file
@@ -21,14 +29,12 @@
 # their build trees. packages/pssparser alone is 305 MB of C++ and Emscripten
 # output, packages/python is a 190 MB venv.
 #
-# NOTE ON THE PARSER. While server/package.json names the parser as
-# `file:../packages/pssparser/ts`, npm links it as a SYMLINK into packages/,
-# so excluding packages/ leaves that link dangling. It cannot be fixed by
-# re-including packages/pssparser/ts/dist: vsce would still emit the link
-# itself as a single entry, which is the EISDIR above. The fix is the
-# published @psstools/pssparser -- npm then writes a real directory into
-# server/node_modules and it ships through the server/node_modules rule with
-# no special case here. See the note next to that rule.
+# NOTE ON THE PARSER. A VSIX always ships the REGISTRY @psstools/pssparser:
+# installing the server tarball resolves the parser from npm into
+# client/node_modules as a real directory. `npm run use:source` links a
+# source-built parser into server/node_modules only, which no longer ships,
+# so it cannot reach a VSIX (it could not before either: the link is the
+# EISDIR above).
 # ---------------------------------------------------------------------- #
 packages/**
 ivpm.yaml
@@ -55,8 +61,8 @@ ws.vscode-pss-support-lsp.code-workspace
 vsc-extension-quickstart.md
 *.vsix
 
-# ROOT node_modules ONLY -- client/node_modules and server/node_modules are
-# the runtime trees and are NOT matched by this pattern. The root manifest
+# ROOT node_modules ONLY -- client/node_modules is the runtime tree and is
+# NOT matched by this pattern. The root manifest
 # declares no `dependencies`, only devDependencies (typescript, eslint,
 # vitest, vsce), so nothing here is needed at runtime. vsce already drops it
 # via `npm list --prod` returning empty, but that is a resolution result
@@ -72,18 +78,26 @@ node_modules/**
 # ---------------------------------------------------------------------- #
 **/*.ts
 **/tsconfig*.json
+**/*.tsbuildinfo
 **/*.map
+# npm's install record; nothing reads it at runtime.
+**/package-lock.json
 docs/**
 test/**
-server/test/**
-server/bench/**
 client/test/**
 *.g4
+
+# The build scripts (package:vsix and its vscode:prepublish guard).
+scripts/**
+
+# The language server's sources, build tree and development node_modules
+# (devDependencies included). The server ships from client/node_modules.
+server/**
 
 # Grammar sources for the TextMate build live here; the built JSON in
 # syntaxes/ is what VS Code loads.
 **/.env
 
-# Stray build-log file of the same name as the (excluded) out/ directories.
-# `out` matches only the root path, so client/out and server/out are untouched.
+# Stray build-log file of the same name as the out/ directories.
+# `out` matches only the root path, so client/out is untouched.
 out

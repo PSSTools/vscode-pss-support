@@ -121,12 +121,17 @@ export class DocumentSession {
     // An open buffer is the authority for its own file; disk is stale by
     // definition while the user is typing into it.
     if (this.openUris.has(uri)) return;
+    // Watcher events can arrive twice for one change (VS Code's own watcher
+    // and the one the server registers), so an unchanged file is a no-op.
+    if (this.index.getText(uri) === text) return;
     this.writeToIndex(uri, text);
     this.publish(uri);
   }
 
   /** A .pss file was deleted from disk. */
   didDeleteOnDisk(uri: string): void {
+    // A repeated delete finds nothing to remove; see didChangeOnDisk.
+    if (this.index.getText(uri) === undefined && !this.pendingText.has(uri)) return;
     this.index.removeFile(uri);
     this.pendingText.delete(uri);
     this.onDiagnostics?.(uri, []);

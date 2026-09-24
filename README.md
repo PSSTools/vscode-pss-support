@@ -53,22 +53,30 @@ Language support for the Accellera Portable Stimulus Standard (PSS) 3.1.
 ## Configuration
 
 Create `.pssconfig.json` in your workspace root for project settings
-(include/exclude globs, formatting, lint rules). See
-[docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+(formatting and lint rules). See
+[docs/reference/configuration.rst](docs/reference/configuration.rst).
 
-## CLI
+## Other editors
 
-Check PSS files from the command line:
+The language server behind this extension is published on its own as
+[`@psstools/pss-language-server`](https://www.npmjs.com/package/@psstools/pss-language-server).
+It works with any LSP client, including Neovim, Emacs and Helix:
 
-```bash
-npx pss-check src/
+```sh
+npm install -g @psstools/pss-language-server
 ```
 
-See [docs/CLI.md](docs/CLI.md).
+This installs `pss-ls`; have your editor start `pss-ls --stdio` for `*.pss`
+files. The [package README](server/README.md) has the setup for each editor.
+
+## Command-line checking
+
+To check PSS files from the command line or in CI, use the `pssparser`
+command from the pssparser Python package (`pip install pssparser`).
 
 ## Development
 
-See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for build instructions.
+See [docs/development/contributing.rst](docs/development/contributing.rst) for build instructions.
 
 ## Requirements
 

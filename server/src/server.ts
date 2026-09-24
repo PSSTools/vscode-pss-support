@@ -1,12 +1,10 @@
 /**
  * Process entry point for the PSS language server.
  *
- * All wiring lives in PSSLanguageServer.startLanguageServer, which can be
- * started on any Connection; this file only supplies the stdio one.
+ * The VS Code client forks this module with `--node-ipc`. Run by hand, or by
+ * any other editor, it defaults to stdio. The `pss-ls` bin (`cli/pss-ls.ts`)
+ * starts the same server.
  */
-import { createConnection, ProposedFeatures } from 'vscode-languageserver/node.js';
-import { startLanguageServer } from './lsp/PSSLanguageServer.js';
+import { runServer } from './lsp/serverProcess.js';
 
-const connection = createConnection(ProposedFeatures.all);
-startLanguageServer(connection);
-connection.listen();
+runServer();

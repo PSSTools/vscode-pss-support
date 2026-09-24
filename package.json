@@ -104,7 +104,8 @@
         }
     },
     "scripts": {
-        "vscode:prepublish": "npm run build",
+        "vscode:prepublish": "node scripts/check-vsix-server.mjs",
+        "package:vsix": "node scripts/package-vsix.mjs",
         "bootstrap": "ivpm update -a -d default-dev -j 1 && npm install",
         "bootstrap:source": "ivpm update -a -d source-dev -j 1 && npm install && npm run use:source",
         "use:source": "cd server && npm install --no-save ../packages/pssparser/ts",
@@ -116,8 +117,9 @@
         "test": "npm run test:core && npm run test:lsp && npm run test:client && npm run test:contrib && npm run test:grammar",
         "test:core": "cd server && npm run test:core",
         "test:lsp": "cd server && npm run test:lsp",
+        "test:package": "cd server && npm run test:package",
         "test:bench": "cd server && npm run test:bench",
-        "lint": "eslint server/src/core/ --ext .ts",
+        "lint": "eslint server/src/ --ext .ts",
         "postinstall": "cd client && npm install && cd ../server && npm install",
         "test:client": "cd client && npm test",
         "test:contrib": "vitest run",
@@ -128,6 +130,7 @@
         "@types/node": "^20.11.0",
         "@typescript-eslint/eslint-plugin": "^7.0.0",
         "@typescript-eslint/parser": "^7.0.0",
+        "@vscode/vsce": "^3.9.2",
         "eslint": "^8.56.0",
         "typescript": "^5.4.0",
         "vitest": "^2.1.9",

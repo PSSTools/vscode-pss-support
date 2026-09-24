@@ -19,7 +19,8 @@ Project Structure
    vscode-pss-support/
      client/                     # VS Code extension client
        src/extension.ts          # Extension entry point
-     server/                     # Language server
+     scripts/                    # VSIX packaging, CI version stamping
+     server/                     # Language server: the @psstools/pss-language-server npm package
        src/
          core/                   # Pure logic layer (no LSP/VS Code deps)
            ast/                  # AST node types and utilities
@@ -94,6 +95,49 @@ Running Tests
 
    # Benchmarks
    npx vitest bench --run
+
+Packaging the Extension
+-----------------------
+
+The extension runs the language server from its npm package,
+``@psstools/pss-language-server``. ``client/package.json`` depends on it as
+``file:../server``, so in a checkout npm links it and the extension runs
+``server/out`` directly: rebuild the server and reload the window.
+
+A VSIX must instead carry the package as it is published. Build one with:
+
+.. code-block:: bash
+
+   npm run package:vsix
+
+This packs ``server/``, installs the tarball into ``client/node_modules`` as a
+real directory (vsce cannot package the symlink), runs ``vsce package``, checks
+the VSIX's contents and then restores the link. Running ``vsce package``
+directly fails with an error that says so. Set ``PSS_LS_TARBALL`` to package an
+existing server tarball instead of packing one.
+
+A VSIX always ships the parser from the npm registry: ``npm run use:source``
+links a source-built parser into ``server/node_modules``, which only a checkout
+uses.
+
+Releasing
+---------
+
+Push a ``v<major>.<minor>.<patch>`` tag. That is the whole procedure: one tag
+releases the npm package and the VSIX at the same version, and there is no
+version to bump first. Before tagging, rename the "Unreleased" heading in
+``CHANGELOG.md`` and ``docs/development/changelog.rst`` to that version. ``package.json`` and ``server/package.json`` hold a
+``0.0.0`` placeholder, and CI stamps the tag's version into both with
+``scripts/stamp-version.mjs``. Other builds get ``0.0.<YYYYMMDD>``.
+
+On every push and pull request, CI packs the server once, tests that tarball as
+installed, and builds the VSIX around it. Both are uploaded as run artifacts.
+On a tag, and only on the forge that holds release authority, it publishes the
+tarball to npm and then the VSIX to the Marketplace. Neither registry lets a
+version number be reused. If the Marketplace upload fails after the npm one
+succeeded, use "Re-run failed jobs", which re-runs only the Marketplace job.
+Re-running the npm job itself after its upload succeeded fails, because npm
+already has that version.
 
 Architecture Constraint
 -----------------------

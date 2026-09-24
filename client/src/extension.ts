@@ -1,6 +1,5 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
-import { workspace, ExtensionContext } from 'vscode';
+import { ExtensionContext } from 'vscode';
 
 import {
     LanguageClient,
@@ -15,9 +14,10 @@ import { resolveDiagramTarget } from './diagramTarget';
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext): void {
-    const serverModule = context.asAbsolutePath(
-        path.join('server', 'out', 'server.js')
-    );
+    // The server is the @psstools/pss-language-server npm package. In a
+    // checkout this resolves through the file:../server link to server/out;
+    // in a VSIX it is the packed tarball under client/node_modules.
+    const serverModule = require.resolve('@psstools/pss-language-server/server');
 
     const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
 
@@ -35,13 +35,17 @@ export function activate(context: ExtensionContext): void {
 
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'pss' }],
-        synchronize: {
-            fileEvents: workspace.createFileSystemWatcher('**/*.pss'),
-        },
+        // The server's code lenses run VS Code commands, so it only offers
+        // them to a client that says it can run them.
+        initializationOptions: { vscodeCommands: true },
+        // No synchronize.fileEvents: the server registers its own watcher
+        // for **/*.pss, as it does with any client that allows it.
     };
 
+    // The id is also the settings section vscode-languageclient reads its
+    // trace level from, so 'pss' makes it read pss.trace.server.
     client = new LanguageClient(
-        'pssLanguageServer',
+        'pss',
         'PSS Language Server',
         serverOptions,
         clientOptions

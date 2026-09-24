@@ -8,6 +8,7 @@ import { getCompletions, resolveCompletionItem } from '../core/services/Completi
 import { CompletionKind } from '../core/types/CompletionResult.js';
 import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 import { IConfiguration } from '../core/io/IConfiguration.js';
+import { ClientSupport, FULL_SUPPORT } from './ClientSupport.js';
 
 function convertKind(kind: CompletionKind): CompletionItemKind {
   switch (kind) {
@@ -32,6 +33,7 @@ export function handleCompletion(
   params: CompletionParams,
   index: WorkspaceIndex,
   config?: IConfiguration,
+  support: ClientSupport = FULL_SUPPORT,
 ): CompletionList {
   const results = getCompletions(
     params.textDocument.uri,
@@ -43,7 +45,7 @@ export function handleCompletion(
 
   const items: CompletionItem[] = results.map(r => ({
     label: r.label,
-    kind: convertKind(r.kind),
+    kind: support.completionKind(convertKind(r.kind)),
     detail: r.detail,
     documentation: r.documentation,
     insertText: r.insertText,

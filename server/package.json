@@ -1,11 +1,43 @@
 {
-  "name": "pss-language-server",
-  "description": "PSS Language Server",
-  "version": "1.0.0",
+  "name": "@psstools/pss-language-server",
+  "description": "Language server for the Accellera Portable Test and Stimulus Standard (PSS)",
+  "version": "0.0.0",
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PSSTools/vscode-pss-support.git",
+    "directory": "server"
+  },
+  "homepage": "https://github.com/PSSTools/vscode-pss-support/tree/master/server#readme",
+  "bugs": {
+    "url": "https://github.com/PSSTools/vscode-pss-support/issues"
+  },
+  "keywords": [
+    "pss",
+    "portable stimulus",
+    "Accellera",
+    "language server",
+    "lsp"
+  ],
   "engines": {
     "node": ">=18"
+  },
+  "bin": {
+    "pss-ls": "out/cli/pss-ls.js"
+  },
+  "exports": {
+    "./server": "./out/server.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "out/**/*.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "@psstools/pssparser": "^3.1.3",
@@ -21,8 +53,11 @@
   },
   "scripts": {
     "build": "tsc -b",
+    "clean": "node -e \"for (const p of ['out', 'tsconfig.tsbuildinfo']) require('fs').rmSync(p, { recursive: true, force: true })\"",
+    "prepack": "npm run clean && tsc -b",
     "test:core": "vitest run test/core",
-    "test:lsp": "vitest run test/lsp test/helpers",
+    "test:lsp": "vitest run test/lsp test/cli test/helpers",
+    "test:package": "vitest run --config vitest.package.config.ts",
     "test:bench": "vitest bench",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.test.json"

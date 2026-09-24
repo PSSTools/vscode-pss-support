@@ -1,16 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { PassThrough } from 'stream';
 import {
-  createConnection,
-  StreamMessageReader,
-  StreamMessageWriter,
-  ProposedFeatures,
-} from 'vscode-languageserver/node.js';
-import {
-  createProtocolConnection,
-  InitializeRequest,
-  InitializedNotification,
-  DidOpenTextDocumentNotification,
   DidChangeTextDocumentNotification,
   DidCloseTextDocumentNotification,
   DefinitionRequest,
@@ -18,7 +7,6 @@ import {
   DocumentSymbolRequest,
   CompletionRequest,
   WorkspaceSymbolRequest,
-  PublishDiagnosticsNotification,
   DocumentFormattingRequest,
   SemanticTokensRequest,
   ShutdownRequest,
@@ -28,18 +16,19 @@ import {
   DocumentSymbol,
   CompletionList,
   SymbolInformation,
-  PublishDiagnosticsParams,
   TextEdit,
   SemanticTokens,
 } from 'vscode-languageserver-protocol/node.js';
-import { startLanguageServer } from '../../src/lsp/PSSLanguageServer.js';
+import {
+  startTestServer,
+  initialize,
+  openDoc,
+  waitForDiagnostics,
+  TestServer,
+} from './harness.js';
 
 /**
- * End-to-end test over a real JSON-RPC connection.
- *
- * The server runs exactly as it does in production -- same handler
- * registration, same protocol framing -- with a pair of in-memory streams
- * standing in for stdio. No VS Code, no extension host, no display.
+ * End-to-end test over a real JSON-RPC connection (see `harness.ts`).
  *
  * This is the only level at which registration mistakes are visible: a handler
  * wired to the wrong request, a capability advertised but not implemented, or a
@@ -52,77 +41,6 @@ const PKG_URI = 'file:///ws/pkg.pss';
 
 const PKG_TEXT = 'package p {\n    struct data_s {\n        rand bit[32] addr;\n    }\n}';
 const TOP_TEXT = 'import p::*;\ncomponent top_c {\n    data_s cfg;\n}';
-
-/** A running server plus a client connection speaking to it. */
-function startTestServer() {
-  const clientToServer = new PassThrough();
-  const serverToClient = new PassThrough();
-
-  const serverConnection = createConnection(
-    ProposedFeatures.all,
-    new StreamMessageReader(clientToServer),
-    new StreamMessageWriter(serverToClient),
-  );
-  // debounceMs 0 keeps edits synchronous so the test does not race the timer.
-  startLanguageServer(serverConnection, { debounceMs: 0 });
-  serverConnection.listen();
-
-  const client = createProtocolConnection(
-    new StreamMessageReader(serverToClient),
-    new StreamMessageWriter(clientToServer),
-  );
-  client.listen();
-
-  const diagnostics: PublishDiagnosticsParams[] = [];
-  client.onNotification(PublishDiagnosticsNotification.type, params => {
-    diagnostics.push(params);
-  });
-
-  return {
-    client,
-    diagnostics,
-    dispose: () => {
-      client.dispose();
-      serverConnection.dispose();
-    },
-  };
-}
-
-type TestServer = ReturnType<typeof startTestServer>;
-
-async function initialize(server: TestServer) {
-  const result = await server.client.sendRequest(InitializeRequest.type, {
-    processId: null,
-    rootUri: null,
-    capabilities: {},
-    workspaceFolders: null,
-  });
-  await server.client.sendNotification(InitializedNotification.type, {});
-  return result;
-}
-
-function openDoc(server: TestServer, uri: string, text: string) {
-  return server.client.sendNotification(DidOpenTextDocumentNotification.type, {
-    textDocument: { uri, languageId: 'pss', version: 1, text },
-  });
-}
-
-/** Wait for a diagnostics notification for `uri`, or time out with a clear message. */
-async function waitForDiagnostics(
-  server: TestServer,
-  uri: string,
-  timeoutMs = 3000,
-): Promise<PublishDiagnosticsParams> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const found = server.diagnostics.find(d => d.uri === uri);
-    if (found) return found;
-    if (Date.now() > deadline) {
-      throw new Error(`No diagnostics published for ${uri} within ${timeoutMs}ms`);
-    }
-    await new Promise(resolve => setTimeout(resolve, 10));
-  }
-}
 
 let server: TestServer | undefined;
 
@@ -192,7 +110,11 @@ describe('LSP protocol', () => {
 
   it('answers textDocument/documentSymbol with a nested tree', async () => {
     server = startTestServer();
-    await initialize(server);
+    // A client that takes a tree; one that does not gets a flat list
+    // (client-profiles.test.ts).
+    await initialize(server, {
+      capabilities: { textDocument: { documentSymbol: { hierarchicalDocumentSymbolSupport: true } } },
+    });
     await openDoc(server, PKG_URI, PKG_TEXT);
 
     const symbols = await server.client.sendRequest(DocumentSymbolRequest.type, {

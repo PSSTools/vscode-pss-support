@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
@@ -90,18 +90,23 @@ describe('configuration schema', () => {
   });
 
   /**
-   * Every declared setting should be read somewhere. `pss.trace.server` is the
-   * exception: it is consumed by vscode-languageclient itself, not by our code.
+   * Every declared setting should be read somewhere in the extension.
+   * `pss.trace.server` is the exception: it is meant for vscode-languageclient
+   * itself, not for our code.
+   *
+   * Only the extension's own sources count. The server never sees VS Code
+   * settings -- nothing forwards them; it reads `.pssconfig.json` -- so a
+   * match in server code would be a same-named `.pssconfig.json` key, not
+   * this setting being read.
    */
   it('reads every setting it declares', () => {
     const CLIENT_LIBRARY_OWNED = new Set(['pss.trace.server']);
-    const sources = [
-      read('server/src/lsp/PSSLanguageServer.ts'),
-      read('server/src/core/services/LintService.ts'),
-      read('server/src/core/services/FormatterService.ts'),
-      read('server/src/core/services/CompletionService.ts'),
-      read('server/src/core/config/PSSConfigLoader.ts'),
-    ].join('\n');
+    const tsFiles = (dir: string): string[] => readdirSync(dir).flatMap(name => {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) return tsFiles(path);
+      return name.endsWith('.ts') ? [path] : [];
+    });
+    const sources = tsFiles(join(ROOT, 'client/src')).map(f => readFileSync(f, 'utf-8')).join('\n');
 
     // Look for the key as a string literal -- a `config.get('...')` call --
     // rather than anywhere in the text, so prose in a comment does not count
@@ -116,9 +121,22 @@ describe('configuration schema', () => {
     }
 
     // `pss.maxNumberOfProblems` is declared but not yet consumed; wiring it is
-    // part of the diagnostics work (marker cap PSS029). Listed explicitly so
-    // the gap is visible rather than silently tolerated.
+    // part of the diagnostics work (marker cap PSS029) and needs the setting
+    // forwarded to the server. Listed explicitly so the gap is visible rather
+    // than silently tolerated.
     expect(unread).toEqual(['pss.maxNumberOfProblems']);
+  });
+
+  /**
+   * vscode-languageclient reads `<client id>.trace.server`. With any other id
+   * the declared setting is inert: it was, while the id was
+   * `pssLanguageServer`.
+   */
+  it('names the language client after the section of its trace setting', () => {
+    const extension = read('client/src/extension.ts');
+    const id = extension.match(/new LanguageClient\(\s*'([^']+)'/)?.[1];
+    expect(id).toBeDefined();
+    expect(Object.keys(properties)).toContain(`${id}.trace.server`);
   });
 });
 
@@ -215,11 +233,36 @@ describe('packaging', () => {
     expect(vscodeignore).toContain('**/.env');
   });
 
-  it('does not exclude the compiled server the client spawns', () => {
-    // client/src/extension.ts resolves 'server/out/server.js'.
+  // The VSIX's own contents are checked by scripts/package-vsix.mjs, which
+  // is what builds it. These check the configuration that decides them.
+
+  it('ships nothing from server/: the server arrives as the npm package', () => {
+    expect(vscodeignore).toContain('server/**');
+  });
+
+  it('does not exclude client/node_modules, where the server is installed', () => {
     for (const pattern of vscodeignore) {
-      expect(pattern.startsWith('server/out'), `'${pattern}' would exclude the server`).toBe(false);
+      expect(pattern.startsWith('client/node_modules'), `'${pattern}' would exclude the server`).toBe(false);
+      expect(pattern.startsWith('client/**'), `'${pattern}' would exclude the server`).toBe(false);
     }
+  });
+
+  it('starts the server the package exports, not a path in the checkout', () => {
+    const extension = read('client/src/extension.ts');
+    expect(extension).toContain("require.resolve('@psstools/pss-language-server/server')");
+    expect(extension).not.toContain('asAbsolutePath');
+
+    const client = readJson('client/package.json');
+    expect(client.dependencies['@psstools/pss-language-server']).toBe('file:../server');
+    const server = readJson('server/package.json');
+    expect(server.name).toBe('@psstools/pss-language-server');
+    expect(server.exports['./server']).toBe('./out/server.js');
+  });
+
+  it('guards vsce package against the development link', () => {
+    expect(pkg.scripts['vscode:prepublish']).toBe('node scripts/check-vsix-server.mjs');
+    expect(pkg.scripts['package:vsix']).toBe('node scripts/package-vsix.mjs');
+    expect(vscodeignore).toContain('scripts/**');
   });
 
   /**

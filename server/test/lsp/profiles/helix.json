@@ -1,0 +1,128 @@
+{
+  "client": "Helix",
+  "source": "https://raw.githubusercontent.com/helix-editor/helix/25.07.1/helix-lsp/src/client.rs (Client::initialize, Client::start, workspace_for_uri), https://raw.githubusercontent.com/helix-editor/helix/25.07.1/helix-lsp/src/lib.rs (start_client), https://raw.githubusercontent.com/helix-editor/helix/25.07.1/helix-lsp-types/src/lib.rs (serde attributes), https://raw.githubusercontent.com/helix-editor/helix/25.07.1/helix-loader/build.rs (VERSION_AND_GIT_HASH)",
+  "version": "25.07.1",
+  "transcribed": "2026-09-23",
+  "notes": "Transcribed from source, not captured from a running editor. Serialization follows helix-lsp-types serde attributes: None options are skipped, except rootUri which serializes as null when absent; a Some(Default) struct serializes as {} (completionItemKind). Runtime-dependent values chosen: editor config lsp.snippets = true (default), so completionItem.snippetSupport is true; no `config` key in the language-server configuration, so initializationOptions is absent; an LSP root was found (root marker / workspace), so rootUri is set and workspaceFolders holds one folder named after the root's basename (with no root, rootUri is null, workspaceFolders is [] and rootPath falls back to the workspace directory). rootPath is the root path string (no trailing slash). clientInfo.version is VERSION_AND_GIT_HASH, which is '25.07.1' for a build without git metadata (a build from a git checkout appends ' (<8-char hash>)'). trace, locale and workDoneToken are None and therefore absent. processId is std::process::id() in reality; null here per fixture convention.",
+  "params": {
+    "processId": null,
+    "rootPath": "/WORKSPACE",
+    "rootUri": "file:///WORKSPACE",
+    "capabilities": {
+      "workspace": {
+        "applyEdit": true,
+        "workspaceEdit": {
+          "documentChanges": true,
+          "resourceOperations": ["create", "rename", "delete"],
+          "failureHandling": "abort",
+          "normalizesLineEndings": false
+        },
+        "didChangeConfiguration": {
+          "dynamicRegistration": false
+        },
+        "didChangeWatchedFiles": {
+          "dynamicRegistration": true,
+          "relativePatternSupport": false
+        },
+        "symbol": {
+          "dynamicRegistration": false
+        },
+        "executeCommand": {
+          "dynamicRegistration": false
+        },
+        "workspaceFolders": true,
+        "configuration": true,
+        "fileOperations": {
+          "didRename": true,
+          "willRename": true
+        },
+        "inlayHint": {
+          "refreshSupport": false
+        }
+      },
+      "textDocument": {
+        "completion": {
+          "completionItem": {
+            "snippetSupport": true,
+            "deprecatedSupport": true,
+            "tagSupport": {
+              "valueSet": [1]
+            },
+            "insertReplaceSupport": true,
+            "resolveSupport": {
+              "properties": ["documentation", "detail", "additionalTextEdits"]
+            }
+          },
+          "completionItemKind": {}
+        },
+        "hover": {
+          "contentFormat": ["markdown"]
+        },
+        "signatureHelp": {
+          "signatureInformation": {
+            "documentationFormat": ["markdown"],
+            "parameterInformation": {
+              "labelOffsetSupport": true
+            },
+            "activeParameterSupport": true
+          }
+        },
+        "formatting": {
+          "dynamicRegistration": false
+        },
+        "codeAction": {
+          "codeActionLiteralSupport": {
+            "codeActionKind": {
+              "valueSet": [
+                "",
+                "quickfix",
+                "refactor",
+                "refactor.extract",
+                "refactor.inline",
+                "refactor.rewrite",
+                "source",
+                "source.organizeImports"
+              ]
+            }
+          },
+          "isPreferredSupport": true,
+          "disabledSupport": true,
+          "dataSupport": true,
+          "resolveSupport": {
+            "properties": ["edit", "command"]
+          }
+        },
+        "rename": {
+          "dynamicRegistration": false,
+          "prepareSupport": true,
+          "honorsChangeAnnotations": false
+        },
+        "publishDiagnostics": {
+          "tagSupport": {
+            "valueSet": [1, 2]
+          },
+          "versionSupport": true
+        },
+        "inlayHint": {
+          "dynamicRegistration": false
+        }
+      },
+      "window": {
+        "workDoneProgress": true
+      },
+      "general": {
+        "positionEncodings": ["utf-8", "utf-32", "utf-16"]
+      }
+    },
+    "workspaceFolders": [
+      {
+        "uri": "file:///WORKSPACE",
+        "name": "WORKSPACE"
+      }
+    ],
+    "clientInfo": {
+      "name": "helix",
+      "version": "25.07.1"
+    }
+  }
+}

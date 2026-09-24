@@ -1,28 +1,35 @@
 import { describe, it, expect } from 'vitest';
-import { execFileSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { existsSync, mkdtempSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { fileURLToPath } from 'url';
+import { pathToUri } from '../../src/core/io/UriUtils.js';
+import { DiagnosticSeverity } from '../../src/core/types/Diagnostic.js';
+import { makeIndex } from '../helpers/Indexes.js';
 
 /**
- * Differential testing between this extension's analyzer and `pssparser`.
+ * Differential testing between this server's analyzer and `pssparser`.
  *
- * The extension re-implements the PSS front end in TypeScript, so the two can
- * drift on any construct. Both are headless CLIs, which makes the comparison a
- * plain subprocess diff -- the mitigation for the "two front ends, one
- * language" risk.
+ * The server layers its own analysis over the parser, so the two can drift
+ * on any construct. The reference side is the `pssparser` command-line
+ * checker from the pssparser Python package; this side is computed in-process through `WorkspaceIndex`, the same pipeline the
+ * language server runs, and rendered as the positions that CLI would print.
  *
- * Skips when the pssparser binary is not built; a developer machine without it
- * should not fail the suite, but CI that builds pssparser gets the coverage.
+ * Skips when the pssparser command is not installed; a developer machine
+ * without it should not fail the suite. `ivpm update` installs it into
+ * `packages/python`.
  */
 
-const ROOT = join(__dirname, '..');
+const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 
-/** Locations pssparser's CLI may have been built into. */
+/**
+ * Where the reference checker may be installed. Until 2026-09 this listed
+ * `pss-check` paths, which pssparser has never provided, so the suite always
+ * skipped.
+ */
 const CANDIDATES = [
-  join(ROOT, 'packages/pssparser/build/src/pss-check'),
-  join(ROOT, 'packages/pssparser/build/pss-check'),
-  join(ROOT, 'packages/python/bin/pss-check'),
+  join(ROOT, 'packages/python/bin/pssparser'),
 ];
 
 function findReferenceCli(): string | undefined {
@@ -30,7 +37,6 @@ function findReferenceCli(): string | undefined {
 }
 
 const referenceCli = findReferenceCli();
-const extensionCli = join(ROOT, 'server/out/cli/pss-check.js');
 
 /** A diagnostic reduced to what both front ends should agree on. */
 interface Marker {
@@ -51,17 +57,30 @@ function parseMarkers(output: string): Marker[] {
   return markers;
 }
 
-function run(cli: string, file: string): string {
-  try {
-    if (cli.endsWith('.js')) {
-      return execFileSync(process.execPath, [cli, file], { encoding: 'utf-8' });
-    }
-    return execFileSync(cli, [file], { encoding: 'utf-8' });
-  } catch (e) {
-    // Both CLIs exit non-zero when they report errors; the output is the point.
-    const err = e as { stdout?: string };
-    return err.stdout ?? '';
-  }
+function runReference(file: string): string {
+  // pssparser writes diagnostics to stderr and exits non-zero when it reports
+  // errors; the output is the point, whichever stream it is on.
+  const result = spawnSync(referenceCli!, ['--no-color', file], { encoding: 'utf-8' });
+  return `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+}
+
+const SEVERITY: Record<DiagnosticSeverity, string> = {
+  [DiagnosticSeverity.Error]: 'error',
+  [DiagnosticSeverity.Warning]: 'warning',
+  [DiagnosticSeverity.Information]: 'info',
+  [DiagnosticSeverity.Hint]: 'hint',
+};
+
+/** The server's diagnostics for one file, as 1-based markers like the CLI's. */
+function serverMarkers(file: string, source: string): Marker[] {
+  const index = makeIndex();
+  const uri = pathToUri(file);
+  index.addFile(uri, source);
+  return index.getDiagnostics(uri).map(d => ({
+    line: d.range.start.line + 1,
+    column: d.range.start.character + 1,
+    severity: SEVERITY[d.severity],
+  }));
 }
 
 const CORPUS: Record<string, string> = {
@@ -71,7 +90,7 @@ const CORPUS: Record<string, string> = {
   'unclosed-brace.pss': 'component top {\n    int a;\n',
 };
 
-describe.skipIf(!referenceCli || !existsSync(extensionCli))(
+describe.skipIf(!referenceCli)(
   'differential vs pssparser',
   () => {
     const dir = mkdtempSync(join(tmpdir(), 'pss-diff-'));
@@ -81,8 +100,8 @@ describe.skipIf(!referenceCli || !existsSync(extensionCli))(
         const file = join(dir, name);
         writeFileSync(file, source);
 
-        const ours = parseMarkers(run(extensionCli, file));
-        const theirs = parseMarkers(run(referenceCli!, file));
+        const ours = serverMarkers(file, source);
+        const theirs = parseMarkers(runReference(file));
 
         // Compare positions and severities, not message text: the friendly
         // message port is separate work, and identical wording is not yet a
@@ -101,11 +120,8 @@ describe('differential harness', () => {
     // suite is visible rather than silently absent.
     if (!referenceCli) {
       console.info(
-        `[differential] pssparser CLI not found; searched:\n  ${CANDIDATES.join('\n  ')}`,
+        `[differential] pssparser command not found; searched:\n  ${CANDIDATES.join('\n  ')}`,
       );
-    }
-    if (!existsSync(extensionCli)) {
-      console.info(`[differential] extension CLI not built at ${extensionCli}; run 'tsc -b'`);
     }
     expect(true).toBe(true);
   });

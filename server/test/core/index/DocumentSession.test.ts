@@ -156,6 +156,29 @@ describe('DocumentSession', () => {
     expect(published.at(-1)).toEqual({ uri, diagnostics: [] });
   });
 
+  it('ignores a repeated on-disk change', () => {
+    const { session, published } = setup();
+    const uri = 'file:///ws/other.pss';
+    session.didChangeOnDisk(uri, 'component c { }');
+    const count = published.length;
+
+    session.didChangeOnDisk(uri, 'component c { }');
+
+    expect(published).toHaveLength(count);
+  });
+
+  it('ignores a repeated delete', () => {
+    const { session, published } = setup();
+    const uri = 'file:///ws/other.pss';
+    session.didChangeOnDisk(uri, 'component c { }');
+    session.didDeleteOnDisk(uri);
+    const count = published.length;
+
+    session.didDeleteOnDisk(uri);
+
+    expect(published).toHaveLength(count);
+  });
+
   it('flushAll drains every pending document', () => {
     const { index, session } = setup();
     session.didChangeContent('file:///a.pss', 'component a { }');

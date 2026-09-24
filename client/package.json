@@ -8,6 +8,7 @@
         "vscode": "^1.75.0"
     },
     "dependencies": {
+        "@psstools/pss-language-server": "file:../server",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {

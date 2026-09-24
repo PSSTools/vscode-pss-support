@@ -2,6 +2,8 @@
 node_modules/
 *.log
 out/
+# Built by `npm run package:vsix`.
+*.vsix
 
 # tsc -b incremental state. Rewritten by every build and tracked until now, so
 # it turned up dirty in every diff and every commit -- derived state competing

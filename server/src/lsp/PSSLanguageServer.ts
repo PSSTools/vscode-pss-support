@@ -25,6 +25,7 @@ import {
   TypeHierarchySubtypesParams,
   InlayHintParams,
   CodeLensParams,
+  DidChangeWatchedFilesNotification,
 } from 'vscode-languageserver/node.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
@@ -53,6 +54,8 @@ import { loadPSSConfig, PSSConfigAdapter } from '../core/config/PSSConfigLoader.
 import { IConfiguration } from '../core/io/IConfiguration.js';
 import { uriToPath } from '../core/io/UriUtils.js';
 import { nodeFileSystem } from '../core/io/NodeFileSystem.js';
+import { workspaceRoots, serverInitOptions, ServerInitOptions } from './InitParams.js';
+import { clientSupport, ClientSupport } from './ClientSupport.js';
 
 /**
  * Wire every LSP request handler onto a connection.
@@ -95,8 +98,16 @@ export function startLanguageServer(
    */
   let config: IConfiguration = new PSSConfigAdapter({});
 
+  /** Parsed from `initializationOptions`; editor-neutral until initialize says otherwise. */
+  let initOptions: ServerInitOptions = serverInitOptions(undefined);
+
+  /** Formats and kinds the client takes; the protocol defaults until initialize. */
+  let support: ClientSupport = clientSupport({});
+
   connection.onInitialize((params: InitializeParams) => {
     initParams = params;
+    initOptions = serverInitOptions(params.initializationOptions);
+    support = clientSupport(params.capabilities);
     connection.console.info('PSS Language Server initializing');
 
     const result: InitializeResult = {
@@ -126,7 +137,10 @@ export function startLanguageServer(
         inlayHintProvider: true,
         documentFormattingProvider: true,
         documentRangeFormattingProvider: true,
-        codeLensProvider: { resolveProvider: false },
+        // Every lens runs a VS Code-only command; see ServerInitOptions.
+        ...(initOptions.vscodeCommands
+          ? { codeLensProvider: { resolveProvider: false } }
+          : {}),
       },
     };
     connection.console.info('PSS Language Server initialized - capabilities registered');
@@ -135,13 +149,25 @@ export function startLanguageServer(
 
   // After initialization, scan the workspace for all .pss files
   connection.onInitialized(async () => {
-    const folders = initParams.workspaceFolders;
-    if (!folders) return;
+    const rootUris = workspaceRoots(initParams);
+    if (rootUris.length === 0) {
+      // Single-file mode: open documents are still served, one at a time.
+      connection.console.info('[workspace] No workspace root; serving open documents only');
+      return;
+    }
 
-    const rootUris = folders.map(f => f.uri).filter(uri => uri.startsWith('file://'));
+    config = new PSSConfigAdapter(loadPSSConfig(uriToPath(rootUris[0])));
 
-    if (rootUris.length > 0) {
-      config = new PSSConfigAdapter(loadPSSConfig(uriToPath(rootUris[0])));
+    // Ask the client to watch .pss files. Without this, only VS Code (whose
+    // extension sets up its own watcher) tells the server about files created,
+    // changed or deleted outside the editor. Registered before the scan, so a
+    // change made while scanning is not missed.
+    if (initParams.capabilities.workspace?.didChangeWatchedFiles?.dynamicRegistration) {
+      connection.client.register(DidChangeWatchedFilesNotification.type, {
+        watchers: [{ globPattern: '**/*.pss' }],
+      }).catch((e: unknown) => {
+        connection.console.warn(`[workspace] Could not register a file watcher: ${String(e)}`);
+      });
     }
 
     const loader = new WorkspaceLoader();
@@ -174,13 +200,13 @@ export function startLanguageServer(
   // Phase 1
   connection.onDocumentSymbol((params: DocumentSymbolParams) => {
     ensureParsed(params.textDocument.uri);
-    return handleDocumentSymbol(params, u => index.getAST(u));
+    return handleDocumentSymbol(params, u => index.getAST(u), support);
   });
 
   // Phase 2
   connection.onHover((params: HoverParams) => {
     ensureParsed(params.textDocument.uri);
-    return handleHover(params, index);
+    return handleHover(params, index, support);
   });
   connection.onDefinition((params: DefinitionParams) => {
     ensureParsed(params.textDocument.uri);
@@ -194,7 +220,7 @@ export function startLanguageServer(
   // Phase 3
   connection.onCompletion((params: CompletionParams) => {
     ensureParsed(params.textDocument.uri);
-    return handleCompletion(params, index, config);
+    return handleCompletion(params, index, config, support);
   });
   connection.onCompletionResolve((item: CompletionItem) => handleCompletionResolve(item, index));
   connection.onSignatureHelp((params: SignatureHelpParams) => {
@@ -208,7 +234,7 @@ export function startLanguageServer(
   connection.onWorkspaceSymbol((params: WorkspaceSymbolParams) => {
     // Workspace-scoped: there is no document to flush, so flush them all.
     session.flushAll();
-    return handleWorkspaceSymbol(params, index);
+    return handleWorkspaceSymbol(params, index, support);
   });
   connection.languages.semanticTokens.on((params: SemanticTokensParams) => {
     ensureParsed(params.textDocument.uri);
@@ -255,6 +281,8 @@ export function startLanguageServer(
     return handleRangeFormatting(params, index, config);
   });
   connection.onCodeLens((params: CodeLensParams) => {
+    // Not advertised in this case, but a client may ask anyway.
+    if (!initOptions.vscodeCommands) return [];
     ensureParsed(params.textDocument.uri);
     return handleCodeLens(params, index);
   });

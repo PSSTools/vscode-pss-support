@@ -1,4 +1,6 @@
-# CI for psstools/vscode-pss-support.
+# CI for psstools/vscode-pss-support: the VS Code extension, and the language
+# server it ships, which is also published to npm as
+# @psstools/pss-language-server.
 #
 # THE ONLY VS CODE MARKETPLACE PUBLISHER IN THE ESTATE, and the reason this
 # repository is the first one converted in Phase 9. A Marketplace version is
@@ -16,19 +18,27 @@
 # test always, release on a tag, and the tag IS the version:
 #
 #   * every job below runs on every push and every PR.
-#   * `build` stamps the version from the tag (a 0.0.<YYYYMMDD> date stamp
-#     otherwise), packages a VSIX, and uploads it -- always, so a PR run leaves
-#     an installable build behind.
-#   * `publish` is a terminal job gated on a `v*` tag AND the release-authority
-#     switch. It `needs` every build, test and docs job, so nothing reaches the
-#     Marketplace past a red anything, and it uploads the VSIX the build job
-#     produced rather than repackaging one of its own.
+#   * `server-package` stamps the version from the tag (a 0.0.<YYYYMMDD> date
+#     stamp otherwise), packs the language server, tests the tarball as
+#     installed, and uploads it.
+#   * `build` stamps the same version, packages a VSIX around THAT tarball,
+#     and uploads it -- always, so a PR run leaves an installable build
+#     behind.
+#   * `publish-npm` and then `publish` are terminal jobs gated on a `v*` tag
+#     AND the release-authority switch. They `need` every build, test and
+#     docs job, so nothing is released past a red anything, and they upload
+#     the artifacts the build jobs produced rather than repackaging their own.
+#
+# ONE TAG RELEASES BOTH, at one version (lockstep). npm goes first, so a
+# failure part-way leaves a server on npm with no VSIX, which is harmless,
+# and never a VSIX whose server npm does not have.
 #
 # TAGGING IS THE ENTIRE RELEASE PROCEDURE. There is no version to bump first:
-# package.json holds a 0.0.0 placeholder and CI substitutes. Two steps carried
-# the old contract -- a check that the tag matched a hand-edited package.json,
-# and a publish step inside `build` -- and both are gone; see the notes at the
-# stamp step and above `publish` for what replaced each.
+# package.json and server/package.json hold a 0.0.0 placeholder and CI
+# substitutes (scripts/stamp-version.mjs). Two steps carried the old contract
+# -- a check that the tag matched a hand-edited package.json, and a publish
+# step inside `build` -- and both are gone; see the stamp script and the note
+# above `publish` for what replaced each.
 
 name: CI
 on:
@@ -263,11 +273,142 @@ jobs:
           echo "generated pages: $(find docs/_build/html -name '*.html' | wc -l)"
 
 
+  # ---------------------------------------------------------------------- #
+  # THE LANGUAGE SERVER AS AN npm PACKAGE: packed once, here, and every later
+  # use of it -- the package tests, the VSIX, the npm release -- takes this
+  # tarball rather than packing its own. What is tested is then byte for byte
+  # what ships, in both places it ships.
+  # ---------------------------------------------------------------------- #
+  server-package:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.stamp.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Stamp version
+        # THE ONE PLACE THE VERSION IS WORKED OUT. `build` takes it from this
+        # job's output rather than working it out again: a dev version is the
+        # date, and two jobs can run either side of midnight UTC. See the
+        # script for the version rules.
+        id: stamp
+        run: node scripts/stamp-version.mjs
+      - name: Install dependencies
+        working-directory: server
+        run: npm install
+      - name: Pack the server
+        # `prepack` does a clean build, so this packs fresh output.
+        working-directory: server
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/server-dist"
+          npm pack --pack-destination "$RUNNER_TEMP/server-dist"
+      - name: Check the tarball
+        # The same checks `publish-npm` makes before the upload, made here as
+        # well so a broken package fails the PR that broke it rather than the
+        # release. Everything lands in $RUNNER_TEMP, outside the checkout.
+        run: |
+          set -eu
+          cd "$RUNNER_TEMP"
+          n=$(ls -1 server-dist/*.tgz | wc -l)
+          [ "$n" -eq 1 ] || { echo "::error::expected one tarball from npm pack, found $n"; exit 1; }
+          tgz=$(ls -1 server-dist/*.tgz)
+          if [ "$(basename "$tgz")" != "psstools-pss-language-server-${VERSION}.tgz" ]; then
+            echo "::error::$(basename "$tgz") is not psstools-pss-language-server-${VERSION}.tgz"
+            exit 1
+          fi
+          tar -tzf "$tgz" > files.txt
+          tar -xzOf "$tgz" package/package.json > manifest.json
+          node -e '
+            const fs = require("fs");
+            const fail = (m) => { console.error(`::error::${m}`); process.exit(1); };
+            const p = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            if (p.name !== "@psstools/pss-language-server") fail(`tarball is ${p.name}`);
+            if (p.version !== process.env.VERSION) fail(`tarball is version ${p.version}, expected ${process.env.VERSION}`);
+            const files = fs.readFileSync("files.txt", "utf8").split("\n").filter(Boolean)
+              .map((f) => f.replace(/^package\//, ""));
+            for (const need of ["package.json", "README.md", "LICENSE", "out/server.js", "out/cli/pss-ls.js"]) {
+              if (!files.includes(need)) fail(`no ${need} in the tarball`);
+            }
+            const stray = files.filter((f) => /^(src|test|bench)\//.test(f) || f.endsWith(".ts"));
+            if (stray.length) fail(`the tarball ships ${stray.length} source or test files, e.g. ${stray[0]}`);
+            console.log(`tarball OK: ${p.name}@${p.version}, ${files.length} files`);
+          '
+          echo "PSS_LS_TARBALL=$RUNNER_TEMP/$tgz" >> "$GITHUB_ENV"
+      - name: Test the installed package
+        # Installs the tarball outside the repo, the way a user does, and runs
+        # the bin over stdio. Its dependencies come from the registry at the
+        # newest versions in range, as they would for `npm i -g`: that is what
+        # an npm user gets, and the lockfile is not in the tarball.
+        run: npm run test:package
+      - name: Upload the tarball
+        # The name carries the run and commit, which a dev version cannot (see
+        # the stamp script). The tarball inside is named for its version alone.
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-tgz-${{ env.VERSION }}-r${{ github.run_number }}-g${{ env.SHORT_SHA }}
+          path: ${{ runner.temp }}/server-dist/*.tgz
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------- #
+  # A REAL NEOVIM against the packed server: starts `pss-ls`, gets its
+  # diagnostics, goes to a definition in another file.
+  #
+  # NON-BLOCKING FOR NOW (continue-on-error), and nothing needs it. It depends
+  # on a third-party editor release and on timing in a headless editor; it
+  # joins the release's `needs` once it has proven stable.
+  #
+  # NVIM_BIN makes it a real test: with it set, a Neovim that does not run
+  # fails the test rather than skipping it, so this job cannot go green by
+  # testing nothing.
+  # ---------------------------------------------------------------------- #
+  test-neovim:
+    needs: server-package
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    env:
+      # The release it was first run against. The distro package is older than
+      # the 0.11 the test needs.
+      NVIM_VERSION: v0.12.5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the server tarball
+        uses: actions/download-artifact@v4
+        with:
+          pattern: server-tgz-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/server-dist
+      - name: Install Neovim
+        run: |
+          set -eu
+          curl -fsSL -o nvim.tar.gz \
+            "https://github.com/neovim/neovim/releases/download/${NVIM_VERSION}/nvim-linux-x86_64.tar.gz"
+          tar -xzf nvim.tar.gz
+          echo "NVIM_BIN=$PWD/nvim-linux-x86_64/bin/nvim" >> "$GITHUB_ENV"
+          nvim-linux-x86_64/bin/nvim --version | head -1
+      - name: Install dependencies
+        working-directory: server
+        run: npm install
+      - name: Run the Neovim test
+        run: |
+          set -eu
+          export PSS_LS_TARBALL=$(ls -1 "$RUNNER_TEMP"/server-dist/*.tgz)
+          npm run test:package -- --reporter=verbose test/package/neovim.test.ts
+
   build:
-    # NO `needs: gate` any more. This job stopped reading the switch when the
-    # publish moved out of it, and a `needs` edge that nothing consumes only
-    # parks the whole build behind a curl to dvkit.org. `publish` declares the
-    # edge, and `publish` is the only job that reads the output.
+    # THE VSIX IS BUILT AROUND THE SERVER TARBALL `server-package` tested and
+    # uploaded -- the bytes `publish-npm` will upload -- so the extension and
+    # the npm package cannot ship different servers.
+    #
+    # NO `needs: gate`. `publish` declares that edge and is the only job that
+    # reads the switch; here it would only park the build behind a curl to
+    # dvkit.org.
+    needs: server-package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -290,118 +431,52 @@ jobs:
         with:
           node-version: 22
       - name: Stamp version
-        # THE TAG IS THE VERSION. package.json carries a 0.0.0 placeholder; on
-        # a `v*` build this substitutes the tag into it, and everything else
-        # gets a date stamp. There is no version to bump before tagging and
-        # nothing in the tree to keep in step with the tag.
-        #
-        # This REPLACES a step that checked tag == package.json and failed the
-        # release when they disagreed. The check was correct and guarded
-        # against forgetting to hand-edit a file -- which is a step that should
-        # not exist. Substituting removes the step and the check together; what
-        # the check was really protecting (that what reaches the Marketplace
-        # carries the tag's version) is now asserted in the publish job against
-        # the VSIX ITSELF, which also catches a stamp that silently did
-        # nothing.
-        #
-        # `npm version` rather than an edit: it is npm's own mechanism, it
-        # updates package-lock.json in step, and it refuses a malformed version
-        # instead of writing it. --no-git-tag-version because a release is
-        # already on its tag and a second one is not wanted; it also skips
-        # npm's clean-tree check, so this works on a runner regardless.
-        #
-        # THE DEV STAMP IS 0.0.<YYYYMMDD>, and the shape is constrained from
-        # three directions:
-        #
-        #   * pssparser's `.<run-id>` suffix does not port. That is a fourth
-        #     PEP 440 segment, and a VSIX version is three fields.
-        #   * THE DATE CANNOT GO IN major OR minor. A dev build must sort BELOW
-        #     every real release, or a dogfooder who installed one is told they
-        #     are up to date and never offered the Marketplace upgrade --
-        #     silently, forever. 0.<YYYYMMDD>.<run> would outrank 0.4.0; in the
-        #     patch field, under a 0 minor, it cannot outrank any 0.N.x.
-        #   * It has to be legal semver, because vsce validates with
-        #     semver.valid() and nothing more.
-        #
-        # The cost, accepted: two builds on the same day carry the SAME
-        # version. The run number and commit are in the artifact name instead
-        # -- see the upload step. A prerelease spelling (0.0.0-dev.<date>.<run>)
-        # would be unique and sort even lower, but whether VS Code installs a
-        # prerelease-versioned VSIX cleanly was not verified, and this is not
-        # the place to find out.
-        #
-        # SHORT_SHA is set here rather than in the upload step because
-        # `github.sha` cannot be truncated in an expression.
-        run: |
-          set -eu
-          case "$GITHUB_REF" in
-            refs/tags/v*)
-              v="${GITHUB_REF#refs/tags/v}"
-              # STRICTLY <major>.<minor>.<patch>. Narrower than pssparser's
-              # grammar, which also takes `rc<N>`, and the difference is the
-              # Marketplace: it has no pre-release CHANNEL keyed on the version
-              # string. Pre-releases there are the --pre-release flag plus the
-              # even/odd-minor convention, which is a design decision rather
-              # than a port -- so an rc tag is refused here instead of being
-              # quietly shipped as a normal release.
-              #
-              # (The flag is named without its command on purpose. The shadow
-              # check in .forgejo/workflows/ci.yml reads these files as TEXT,
-              # and a comment naming a release command is indistinguishable
-              # from one -- so the full spelling here would register this
-              # stamping step as an ungated publisher. It did, once.)
-              bad=0
-              case "$v" in
-                ''|*[!0-9.]*) bad=1 ;;
-                *) n=$(printf '%s' "$v" | tr -cd '.' | wc -c)
-                   [ "$n" -eq 2 ] || bad=1 ;;
-              esac
-              if [ "$bad" -ne 0 ]; then
-                echo "::error::tag v$v is not <major>.<minor>.<patch>; the VS Code Marketplace has no pre-release channel keyed on the version string, so rc/alpha/beta tags are not accepted here"
-                exit 1
-              fi
-              ;;
-            *)
-              v="0.0.$(date -u +%Y%m%d)"
-              ;;
-          esac
-          npm version "$v" --no-git-tag-version --allow-same-version
-          # ANTI-VACUITY. `npm version` writing nothing would leave the 0.0.0
-          # placeholder to be packaged and -- on a tag -- published as a
-          # release. Read back what is on disk rather than trusting the
-          # command's exit status.
-          got=$(node -p "require('./package.json').version")
-          if [ "$got" != "$v" ]; then
-            echo "::error::failed to stamp version $v into package.json (it reads $got)"
-            exit 1
-          fi
-          echo "version: $got"
-          echo "VSIX_VERSION=$got" >> "$GITHUB_ENV"
-          echo "SHORT_SHA=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_ENV"
-      # WHAT SHIPS IS THE PUBLISHED PARSER, not a locally built one. `npm
-      # install` resolves @psstools/pssparser from the registry at the version
-      # server/package-lock.json pins, and that is the copy `vsce package`
-      # writes into the VSIX -- out of server/node_modules, where npm put it.
+        # `server-package`'s version, passed in rather than worked out again
+        # (see the note there). The vscode:prepublish guard then checks that
+        # the server in the VSIX carries it too.
+        run: node scripts/stamp-version.mjs "${{ needs.server-package.outputs.version }}"
+      - name: Download the server tarball
+        # Into $RUNNER_TEMP, NOT the checkout: vsce packages the checkout, and
+        # a tarball sitting in it ships inside the VSIX. (package:vsix's content
+        # check refuses any .tgz, which is how that was found.)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: server-tgz-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/server-dist
+      # WHAT SHIPS IS THE PUBLISHED PARSER, not a locally built one. The VSIX
+      # carries the language server as its npm package, installed from the
+      # tarball into client/node_modules (see the Package step), and that
+      # install fetches @psstools/pssparser from the registry at the version
+      # server/package-lock.json pins. The script pins it: a lockfile never
+      # ships in a tarball, so the tarball alone would take the newest release
+      # in range.
       #
       # This job used to build the parser itself, on the reasoning that what
       # ships must be built from what was fetched. That reasoning is now served
       # better by the release: an integrity-pinned tarball is a stronger
       # statement about what shipped than a rebuild on the runner. It also has
-      # to be this way -- a source build reaches server/node_modules as a
-      # SYMLINK into packages/, and vsce cannot package a symlinked directory
-      # at all (`not a file`, after secretlint EISDIRs on it first). The
-      # published package arrives as a real directory.
-      #
-      # `npm run generate` used to sit here. It is gone along with the ANTLR
-      # front end; there is no parser build in this job any more.
+      # to be this way -- a source build reaches node_modules as a SYMLINK into
+      # packages/, and vsce cannot package a symlinked directory at all (`not a
+      # file`, after secretlint EISDIRs on it first). The published package
+      # arrives as a real directory.
       - name: Install dependencies
         run: npm install
-      - name: Build
-        run: npm run compile
-      - name: Install vsce
-        run: npm install -g @vscode/vsce
       - name: Package extension
-        run: vsce package
+        # `npm run package:vsix`, not `vsce package`: it builds the extension,
+        # installs the server tarball into client/ as a real directory (vsce
+        # cannot package the file:../server link a checkout has), packages
+        # with the vsce version root package-lock.json pins, and checks the
+        # VSIX's contents. PSS_LS_TARBALL makes it use the downloaded tarball
+        # rather than pack its own. PSS_VSIX_NO_RESTORE skips putting the link
+        # back afterwards; nothing here needs it.
+        env:
+          PSS_VSIX_NO_RESTORE: '1'
+        run: |
+          set -eu
+          n=$(ls -1 "$RUNNER_TEMP"/server-dist/*.tgz | wc -l)
+          [ "$n" -eq 1 ] || { echo "::error::expected one server tarball, found $n"; exit 1; }
+          PSS_LS_TARBALL=$(ls -1 "$RUNNER_TEMP"/server-dist/*.tgz) npm run package:vsix
       - name: Upload the VSIX
         # EVERY BUILD, not just tagged ones. On a tag this is the artifact the
         # publish job uploads to the Marketplace; on a branch or a PR it is the
@@ -409,14 +484,123 @@ jobs:
         # often wanted from a run here and previously was not kept at all.
         #
         # THE ARTIFACT NAME CARRIES WHAT THE VERSION CANNOT. Two dev builds on
-        # one day share a version (see the stamp step), so the run number and
+        # one day share a version (see the stamp script), so the run number and
         # the commit go here, where there is no format to satisfy. The VSIX
         # inside is still named for its version alone.
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-${{ env.VSIX_VERSION }}-r${{ github.run_number }}-g${{ env.SHORT_SHA }}
+          name: vsix-${{ env.VERSION }}-r${{ github.run_number }}-g${{ env.SHORT_SHA }}
           path: '*.vsix'
           if-no-files-found: error
+
+  # ---------------------------------------------------------------------- #
+  # THE npm RELEASE of @psstools/pss-language-server. Gated exactly as
+  # `publish` is (see the note there), and `publish` needs it: npm goes first.
+  # A failure between the two then leaves a server on npm with no VSIX, which
+  # is harmless, never a VSIX whose server version npm does not have. It is
+  # also retryable: "Re-run failed jobs" re-runs `publish` and not this job,
+  # which succeeded.
+  #
+  # AN npm VERSION CAN NEVER BE REUSED, even after an unpublish, so this is as
+  # unrecoverable as the Marketplace. Treat it the same way: check the
+  # artifact, then upload it unconditionally. Nothing asks the registry first
+  # (pssparser's release showed npm's read path lagging its write path by
+  # minutes), so re-running THIS job after a successful upload goes red on
+  # EPUBLISHCONFLICT, and should.
+  #
+  # NO CHECKOUT, for the reason given above `publish`: what is uploaded is the
+  # tarball `server-package` tested, not a repack.
+  # ---------------------------------------------------------------------- #
+  publish-npm:
+    # `needs: gate` is declared below; without it the authority reads as the
+    # empty string and this job silently never runs.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.gate.outputs.authority == 'github' }}
+    needs:
+      - gate
+      - server-package
+      - build
+      - lint
+      - typecheck
+      - test-core
+      - test-lsp
+      - test-client
+      - test-contributions
+      - test-bench
+      - docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # For --provenance only: npm signs a statement linking the package to
+      # this workflow run, through GitHub's OIDC token. Authentication is the
+      # NPM_TOKEN below.
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # Writes the .npmrc through which npm reads NODE_AUTH_TOKEN. Without
+          # it the upload fails as unauthenticated with the token sitting in
+          # the environment.
+          registry-url: 'https://registry.npmjs.org'
+      - name: Resolve the release version from the tag
+        # The tag verbatim; `server-package` already refused anything that is
+        # not <major>.<minor>.<patch>.
+        run: |
+          set -eu
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_ENV"
+      - name: Download the server tarball
+        uses: actions/download-artifact@v4
+        with:
+          pattern: server-tgz-*
+          merge-multiple: true
+          path: server-dist
+      - name: Check the tarball
+        # THE LAST POINT BEFORE THE UPLOAD IS PERMANENT, so this asserts
+        # against the archive rather than anything this workflow wrote: the
+        # name and the manifest INSIDE it, which is what npm reads.
+        run: |
+          set -eu
+          n=$(ls -1 server-dist/*.tgz 2>/dev/null | wc -l)
+          if [ "$n" -ne 1 ]; then
+            echo "::error::expected exactly one server tarball to publish, found $n"
+            ls -la server-dist || true
+            exit 1
+          fi
+          tgz=$(ls -1 server-dist/*.tgz)
+          echo "$(basename "$tgz") ($(wc -c < "$tgz") bytes)"
+          if [ "$(basename "$tgz")" != "psstools-pss-language-server-${VERSION}.tgz" ]; then
+            echo "::error::$(basename "$tgz") is not psstools-pss-language-server-${VERSION}.tgz"
+            exit 1
+          fi
+          tar -xzOf "$tgz" package/package.json > manifest.json
+          node -e '
+            const fs = require("fs");
+            const want = process.env.VERSION;
+            const fail = (m) => { console.error(`::error::${m}`); process.exit(1); };
+            const p = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            if (p.name !== "@psstools/pss-language-server") fail(`tarball is ${p.name}, expected @psstools/pss-language-server`);
+            if (p.version !== want) fail(`tarball is version ${p.version}, expected ${want}`);
+            if (p.private) fail("the tarball is marked private");
+            console.log(`tarball OK: ${p.name}@${p.version}`);
+          '
+          echo "TGZ_PATH=$tgz" >> "$GITHUB_ENV"
+      - name: Publish to npm
+        # A tarball path, so this uploads the bytes checked above and runs no
+        # lifecycle scripts. --access public because a scoped package is
+        # otherwise restricted, and npm does not ask: a restricted first
+        # publish of a package meant to be public looks like a success.
+        # (publishConfig says both too; the flags do not depend on npm reading
+        # it from inside a tarball.)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -eu
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::NPM_TOKEN is not available to this repository"
+            exit 1
+          fi
+          npm publish "$TGZ_PATH" --access public --provenance
+          echo "published @psstools/pss-language-server ${VERSION}"
 
   # ---------------------------------------------------------------------- #
   # THE RELEASE, and it is a JOB rather than a step for one reason: `needs`.
@@ -456,6 +640,7 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/v') && needs.gate.outputs.authority == 'github' }}
     needs:
       - gate
+      - publish-npm
       - build
       - lint
       - typecheck
@@ -521,6 +706,17 @@ jobs:
             if (p.publisher !== "matthew-ballance") fail(`VSIX publisher is ${p.publisher}, expected matthew-ballance`);
             if (p.version !== want) fail(`VSIX manifest is version ${p.version}, expected ${want}`);
             console.log(`VSIX OK: ${p.publisher}.${p.name}@${p.version}`);
+          '
+          # And the server inside it: the version publish-npm just released.
+          unzip -p "$pkg" extension/client/node_modules/@psstools/pss-language-server/package.json > server.json
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("server.json", "utf8"));
+            if (p.version !== process.env.VERSION) {
+              console.error(`::error::the VSIX ships ${p.name}@${p.version}, expected ${process.env.VERSION}`);
+              process.exit(1);
+            }
+            console.log(`server OK: ${p.name}@${p.version}`);
           '
           echo "VSIX_PATH=$pkg" >> "$GITHUB_ENV"
       - name: Publish to VS Code Marketplace

@@ -6,4 +6,4 @@ Reference
 
    diagnostics
    configuration
-   cli
+   language-server

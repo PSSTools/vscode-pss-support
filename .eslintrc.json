@@ -25,6 +25,17 @@
       }
     },
     {
+      "files": ["server/src/**/*.ts"],
+      "excludedFiles": ["server/src/cli/**"],
+      "rules": {
+        "no-restricted-properties": ["error", {
+          "object": "process",
+          "property": "stdout",
+          "message": "Over --stdio, stdout is the LSP channel: a stray write corrupts the protocol. Use connection.console. Only the bin in src/cli may write to stdout."
+        }]
+      }
+    },
+    {
       "files": ["client/src/**/*.ts"],
       "rules": {
         "no-restricted-imports": ["error", {

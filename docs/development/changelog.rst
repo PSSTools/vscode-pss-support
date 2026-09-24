@@ -1,6 +1,27 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+The language server as an npm package
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- The language server is published on its own as
+  ``@psstools/pss-language-server``, for any editor with an LSP client.
+  ``npm install -g @psstools/pss-language-server`` installs ``pss-ls``;
+  editors start ``pss-ls --stdio``. See :doc:`../reference/language-server`.
+- The extension runs the same package, so the extension and npm ship
+  identical server code, released together from one tag.
+- The server no longer assumes VS Code:
+
+  - it uses ``rootUri`` when the client sends no workspace folders, and
+    serves open files when there is no root at all;
+  - it asks the client to watch ``*.pss`` files, so changes made outside the
+    editor are seen in every editor;
+  - hover, document symbols and symbol and completion kinds follow what the
+    client says it supports;
+  - code lenses, which run VS Code commands, are offered only to VS Code.
+
 0.3.0
 -----
 
@@ -10,13 +31,12 @@ Phase 5 — Polish & Extensions
 - Lint service with configurable rules.
 - Monitor activity diagram builder.
 - Project configuration via ``.pssconfig.json``.
-- ``pss-check`` CLI tool with GCC-compatible output.
 - Resource binding analysis and tree view.
 - CodeLens for references and inheritance counts.
 - Edit debouncing (300 ms).
 - Sphinx documentation site skeleton.
 - Condensed README for the VS Code Marketplace.
-- Configuration and CLI reference docs.
+- Configuration reference docs.
 
 Phase 4 — Advanced Features
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

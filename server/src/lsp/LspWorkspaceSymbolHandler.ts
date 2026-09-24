@@ -3,6 +3,7 @@ import { getWorkspaceSymbols } from '../core/services/SymbolService.js';
 import { WorkspaceIndex } from '../core/index/WorkspaceIndex.js';
 import { GlobalScope } from '../core/ast/generated/index.js';
 import { convertSymbolKind } from './LspTypeConverters.js';
+import { ClientSupport, FULL_SUPPORT } from './ClientSupport.js';
 
 /**
  * LSP handler for workspace/symbol requests.
@@ -13,6 +14,7 @@ import { convertSymbolKind } from './LspTypeConverters.js';
 export function handleWorkspaceSymbol(
   params: WorkspaceSymbolParams,
   index: WorkspaceIndex,
+  support: ClientSupport = FULL_SUPPORT,
 ): SymbolInformation[] {
   const allAsts = new Map<string, GlobalScope>();
   for (const uri of index.getFileUris()) {
@@ -22,7 +24,7 @@ export function handleWorkspaceSymbol(
 
   return getWorkspaceSymbols(params.query, allAsts).map(s => ({
     name: s.name,
-    kind: convertSymbolKind(s.kind),
+    kind: support.workspaceSymbolKind(convertSymbolKind(s.kind)),
     containerName: s.containerName || undefined,
     location: { uri: s.uri, range: s.selectionRange },
   }));
