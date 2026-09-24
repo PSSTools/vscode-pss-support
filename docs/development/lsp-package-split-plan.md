@@ -1,6 +1,6 @@
 # Plan: publish the PSS language server as a standalone npm package
 
-Status: **Phases 1–6 done, not yet committed** (2026-09-23), except the
+Status: **Phases 1–6 done, committed in `0c9c13c`** (2026-09-23), except the
 manual checks in a real VS Code (4.3, 4.7, 4.9) and Phase 5's exit
 criteria, which need a CI run. Phase 7 follows the first release.
 Owner: Matthew Ballance
@@ -338,7 +338,7 @@ default the flag to `true` and flip it in Phase 4).
 
 ### Phase 2: package metadata
 
-Done 2026-09-23, not yet committed.
+Done 2026-09-23, in `0c9c13c`.
 
 - [x] **2.1 `server/package.json`:**
   - `name`: `@psstools/pss-language-server` (D1). `version`: `0.0.0`
@@ -408,7 +408,7 @@ Found while doing it:
 
 ### Phase 3: package-level tests (the focused-testing half)
 
-Done 2026-09-23, not yet committed.
+Done 2026-09-23, in `0c9c13c`.
 
 New suite `server/test/package/`, run by `npm run test:package` (in
 `server/`, or from the root). It packs and installs, so it has its own config
@@ -648,8 +648,8 @@ errors, and `sphinx-build -W` passes.
 
 ### Phase 5: CI and release
 
-Done 2026-09-23, not committed. Everything was rehearsed locally; nothing has
-run on a real runner yet (see the exit criteria). The `dvkit-infra` skill was
+Done 2026-09-23, in `0c9c13c`. Everything was rehearsed locally; nothing had
+run on a real runner at commit time (see the exit criteria). The `dvkit-infra` skill was
 loaded first: both forges, the release-authority gate and the shadow check
 are involved.
 
@@ -759,7 +759,7 @@ are involved.
 - Typecheck is clean. Lint has 0 errors. `sphinx-build -W` passes.
 - `docs/development/contributing.rst` gained a "Releasing" section.
 
-**Exit criteria**, not yet met, because nothing has been pushed:
+**Exit criteria**, not yet met (first push of `wasm-parser` 2026-09-24):
 - a PR run produces both a VSIX and a server tarball artifact;
 - a tag run with the authority set to none shows both publish jobs skipped;
 - the first real tag publishes both.
@@ -851,12 +851,12 @@ are involved.
 
 ## Tracking
 
-| Phase | PR | Status |
+| Phase | Commit | Status |
 |---|---|---|
 | Decisions D1–D9 | n/a | settled 2026-09-23 |
-| 1 Editor-neutral server | | done 2026-09-23, uncommitted |
-| 2 Package metadata | | done 2026-09-23, uncommitted |
-| 3 Package-level tests | | done 2026-09-23, uncommitted |
-| 4 Extension cut-over | | done 2026-09-23, uncommitted; manual VS Code checks (4.3, 4.7, 4.9) open |
-| 5 CI & release | | done 2026-09-23, uncommitted, rehearsed locally; a real CI run open |
-| 6 Documentation | | done 2026-09-23, uncommitted; Emacs, Sublime and Kate snippets not run |
+| 1 Editor-neutral server | `0c9c13c` | done 2026-09-23 |
+| 2 Package metadata | `0c9c13c` | done 2026-09-23 |
+| 3 Package-level tests | `0c9c13c` | done 2026-09-23 |
+| 4 Extension cut-over | `0c9c13c` | done 2026-09-23; manual VS Code checks (4.3, 4.7, 4.9) open |
+| 5 CI & release | `0c9c13c` | done 2026-09-23, rehearsed locally; a real CI run open |
+| 6 Documentation | `0c9c13c` | done 2026-09-23; Emacs, Sublime and Kate snippets not run |
